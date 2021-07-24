@@ -39,7 +39,7 @@ Required action:
 Download and execute this script inside server.
 
 ```
-wget https://github.com/ijortengab/ispconfig-autoinstaller/blob/master/debian10.digitalocean.sh
+wget https://raw.githubusercontent.com/ijortengab/ispconfig-autoinstaller/master/debian10.digitalocean.sh
 bash debian10.digitalocean.sh
 ```
 
