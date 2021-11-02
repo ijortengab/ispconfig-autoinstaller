@@ -41,6 +41,7 @@ FQCDN="${SUBDOMAIN_FQCDN}.${DOMAIN}"
 FQCDN_PHPMYADMIN="${SUBDOMAIN_PHPMYADMIN}.${DOMAIN}"
 FQCDN_ROUNDCUBE="${SUBDOMAIN_ROUNDCUBE}.${DOMAIN}"
 FQCDN_ISPCONFIG="${SUBDOMAIN_ISPCONFIG}.${DOMAIN}"
+FQCDN_MX="$FQCDN"
 
 # Validate Variables.
 if [[ -z $(grep -m 1 -oE '^[0-9]{1,3}(\.[0-9]{1,3}){3}$'  <<< $IP_PUBLIC ) ]];then
@@ -864,7 +865,7 @@ CONTENT=$(cat <<- EOF
 \$object = (json_decode('$_output'));
 if (is_object(\$object)) {
     foreach (\$object->domain_records as \$domain_record) {
-        if (\$domain_record->data == '$FQCDN') {
+        if (\$domain_record->data == '$FQCDN_MX') {
             exit(1);
         }
     }
@@ -873,11 +874,11 @@ EOF
 )
 php -r "$CONTENT"
 if [[ "$?" == "1" ]];then
-    echo DNS MX Record of FQCDN "'"${DOMAIN}"'" target to "'"${FQCDN}"'" found in DNS Digital Ocean.
+    echo DNS MX Record of FQCDN "'"${DOMAIN}"'" target to "'"${FQCDN_MX}"'" found in DNS Digital Ocean.
 else
-    echo DNS MX Record of FQCDN "'"${DOMAIN}"'" target to "'"${FQCDN}"'" NOT found in DNS Digital Ocean.
+    echo DNS MX Record of FQCDN "'"${DOMAIN}"'" target to "'"${FQCDN_MX}"'" NOT found in DNS Digital Ocean.
     echo -n  Trying to create...
-    _data=$FQCDN"."
+    _data=$FQCDN_MX"."
     _priority=10
     _code=$(curl -X POST \
         -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
@@ -898,7 +899,7 @@ else
 fi
 
 echo $'\n''#' Modify TXT DNS Record for SPF
-spf_txt='v=spf1 a:'"$FQCDN"' ip4:'"$IP_PUBLIC"' ~all'
+spf_txt='v=spf1 a:'"$FQCDN_MX"' ip4:'"$IP_PUBLIC"' ~all'
 spf_txt=$(php -r 'echo "\"".implode("\"\"", str_split("'"$spf_txt"'", 200))."\"";')
 _fqcdn=$DOMAIN
 _output=$(curl -X GET \
