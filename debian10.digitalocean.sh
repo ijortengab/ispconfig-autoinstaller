@@ -338,39 +338,39 @@ EOF
 
 echo $'\n''#' Setup ISPConfig Virtual Host
 cd      /etc/nginx/sites-available
-touch   "${SUBDOMAIN_ISPCONFIG}.${DOMAIN}"
+touch   "$FQCDN_ISPCONFIG"
 cd      /etc/nginx/sites-enabled
-ln -sf  ../sites-available/"${SUBDOMAIN_ISPCONFIG}.${DOMAIN}" "${SUBDOMAIN_ISPCONFIG}.${DOMAIN}"
+ln -sf  ../sites-available/"$FQCDN_ISPCONFIG" "$FQCDN_ISPCONFIG"
 cd      /etc/nginx/sites-available
-echo   "$CONTENT" > "${SUBDOMAIN_ISPCONFIG}.${DOMAIN}"
-sed -i 's/|SERVER_NAME|/'"${SUBDOMAIN_ISPCONFIG}.${DOMAIN}"'/' "${SUBDOMAIN_ISPCONFIG}.${DOMAIN}"
-mkdir -p    /var/www/"${SUBDOMAIN_ISPCONFIG}.${DOMAIN}"
-cd          /var/www/"${SUBDOMAIN_ISPCONFIG}.${DOMAIN}"
-echo        "<?php echo '""${SUBDOMAIN_ISPCONFIG}.${DOMAIN}""'.PHP_EOL;?>" > index.php
+echo   "$CONTENT" > "$FQCDN_ISPCONFIG"
+sed -i 's/|SERVER_NAME|/'"$FQCDN_ISPCONFIG"'/' "$FQCDN_ISPCONFIG"
+mkdir -p    /var/www/"$FQCDN_ISPCONFIG"
+cd          /var/www/"$FQCDN_ISPCONFIG"
+echo        "<?php echo '$FQCDN_ISPCONFIG'.PHP_EOL;?>" > index.php
 
 echo $'\n''#' Setup PHPMyAdmin Virtual Host
 cd      /etc/nginx/sites-available
-touch   "${SUBDOMAIN_PHPMYADMIN}.${DOMAIN}"
+touch   "$FQCDN_PHPMYADMIN"
 cd      /etc/nginx/sites-enabled
-ln -sf  ../sites-available/"${SUBDOMAIN_PHPMYADMIN}.${DOMAIN}" "${SUBDOMAIN_PHPMYADMIN}.${DOMAIN}"
+ln -sf  ../sites-available/"$FQCDN_PHPMYADMIN" "$FQCDN_PHPMYADMIN"
 cd      /etc/nginx/sites-available
-echo   "$CONTENT" > "${SUBDOMAIN_PHPMYADMIN}.${DOMAIN}"
-sed -i 's/|SERVER_NAME|/'"${SUBDOMAIN_PHPMYADMIN}.${DOMAIN}"'/' "${SUBDOMAIN_PHPMYADMIN}.${DOMAIN}"
-mkdir -p    /var/www/"${SUBDOMAIN_PHPMYADMIN}.${DOMAIN}"
-cd          /var/www/"${SUBDOMAIN_PHPMYADMIN}.${DOMAIN}"
-echo        "<?php echo '""${SUBDOMAIN_PHPMYADMIN}.${DOMAIN}""'.PHP_EOL;?>" > index.php
+echo   "$CONTENT" > "$FQCDN_PHPMYADMIN"
+sed -i 's/|SERVER_NAME|/'"$FQCDN_PHPMYADMIN"'/' "$FQCDN_PHPMYADMIN"
+mkdir -p    /var/www/"$FQCDN_PHPMYADMIN"
+cd          /var/www/"$FQCDN_PHPMYADMIN"
+echo        "<?php echo '$FQCDN_PHPMYADMIN'.PHP_EOL;?>" > index.php
 
 echo $'\n''#' Setup Roundcube Virtual Host
 cd      /etc/nginx/sites-available
-touch   "${SUBDOMAIN_ROUNDCUBE}.${DOMAIN}"
+touch   "$FQCDN_ROUNDCUBE"
 cd      /etc/nginx/sites-enabled
-ln -sf  ../sites-available/"${SUBDOMAIN_ROUNDCUBE}.${DOMAIN}" "${SUBDOMAIN_ROUNDCUBE}.${DOMAIN}"
+ln -sf  ../sites-available/"$FQCDN_ROUNDCUBE" "$FQCDN_ROUNDCUBE"
 cd      /etc/nginx/sites-available
-echo   "$CONTENT" > "${SUBDOMAIN_ROUNDCUBE}.${DOMAIN}"
-sed -i 's/|SERVER_NAME|/'"${SUBDOMAIN_ROUNDCUBE}.${DOMAIN}"'/' "${SUBDOMAIN_ROUNDCUBE}.${DOMAIN}"
-mkdir -p    /var/www/"${SUBDOMAIN_ROUNDCUBE}.${DOMAIN}"
-cd          /var/www/"${SUBDOMAIN_ROUNDCUBE}.${DOMAIN}"
-echo        "<?php echo '""${SUBDOMAIN_ROUNDCUBE}.${DOMAIN}""'.PHP_EOL;?>" > index.php
+echo   "$CONTENT" > "$FQCDN_ROUNDCUBE"
+sed -i 's/|SERVER_NAME|/'"$FQCDN_ROUNDCUBE"'/' "$FQCDN_ROUNDCUBE"
+mkdir -p    /var/www/"$FQCDN_ROUNDCUBE"
+cd          /var/www/"$FQCDN_ROUNDCUBE"
+echo        "<?php echo '$FQCDN_ROUNDCUBE'.PHP_EOL;?>" > index.php
 
 echo $'\n''#' HTTP Request Verification
 nginx -s reload
