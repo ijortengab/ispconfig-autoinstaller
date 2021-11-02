@@ -585,9 +585,9 @@ cd  /etc/nginx/sites-enabled
 rm  000-ispconfig.vhost
 rm  000-apps.vhost
 rm  999-acme.vhost
-rm -rf /var/www/cp.developer.web.id
-rm -rf /var/www/db.developer.web.id
-rm -rf /var/www/mail.developer.web.id
+rm -rf /var/www/"$FQCDN_PHPMYADMIN"
+rm -rf /var/www/"$FQCDN_ROUNDCUBE"
+rm -rf /var/www/"$FQCDN_ISPCONFIG"
 nginx -s reload
 sleep 1
 echo $'\n''#' Retrieve ISP Config Directory
