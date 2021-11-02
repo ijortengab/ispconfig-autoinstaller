@@ -374,6 +374,7 @@ echo        "<?php echo '""${SUBDOMAIN_ROUNDCUBE}.${DOMAIN}""'.PHP_EOL;?>" > ind
 
 echo $'\n''#' HTTP Request Verification
 nginx -s reload
+sleep 1
 if [[ ! $(curl -s http://"$FQCDN_PHPMYADMIN") == "$FQCDN_PHPMYADMIN" ]];then
     echo Failed to request http://"$FQCDN_PHPMYADMIN"
     echo -e '\033[0;31m'Script terminated.'\033[0m'
@@ -588,7 +589,7 @@ rm -rf /var/www/cp.developer.web.id
 rm -rf /var/www/db.developer.web.id
 rm -rf /var/www/mail.developer.web.id
 nginx -s reload
-
+sleep 1
 echo $'\n''#' Retrieve ISP Config Directory
 CONTENT=$(cat <<- EOF
 include "/tmp/ispconfig3_install/install/dist/conf/$DEBIAN_CONF";
