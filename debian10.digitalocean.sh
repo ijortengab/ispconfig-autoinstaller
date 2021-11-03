@@ -1238,7 +1238,6 @@ do
         "$template_temp"
     source=$mail_account@$DOMAIN
     destination=$EMAIL_ADMIN@$DOMAIN
-    echo "$password" > ~/roundcube-admin-passwd.txt
     CONTENT=$(cat <<- EOF
 \$replace = '';
 \$replace .= "\t\t"."'server_id' => '1',"                                 ."\n";
