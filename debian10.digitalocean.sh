@@ -943,17 +943,63 @@ else
     esac
 fi
 
-echo $'\n''#' Generate DKIM Public and Private Key
+echo $'\n''#' Execute SOAP mail_domain_get_by_domain
 token=$(pwgen 32 -1)
-dirname="$ispconfig_install_dir/interface/web/mail"
-temp_ajax_get_json="temp_ajax_get_json_$token.php"
-cd "$ispconfig_install_dir/interface/web/mail"
+template=mail_domain_get_by_domain
+template_origin=${template}.php
+template_temp=temp_${template}_${token}.php
 echo Create a temporary file:
-echo "$ispconfig_install_dir/interface/web/mail/$temp_ajax_get_json"
-cp "ajax_get_json.php" "$temp_ajax_get_json"
-echo Remove security access inside temporary file.
-sed -i "/\$app->auth->check_module_permissions('mail');/d" "$temp_ajax_get_json"
+echo "$ispconfig_install_dir/scripts/$template_temp"
+cd "$ispconfig_install_dir/scripts"
+cp "$template_origin" "$template_temp"
+sed -i -E -e '/echo/d' \
+    -e 's/print_r/var_export/' \
+    -e 's/\$domain\s+=\s+[^;]+;/\$domain = "'"$DOMAIN"'";/' \
+    "$template_temp"
+cat "$template_temp"
+echo Execute command: isp php "$template_temp"
+VALUE=$(isp php "$template_temp")
+echo Cleaning Temporary File.
+echo rm '"'"$ispconfig_install_dir/scripts/$template_temp"'"'
+rm "$ispconfig_install_dir/scripts/$template_temp"
 CONTENT=$(cat <<- EOF
+\$value=$VALUE;
+// Karena domain pasti hanya bisa satu, maka tidak perlu looping.
+if (\$each = array_shift(\$value)) {
+    // Gunakan selector yang ada pada database.
+    echo isset(\$each['dkim_selector']) ? \$each['dkim_selector'] : '';
+}
+EOF
+)
+dkim_selector=$(php -r "$CONTENT")
+CONTENT=$(cat <<- EOF
+\$value=$VALUE;
+// Karena domain pasti hanya bisa satu, maka tidak perlu looping.
+if (\$each = array_shift(\$value)) {
+    echo isset(\$each['dkim_public']) ? \$each['dkim_public'] : '';
+}
+EOF
+)
+dkim_public=$(php -r "$CONTENT")
+if [ -n "$dkim_public" ];then
+    dns_record=$(echo "$dkim_public" | sed -e "/-----BEGIN PUBLIC KEY-----/d" -e "/-----END PUBLIC KEY-----/d" | tr '\n' ' ' | sed 's/\ //g')
+    dkim_txt='v=DKIM1; t=s; p='"$dns_record"
+    dkim_txt=$(php -r 'echo "\"".implode("\"\"", str_split("'"$dkim_txt"'", 200))."\"";')
+    if [[ ! "$dkim_selector" == "$DKIM_SELECTOR" ]];then
+        DKIM_SELECTOR="$dkim_selector"
+    fi
+else
+    echo $'\n''#' Generate DKIM Public and Private Key
+    token=$(pwgen 32 -1)
+    dirname="$ispconfig_install_dir/interface/web/mail"
+    temp_ajax_get_json="temp_ajax_get_json_$token.php"
+    cd "$ispconfig_install_dir/interface/web/mail"
+    echo Create a temporary file:
+    echo "$ispconfig_install_dir/interface/web/mail/$temp_ajax_get_json"
+    cp "ajax_get_json.php" "$temp_ajax_get_json"
+    echo Remove security access inside temporary file.
+    sed -i "/\$app->auth->check_module_permissions('mail');/d" "$temp_ajax_get_json"
+    CONTENT=$(cat <<- EOF
 chdir("${ispconfig_install_dir}/interface/web/mail");
 \$_GET['type'] = 'create_dkim';
 \$_GET['domain_id'] = '$DOMAIN';
@@ -961,36 +1007,36 @@ chdir("${ispconfig_install_dir}/interface/web/mail");
 \$_GET['dkim_public'] = '';
 include_once '$ispconfig_install_dir/interface/web/mail/$temp_ajax_get_json';
 EOF
-)
-echo Execute temporary file and get pair of keys.
-json=$(php -r "$CONTENT")
-dkim_private=$(php -r "echo (json_decode('$json'))->dkim_private;")
-dkim_public=$(php -r "echo (json_decode('$json'))->dkim_public;")
-dns_record=$(php -r "echo (json_decode('$json'))->dns_record;")
-dkim_txt='v=DKIM1; t=s; p='"$dns_record"
-dkim_txt=$(php -r 'echo "\"".implode("\"\"", str_split("'"$dkim_txt"'", 200))."\"";')
-echo Private Key:
-echo "$dkim_private"
-echo Public Key:
-echo "$dkim_public"
-echo Public Key for DNS Record:
-echo "$dkim_txt"
-echo Cleaning Temporary File.
-echo rm '"'"$ispconfig_install_dir/interface/web/mail/$temp_ajax_get_json"'"'
-rm "$ispconfig_install_dir/interface/web/mail/$temp_ajax_get_json"
+    )
+    echo Execute temporary file and get pair of keys.
+    json=$(php -r "$CONTENT")
+    dkim_private=$(php -r "echo (json_decode('$json'))->dkim_private;")
+    dkim_public=$(php -r "echo (json_decode('$json'))->dkim_public;")
+    dns_record=$(php -r "echo (json_decode('$json'))->dns_record;")
+    dkim_txt='v=DKIM1; t=s; p='"$dns_record"
+    dkim_txt=$(php -r 'echo "\"".implode("\"\"", str_split("'"$dkim_txt"'", 200))."\"";')
+    echo Private Key:
+    echo "$dkim_private"
+    echo Public Key:
+    echo "$dkim_public"
+    echo Public Key for DNS Record:
+    echo "$dkim_txt"
+    echo Cleaning Temporary File.
+    echo rm '"'"$ispconfig_install_dir/interface/web/mail/$temp_ajax_get_json"'"'
+    rm "$ispconfig_install_dir/interface/web/mail/$temp_ajax_get_json"
 
-echo $'\n''#' Execute SOAP mail_domain_add
-token=$(pwgen 32 -1)
-template=mail_domain_add
-template_origin=${template}.php
-template_temp=temp_${template}_${token}.php
-echo Create a temporary file:
-echo "$ispconfig_install_dir/scripts/$template_temp"
-cd "$ispconfig_install_dir/scripts"
-cp "$template_origin" "$template_temp"
-sed -i -E ':a;N;$!ba;s/\$params\s+=\s+[^;]+;/\$params = array(\n|PLACEHOLDER|\t);/g' \
-    "$template_temp"
-CONTENT=$(cat <<- EOF
+    echo $'\n''#' Execute SOAP mail_domain_add
+    token=$(pwgen 32 -1)
+    template=mail_domain_add
+    template_origin=${template}.php
+    template_temp=temp_${template}_${token}.php
+    echo Create a temporary file:
+    echo "$ispconfig_install_dir/scripts/$template_temp"
+    cd "$ispconfig_install_dir/scripts"
+    cp "$template_origin" "$template_temp"
+    sed -i -E ':a;N;$!ba;s/\$params\s+=\s+[^;]+;/\$params = array(\n|PLACEHOLDER|\t);/g' \
+        "$template_temp"
+    CONTENT=$(cat <<- EOF
 \$replace = '';
 \$replace .= "\t\t"."'server_id' => '1',"                                 ."\n";
 \$replace .= "\t\t"."'domain' => '$DOMAIN',"                              ."\n";
@@ -1004,13 +1050,14 @@ CONTENT=$(cat <<- EOF
 file_put_contents('$template_temp', \$string);
 echo \$string;
 EOF
-)
-php -r "$CONTENT"
-echo Execute command: isp php "$template_temp"
-isp php "$template_temp"
-echo Cleaning Temporary File.
-echo rm '"'"$ispconfig_install_dir/scripts/$template_temp"'"'
-rm "$ispconfig_install_dir/scripts/$template_temp"
+    )
+    php -r "$CONTENT"
+    echo Execute command: isp php "$template_temp"
+    isp php "$template_temp"
+    echo Cleaning Temporary File.
+    echo rm '"'"$ispconfig_install_dir/scripts/$template_temp"'"'
+    rm "$ispconfig_install_dir/scripts/$template_temp"
+fi
 
 echo $'\n''#' Modify TXT DNS Record for DKIM
 dkim_fqcdn=$DKIM_SELECTOR._domainkey.$DOMAIN
@@ -1024,7 +1071,7 @@ CONTENT=$(cat <<- EOF
 \$object = (json_decode('$_output'));
 if (is_object(\$object)) {
     foreach (\$object->domain_records as \$domain_record) {
-        if (\$domain_record->data == '$dkim_txt') {
+        if (\$domain_record->name == '$DKIM_SELECTOR._domainkey' && \$domain_record->data == '$dkim_txt') {
             exit(1);
         }
     }
