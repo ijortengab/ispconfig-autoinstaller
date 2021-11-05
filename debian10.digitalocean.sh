@@ -599,10 +599,13 @@ echo \$conf['ispconfig_install_dir'];
 EOF
 )
 ispconfig_install_dir=$(php -r "$CONTENT")
+phpmyadmin_install_dir=/usr/local/share/phpmyadmin/"$VERSION_PHPMYADMIN"
+roundcube_install_dir=/usr/local/share/roundcube/"$VERSION_ROUNDCUBE"
 
 echo $'\n''#' Copy ISPConfig PHP Scripts
 mkdir -p "$ispconfig_install_dir"/scripts
 cp /tmp/ispconfig3_install/remoting_client/examples/* "$ispconfig_install_dir/scripts"
+scripts_dir="$ispconfig_install_dir"/scripts
 
 echo $'\n''#' Modify PHP Scripts
 cd "$ispconfig_install_dir"/scripts
@@ -621,69 +624,104 @@ find * -maxdepth 1 -type f \
 
 echo $'\n''#' Create ISPConfig Command '`'isp'`'.
 CONTENT=$(cat <<- 'EOF'
-ISPCONFIG_INSTALL_DIR=|ISPCONFIG_INSTALL_DIR|
+#!/bin/bash
+s=|scripts_dir|
+Usage() {
+    echo -e "Usage: isp \e[33m<command>\e[0m [<args>]" >&2
+    echo >&2
+    echo "Available commands: " >&2
+    echo -e '   \e[33mls\e[0m       \e[35m[<prefix>]\e[0m   List PHP Script. Filter by prefix.' >&2
+    echo -e '   \e[33mmktemp\e[0m   \e[35m<script>\e[0m     Create a temporary file based on Script.' >&2
+    echo -e '   \e[33meditor\e[0m   \e[35m<script>\e[0m     Edit PHP Script.' >&2
+    echo -e '   \e[33mphp\e[0m      \e[35m<script>\e[0m     Execute PHP Script.' >&2
+    echo -e '   \e[33mcat\e[0m      \e[35m<script>\e[0m     Get the contents of PHP Script.' >&2
+    echo -e '   \e[33mrealpath\e[0m \e[35m<script>\e[0m     Return the real path of PHP Script.' >&2
+    echo -e '   \e[33mexport\e[0m                Export some variables.' >&2
+    echo >&2
+    echo -e 'Command for switch editor: \e[35mupdate-alternatives --config editor\e[0m' >&2
+}
 if [ -z "$1" ];then
-    echo -e "Usage: isp \033[33m<command>\033[m [<args>]"
-    echo
-    echo -e "Directory location: \033[32m$ISPCONFIG_INSTALL_DIR/scripts\033[m"
-    echo
-    echo "Available commands: "
-    echo -e '   \033[33mls\033[m     \033[35m[<prefix>]\033[m     List PHP Script. Filter by prefix.'
-    echo -e '   \033[33mmktemp\033[m  \033[35m<script>\033[m      Create a temporary file based on Script.'
-    echo -e '   \033[33meditor\033[m  \033[35m<script>\033[m      Edit PHP Script. Switch editor, run:'
-    echo -e '                         update-alternatives --config editor'
-    echo -e '   \033[33mphp\033[m     \033[35m<script>\033[m      Execute PHP Script.'
+    Usage
+    exit
 fi
 case "$1" in
+    -h|--help)
+        Usage
+        exit
+        ;;
     ls)
         if [ -z "$2" ];then
-            ls "$ISPCONFIG_INSTALL_DIR/scripts"
+            ls "$s"
         else
-            cd "$ISPCONFIG_INSTALL_DIR/scripts"
+            cd "$s"
             ls "$2"*
         fi
         ;;
     mktemp)
-        if [ -f "$ISPCONFIG_INSTALL_DIR/scripts/$2" ];then
+        if [ -f "$s/$2" ];then
             filename="${2%.*}"
-            temp=$(mktemp -p "$ISPCONFIG_INSTALL_DIR/scripts" \
-                -t "$filename"_temp_XXX.php)
+            temp=$(mktemp -p "$s" \
+                -t "$filename"_temp_XXXXX.php)
+            cd "$s"
             cp "$2" "$temp"
             echo $(basename $temp)
         fi
         ;;
     editor)
-        if [ -f "$ISPCONFIG_INSTALL_DIR/scripts/$2" ];then
-            editor "$ISPCONFIG_INSTALL_DIR/scripts/$2"
+        if [ -f "$s/$2" ];then
+            editor "$s/$2"
         fi
         ;;
     php)
-        if [ -f "$ISPCONFIG_INSTALL_DIR/scripts/$2" ];then
-            php "$ISPCONFIG_INSTALL_DIR/scripts/$2"
+        if [ -f "$s/$2" ];then
+            php "$s/$2"
         fi
+        ;;
+    cat)
+        if [ -f "$s/$2" ];then
+            cat "$s/$2"
+        fi
+        ;;
+    realpath)
+        if [ -f "$s/$2" ];then
+            echo "$s/$2"
+        fi
+        ;;
+    export)
+        echo phpmyadmin_install_dir=|phpmyadmin_install_dir|
+        echo roundcube_install_dir=|roundcube_install_dir|
+        echo ispconfig_install_dir=|ispconfig_install_dir|
+        echo scripts_dir=|scripts_dir|
 esac
 EOF
 )
-echo '#!/bin/bash' > /usr/local/bin/isp
+: > /usr/local/bin/isp
 echo "$CONTENT" >> /usr/local/bin/isp
-sed -i 's,|ISPCONFIG_INSTALL_DIR|,'"${ispconfig_install_dir}"',' /usr/local/bin/isp
 chmod a+x /usr/local/bin/isp
+sed -i 's,|phpmyadmin_install_dir|,'"${phpmyadmin_install_dir}"',' /usr/local/bin/isp
+sed -i 's,|roundcube_install_dir|,'"${roundcube_install_dir}"',' /usr/local/bin/isp
+sed -i 's,|ispconfig_install_dir|,'"${ispconfig_install_dir}"',' /usr/local/bin/isp
+sed -i 's,|scripts_dir|,'"${scripts_dir}"',' /usr/local/bin/isp
 
 echo $'\n''#' Create Autocompletion for '`'isp'`' Command.
 CONTENT=$(cat <<- 'EOF'
+#!/bin/bash
 _isp() {
-    local ispconfig_install_dir=|ISPCONFIG_INSTALL_DIR|
+    local scripts_dir=|scripts_dir|
     local cur
     cur=${COMP_WORDS[COMP_CWORD]}
+    prev=${COMP_WORDS[COMP_CWORD-1]}
     case ${COMP_CWORD} in
         1)
-            COMPREPLY=($(compgen -W "ls php editor mktemp" -- ${cur}))
+            COMPREPLY=($(compgen -W "ls php editor mktemp cat realpath export" -- ${cur}))
             ;;
         2)
-            if [ -z ${cur} ];then
-                COMPREPLY=($(ls "$ispconfig_install_dir"/scripts/ | awk -F '_' '!x[$1]++{print $1}'))
+            if [[ "${prev}" == 'export' ]];then
+                COMPREPLY=()
+            elif [ -z ${cur} ];then
+                COMPREPLY=($(ls "$scripts_dir" | awk -F '_' '!x[$1]++{print $1}'))
             else
-                words_merge=$(ls "$ispconfig_install_dir"/scripts/ | xargs)
+                words_merge=$(ls "$scripts_dir" | xargs)
                 COMPREPLY=($(compgen -W "$words_merge" -- ${cur}))
             fi
             ;;
@@ -695,9 +733,10 @@ _isp() {
 complete -F _isp isp
 EOF
 )
-echo '#!/bin/bash' > /etc/profile.d/isp-completion.sh
+: > /etc/profile.d/isp-completion.sh
 echo "$CONTENT" >> /etc/profile.d/isp-completion.sh
-sed -i 's,|ISPCONFIG_INSTALL_DIR|,'"${ispconfig_install_dir}"',' /etc/profile.d/isp-completion.sh
+chmod a+x /etc/profile.d/isp-completion.sh
+sed -i 's,|scripts_dir|,'"${scripts_dir}"',' /etc/profile.d/isp-completion.sh
 
 echo $'\n''#' Implement Autocompletion for '`'isp'`' Command.
 echo 'Execute: `source /etc/profile.d/isp-completion.sh`'
