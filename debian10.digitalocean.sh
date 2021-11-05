@@ -984,24 +984,21 @@ else
 fi
 
 echo $'\n''#' Execute SOAP mail_domain_get_by_domain
-token=$(pwgen 32 -1)
-template=mail_domain_get_by_domain
-template_origin=${template}.php
-template_temp=temp_${template}_${token}.php
 echo Create a temporary file:
-echo "$ispconfig_install_dir/scripts/$template_temp"
-cd "$ispconfig_install_dir/scripts"
-cp "$template_origin" "$template_temp"
+template=mail_domain_get_by_domain
+template_temp=$(isp mktemp "${template}.php")
+template_temp_path=$(isp realpath "$template_temp")
+echo "$template_temp_path"
 sed -i -E -e '/echo/d' \
     -e 's/print_r/var_export/' \
     -e 's/\$domain\s+=\s+[^;]+;/\$domain = "'"$DOMAIN"'";/' \
-    "$template_temp"
-cat "$template_temp"
+    "$template_temp_path"
+cat "$template_temp_path"
 echo Execute command: isp php "$template_temp"
 VALUE=$(isp php "$template_temp")
 echo Cleaning Temporary File.
-echo rm '"'"$ispconfig_install_dir/scripts/$template_temp"'"'
-rm "$ispconfig_install_dir/scripts/$template_temp"
+echo rm '"'"$template_temp_path"'"'
+rm "$template_temp_path"
 CONTENT=$(cat <<- EOF
 \$value=$VALUE;
 // Karena domain pasti hanya bisa satu, maka tidak perlu looping.
@@ -1064,18 +1061,14 @@ EOF
     echo Cleaning Temporary File.
     echo rm '"'"$ispconfig_install_dir/interface/web/mail/$temp_ajax_get_json"'"'
     rm "$ispconfig_install_dir/interface/web/mail/$temp_ajax_get_json"
-
     echo $'\n''#' Execute SOAP mail_domain_add
-    token=$(pwgen 32 -1)
-    template=mail_domain_add
-    template_origin=${template}.php
-    template_temp=temp_${template}_${token}.php
     echo Create a temporary file:
-    echo "$ispconfig_install_dir/scripts/$template_temp"
-    cd "$ispconfig_install_dir/scripts"
-    cp "$template_origin" "$template_temp"
+    template=mail_domain_add
+    template_temp=$(isp mktemp "${template}.php")
+    template_temp_path=$(isp realpath "$template_temp")
+    echo "$template_temp_path"
     sed -i -E ':a;N;$!ba;s/\$params\s+=\s+[^;]+;/\$params = array(\n|PLACEHOLDER|\t);/g' \
-        "$template_temp"
+        "$template_temp_path"
     CONTENT=$(cat <<- EOF
 \$replace = '';
 \$replace .= "\t\t"."'server_id' => '1',"                                 ."\n";
@@ -1085,9 +1078,9 @@ EOF
 \$replace .= "\t\t"."'dkim_selector' => '$DKIM_SELECTOR',"                ."\n";
 \$replace .= "\t\t"."'dkim_private' => '$dkim_private',"                  ."\n";
 \$replace .= "\t\t"."'dkim_public' => '$dkim_public',"                    ."\n";
-\$string=file_get_contents('$template_temp');
+\$string=file_get_contents('$template_temp_path');
 \$string = str_replace('|PLACEHOLDER|', \$replace, \$string);
-file_put_contents('$template_temp', \$string);
+file_put_contents('$template_temp_path', \$string);
 echo \$string;
 EOF
     )
@@ -1095,8 +1088,8 @@ EOF
     echo Execute command: isp php "$template_temp"
     isp php "$template_temp"
     echo Cleaning Temporary File.
-    echo rm '"'"$ispconfig_install_dir/scripts/$template_temp"'"'
-    rm "$ispconfig_install_dir/scripts/$template_temp"
+    echo rm '"'"$template_temp_path"'"'
+    rm "$template_temp_path"
 fi
 
 echo $'\n''#' Modify TXT DNS Record for DKIM
