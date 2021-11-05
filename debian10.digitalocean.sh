@@ -1202,30 +1202,90 @@ echo $'\n''#' CHAPTER 3. SETUP EMAIL
 echo -n $'\n''########################################'
 echo         '########################################'
 
-echo $'\n''#' Execute SOAP mail_user_add
-token=$(pwgen 32 -1)
-template=mail_user_add
-template_origin=${template}.php
-template_temp=temp_${template}_${token}.php
-echo Create a temporary file:
-echo "$ispconfig_install_dir/scripts/$template_temp"
-cd "$ispconfig_install_dir/scripts"
-cp "$template_origin" "$template_temp"
-sed -i -E ':a;N;$!ba;s/\$params\s+=\s+[^;]+;/\$params = array(\n|PLACEHOLDER|\t);/g' \
-    "$template_temp"
-mail_account=$EMAIL_ADMIN
-password=$(pwgen 9 -1vA0B)
-echo "$password" > ~/roundcube-admin-passwd.txt
-CONTENT=$(cat <<- EOF
+# Get the mailuser_id from table mail_user in ispconfig database.
+#
+# Globals:
+#   ispconfig_db_user, ispconfig_db_pass,
+#   ispconfig_db_host, ispconfig_db_name
+#
+# Arguments:
+#   $1: user mail
+#   $2: host mail
+#
+# Output:
+#   Write mailuser_id to stdout.
+getMailUserIdIspconfigByEmail() {
+    local email="$1"@"$2"
+    local sql="SELECT mailuser_id FROM mail_user WHERE email = '$email';"
+    local u="$ispconfig_db_user"
+    local p="$ispconfig_db_pass"
+    local mailuser_id=$(mysql \
+        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
+        -h "$ispconfig_db_host" "$ispconfig_db_name" -r -N -s -e "$sql"
+    )
+    echo "$mailuser_id"
+}
+
+# Check if the mailuser_id from table mail_user exists in ispconfig database.
+#
+# Globals:
+#   Used: roundcube_db_user, roundcube_db_pass,
+#         roundcube_db_host, roundcube_db_name
+#   Modified: mailuser_id
+#
+# Arguments:
+#   $1: user mail
+#   $2: host mail
+#
+# Return:
+#   0 if exists.
+#   1 if not exists.
+isEmailIspconfigExist() {
+    mailuser_id=$(getMailUserIdIspconfigByEmail "$1" "$2")
+    if [ -n "$mailuser_id" ];then
+        return 0
+    fi
+    return 1
+}
+
+# Insert to table mail_user a new record via SOAP.
+#
+# Globals:
+#   Used: roundcube_db_user, roundcube_db_pass,
+#         roundcube_db_host, roundcube_db_name
+#   Modified: mailuser_id
+#
+# Arguments:
+#   $1: user mail
+#   $2: host mail
+#
+# Return:
+#   0 if exists.
+#   1 if not exists.
+insertEmailIspconfig() {
+    local user="$1"
+    local host="$2"
+    echo $'\n''#' Execute SOAP mail_user_add
+    echo Create a temporary file:
+    template=mail_user_add
+    template_temp=$(isp mktemp "${template}.php")
+    template_temp_path=$(isp realpath "$template_temp")
+    echo "$template_temp_path"
+    sed -i -E ':a;N;$!ba;s/\$params\s+=\s+[^;]+;/\$params = array(\n|PLACEHOLDER|\t);/g' \
+        "$template_temp_path"
+    password=$(pwgen 9 -1vA0B)
+    echo "$password"
+    echo "$password" > ~/"roundcube-passwd-user-${user}-host-${host}.txt"
+    CONTENT=$(cat <<- EOF
 \$replace = '';
 \$replace .= "\t\t"."'server_id' => '1',"                                 ."\n";
-\$replace .= "\t\t"."'email' => '$mail_account@$DOMAIN',"                 ."\n";
-\$replace .= "\t\t"."'login' => '$mail_account@$DOMAIN',"                 ."\n";
+\$replace .= "\t\t"."'email' => '$user@$host',"                           ."\n";
+\$replace .= "\t\t"."'login' => '$user@$host',"                           ."\n";
 \$replace .= "\t\t"."'password' => '$password',"                          ."\n";
 \$replace .= "\t\t"."'name' => 'Admin',"                                  ."\n";
 \$replace .= "\t\t"."'uid' => '5000',"                                    ."\n";
 \$replace .= "\t\t"."'gid' => '5000',"                                    ."\n";
-\$replace .= "\t\t"."'maildir' => '/var/vmail/$DOMAIN/$mail_account',"    ."\n";
+\$replace .= "\t\t"."'maildir' => '/var/vmail/$host/$user',"              ."\n";
 \$replace .= "\t\t"."'maildir_format' => 'maildir',"                      ."\n";
 \$replace .= "\t\t"."'quota' => '0',"                                     ."\n";
 \$replace .= "\t\t"."'cc' => '',"                                         ."\n";
@@ -1258,34 +1318,100 @@ CONTENT=$(cat <<- EOF
 \$replace .= "\t\t"."'last_quota_notification' => NULL,"                  ."\n";
 \$replace .= "\t\t"."'backup_interval' => 'none',"                        ."\n";
 \$replace .= "\t\t"."'backup_copies' => '1',"                             ."\n";
-\$string=file_get_contents('$template_temp');
+\$string=file_get_contents('$template_temp_path');
 \$string = str_replace('|PLACEHOLDER|', \$replace, \$string);
-file_put_contents('$template_temp', \$string);
+file_put_contents('$template_temp_path', \$string);
 echo \$string;
 EOF
-)
-php -r "$CONTENT"
-echo Execute command: isp php "$template_temp"
-isp php "$template_temp"
-echo Cleaning Temporary File.
-echo rm '"'"$ispconfig_install_dir/scripts/$template_temp"'"'
-rm "$ispconfig_install_dir/scripts/$template_temp"
+    )
+    php -r "$CONTENT"
+    echo Execute command: isp php "$template_temp"
+    isp php "$template_temp"
+    echo Cleaning Temporary File.
+    echo rm '"'"$template_temp_path"'"'
+    rm "$template_temp_path"
+    mailuser_id=$(getMailUserIdIspconfigByEmail "$1" "$2")
+    if [ -n "$mailuser_id" ];then
+        return 0
+    fi
+    return 1
+}
 
-echo $'\n''#' Execute SOAP mail_alias_add
-for mail_account in $EMAIL_HOST $EMAIL_WEB $EMAIL_POST
-do
-    token=$(pwgen 32 -1)
-    template=mail_alias_add
-    template_origin=${template}.php
-    template_temp=temp_${template}_${token}.php
+# Get the forwarding_id from table mail_forwarding in ispconfig database.
+#
+# Globals:
+#   ispconfig_db_user, ispconfig_db_pass,
+#   ispconfig_db_host, ispconfig_db_name
+#
+# Arguments:
+#   $1: Filter by email source.
+#   $2: Filter by email destination.
+#
+# Output:
+#   Write forwarding_id to stdout.
+getForwardingIdIspconfigByEmailAlias() {
+    local source="$1"
+    local destination="$2"
+    local sql="SELECT forwarding_id FROM mail_forwarding WHERE source = '$source' and destination = '$destination' and type = 'alias';"
+    local u="$ispconfig_db_user"
+    local p="$ispconfig_db_pass"
+    local forwarding_id=$(mysql \
+        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
+        -h "$ispconfig_db_host" "$ispconfig_db_name" -r -N -s -e "$sql"
+    )
+    echo "$forwarding_id"
+}
+
+# Check if the email alias (source and destination)
+# from table mail_forwarding exists in ispconfig database.
+#
+# Globals:
+#   Used: ispconfig_db_user, ispconfig_db_pass,
+#         ispconfig_db_host, ispconfig_db_name
+#   Modified: forwarding_id
+#
+# Arguments:
+#   $1: Filter by email source.
+#   $2: Filter by email destination.
+#
+# Return:
+#   0 if exists.
+#   1 if not exists.
+isEmailAliasIspconfigExist() {
+    local source="$1"
+    local destination="$2"
+    forwarding_id=$(getForwardingIdIspconfigByEmailAlias "$source" "$destination")
+    if [ -n "$forwarding_id" ];then
+        return 0
+    fi
+    return 1
+}
+
+# Insert to table mail_forwarding a new record via SOAP.
+#
+# Globals:
+#   Used: roundcube_db_user, roundcube_db_pass,
+#         roundcube_db_host, roundcube_db_name
+#   Modified: forwarding_id
+#
+# Arguments:
+#   $1: email destination
+#   $2: email alias
+#
+# Return:
+#   0 if exists.
+#   1 if not exists.
+insertEmailAliasIspconfig() {
+    local source="$1"
+    local destination="$2"
+    echo $'\n''#' Execute SOAP mail_alias_add
     echo Create a temporary file:
-    echo "$ispconfig_install_dir/scripts/$template_temp"
-    cd "$ispconfig_install_dir/scripts"
-    cp "$template_origin" "$template_temp"
+    template=mail_alias_add
+    template_temp=$(isp mktemp "${template}.php")
+    template_temp_path=$(isp realpath "$template_temp")
+    echo "$template_temp_path"
     sed -i -E ':a;N;$!ba;s/\$params\s+=\s+[^;]+;/\$params = array(\n|PLACEHOLDER|\t);/g' \
-        "$template_temp"
-    source=$mail_account@$DOMAIN
-    destination=$EMAIL_ADMIN@$DOMAIN
+        "$template_temp_path"
     CONTENT=$(cat <<- EOF
 \$replace = '';
 \$replace .= "\t\t"."'server_id' => '1',"                                 ."\n";
@@ -1293,57 +1419,268 @@ do
 \$replace .= "\t\t"."'destination' => '$destination',"                    ."\n";
 \$replace .= "\t\t"."'type' => 'alias',"                                  ."\n";
 \$replace .= "\t\t"."'active' => 'y',"                                    ."\n";
-\$string=file_get_contents('$template_temp');
+\$string=file_get_contents('$template_temp_path');
 \$string = str_replace('|PLACEHOLDER|', \$replace, \$string);
-file_put_contents('$template_temp', \$string);
+file_put_contents('$template_temp_path', \$string);
 echo \$string;
 EOF
-)
+    )
     php -r "$CONTENT"
     echo Execute command: isp php "$template_temp"
     isp php "$template_temp"
     echo Cleaning Temporary File.
-    echo rm '"'"$ispconfig_install_dir/scripts/$template_temp"'"'
-    rm "$ispconfig_install_dir/scripts/$template_temp"
-done
+    echo rm '"'"$template_temp_path"'"'
+    rm "$template_temp_path"
+    forwarding_id=$(getForwardingIdIspconfigByEmailAlias "$source" "$destination")
+    if [ -n "$forwarding_id" ];then
+        return 0
+    fi
+    return 1
+}
 
-echo $'\n''#' Inject to Roundcube Database.
-now=$(date +%Y-%m-%d\ %H:%M:%S)
-u=root
-p=$(<~/mysql-root-passwd.txt)
-echo Insert Table users.
-username=$EMAIL_ADMIN@$DOMAIN
-mail_host=localhost
-language=en_US
-sql="INSERT INTO users
-(created, last_login, username, mail_host, language)
-VALUES
-('$now', '$now', '$username', '$mail_host', '$language');"
-mysql --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
-    roundcubemail -e "$sql"
-echo Get user_id.
-username=$EMAIL_ADMIN@$DOMAIN
-sql="SELECT user_id FROM users WHERE username = '$username';"
-user_id=$(mysql --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
-    roundcubemail -r -N -s -e "$sql")
-echo Insert main identity.
-email=$EMAIL_ADMIN@$DOMAIN
-sql="INSERT INTO identities
-(user_id, changed, del, standard, name, organization, email, \`reply-to\`, bcc, html_signature)
-VALUES
-('$user_id', '$now', 0, 1, 'Admin', '', '$email', '', '', 0);"
-mysql --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
-    roundcubemail -e "$sql"
-echo Insert other identities.
-for mail_account in $EMAIL_HOST $EMAIL_WEB $EMAIL_POST
+# Get the user_id from table users in roundcube database.
+#
+# Globals:
+#   roundcube_db_user, roundcube_db_pass,
+#   roundcube_db_host, roundcube_db_name
+#
+# Arguments:
+#   $1: Filter by username.
+#
+# Output:
+#   Write user_id to stdout.
+getUserIdRoundcubeByUsername() {
+    local username="$1"
+    local sql="SELECT user_id FROM users WHERE username = '$username';"
+    local u="$roundcube_db_user"
+    local p="$roundcube_db_pass"
+    local user_id=$(mysql \
+        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
+        -h "$roundcube_db_host" "$roundcube_db_name" -r -N -s -e "$sql"
+    )
+    echo "$user_id"
+}
+
+# Check if the username from table users exists in roundcube database.
+#
+# Globals:
+#   Used: roundcube_db_user, roundcube_db_pass,
+#         roundcube_db_host, roundcube_db_name
+#   Modified: user_id
+#
+# Arguments:
+#   $1: username to be checked.
+#
+# Return:
+#   0 if exists.
+#   1 if not exists.
+isUsernameRoundcubeExist() {
+    local username="$1"
+    user_id=$(getUserIdRoundcubeByUsername "$username")
+    if [ -n "$user_id" ];then
+        return 0
+    fi
+    return 1
+}
+
+# Insert the username to table users in roundcube database.
+#
+# Globals:
+#   Used: roundcube_db_user, roundcube_db_pass,
+#         roundcube_db_host, roundcube_db_name
+#   Modified: user_id
+#
+# Arguments:
+#   $1: username to be checked.
+#   $2: mail host (if omit, default to localhost)
+#   $3: language (if omit, default to en_US)
+#
+# Return:
+#   0 if exists.
+#   1 if not exists.
+insertUsernameRoundcube() {
+    local username="$1"
+    local mail_host="$2"; [ -n "$mail_host" ] || mail_host=localhost
+    local language="$3"; [ -n "$language" ] || language=en_US
+    local now=$(date +%Y-%m-%d\ %H:%M:%S)
+    local sql="INSERT INTO users
+        (created, last_login, username, mail_host, language)
+        VALUES
+        ('$now', '$now', '$username', '$mail_host', '$language');"
+    local u="$roundcube_db_user"
+    local p="$roundcube_db_pass"
+    mysql --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
+        -h "$roundcube_db_host" "$roundcube_db_name" -e "$sql"
+    user_id=$(getUserIdRoundcubeByUsername "$username")
+    if [ -n "$user_id" ];then
+        return 0
+    fi
+    return 1
+}
+
+# Get the user_id from table users in roundcube database.
+#
+# Globals:
+#   roundcube_db_user, roundcube_db_pass,
+#   roundcube_db_host, roundcube_db_name
+#
+# Arguments:
+#   $1: Filter by standard.
+#   $2: Filter by email.
+#   $3: Filter by user_id.
+#
+# Output:
+#   Write identity_id to stdout.
+getIdentityIdRoundcubeByEmail() {
+    local standard="$1"
+    local email="$2"
+    local user_id="$3"
+    local sql="SELECT identity_id FROM identities WHERE standard = '$standard' and email = '$email' and user_id = '$user_id';"
+    local u="$roundcube_db_user"
+    local p="$roundcube_db_pass"
+    local identity_id=$(mysql \
+        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
+        -h "$roundcube_db_host" "$roundcube_db_name" -r -N -s -e "$sql"
+    )
+    echo "$identity_id"
+}
+
+# Check if the username from table users exists in roundcube database.
+#
+# Globals:
+#   Used: roundcube_db_user, roundcube_db_pass,
+#         roundcube_db_host, roundcube_db_name
+#   Modified: identity_id
+#
+# Arguments:
+#   $1: username to be checked.
+#
+# Return:
+#   0 if exists.
+#   1 if not exists.
+isIdentitiesRoundcubeExist() {
+    local standard="$1"
+    local email="$2"
+    local user_id="$3"
+    identity_id=$(getIdentityIdRoundcubeByEmail "$standard" "$email" "$user_id")
+    if [ -n "$identity_id" ];then
+        return 0
+    fi
+    return 1
+}
+
+# Insert the username to table users in roundcube database.
+#
+# Globals:
+#   Used: roundcube_db_user, roundcube_db_pass,
+#         roundcube_db_host, roundcube_db_name
+#   Modified: identity_id
+#
+# Arguments:
+#   $1: standard
+#   $2: email
+#   $3: user_id
+#   $4: name
+#   $5: organization
+#   $6: reply_to
+#   $7: bcc
+#   $8: html_signature (if omit, default to 0)
+#
+# Return:
+#   0 if exists.
+#   1 if not exists.
+insertIdentitiesRoundcube() {
+    local standard="$1"
+    local email="$2"
+    local user_id="$3"
+    local name="$4"
+    local organization="$5"
+    local reply_to="$6"
+    local bcc="$7"
+    local html_signature="$8"; [ -n "$html_signature" ] || html_signature=0
+    local now=$(date +%Y-%m-%d\ %H:%M:%S)
+    local sql="INSERT INTO identities
+        (user_id, changed, del, standard, name, organization, email, \`reply-to\`, bcc, html_signature)
+        VALUES
+        ('$user_id', '$now', 0, $standard, '$name', '$organization', '$email', '$reply_to', '$reply_to', $html_signature);"
+    local u="$roundcube_db_user"
+    local p="$roundcube_db_pass"
+    mysql --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
+        -h "$roundcube_db_host" "$roundcube_db_name" -e "$sql"
+    identity_id=$(getIdentityIdRoundcubeByEmail "$standard" "$email" "$user_id")
+    if [ -n "$identity_id" ];then
+        return 0
+    fi
+    return 1
+}
+
+user="$EMAIL_ADMIN"
+host="$DOMAIN"
+if isEmailIspconfigExist "$user" "$host";then
+    echo Email "$user"@"$host" already exists.
+    echo \$mailuser_id $mailuser_id
+elif insertEmailIspconfig "$user" "$host";then
+    echo Email "$user"@"$host" created.
+    echo \$mailuser_id $mailuser_id
+else
+    echo Email "$user"@"$host" failed to create.
+    echo -e '\033[0;31m'Script terminated.'\033[0m'
+    exit 1
+fi
+destination="$user"@"$host"
+for user in $EMAIL_HOST $EMAIL_WEB $EMAIL_POST
 do
-    email=$mail_account@$DOMAIN
-sql="INSERT INTO identities
-(user_id, changed, del, standard, name, organization, email, \`reply-to\`, bcc, html_signature)
-VALUES
-('$user_id', '$now', 0, 0, '', '', '$email', '', '', 0);"
-mysql --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
-    roundcubemail -e "$sql"
+    source="$user"@"$host"
+    if isEmailAliasIspconfigExist "$source" "$destination";then
+        echo Email "$source" alias of "$destination" already exists.
+        echo \$forwarding_id $forwarding_id
+    elif insertEmailAliasIspconfig "$source" "$destination";then
+        echo Email "$source" alias of "$destination" created.
+        echo \$forwarding_id $forwarding_id
+    else
+        echo Email "$source" alias of "$destination" failed to create.
+        echo -e '\033[0;31m'Script terminated.'\033[0m'
+        exit 1
+    fi
+done
+username=$EMAIL_ADMIN@$DOMAIN
+if isUsernameRoundcubeExist "$username";then
+    echo Username "$username" already exists.
+    echo \$user_id $user_id
+elif insertUsernameRoundcube "$username";then
+    echo Username "$username" created.
+    echo \$user_id $user_id
+else
+    echo Username "$username" failed to create.
+    echo -e '\033[0;31m'Script terminated.'\033[0m'
+    exit 1
+fi
+if isIdentitiesRoundcubeExist 1 "$username" "$user_id";then
+    echo Identities "$username" already exists.
+    echo \$identity_id $identity_id
+elif insertIdentitiesRoundcube 1 "$username" "$user_id" "$EMAIL_ADMIN_IDENTITIES";then
+    echo Identities "$username" created.
+    echo \$identity_id $identity_id
+else
+    echo Identities "$username" failed to create.
+    echo -e '\033[0;31m'Script terminated.'\033[0m'
+    exit 1
+fi
+for user in $EMAIL_HOST $EMAIL_WEB $EMAIL_POST
+do
+    source="$user"@"$host"
+    echo \$source $source
+    if isIdentitiesRoundcubeExist 0 "$source" "$user_id";then
+        echo Identities "$source" alias of "$destination" already exists.
+        echo \$identity_id $identity_id
+    elif insertIdentitiesRoundcube 0 "$source" "$user_id";then
+        echo Identities "$source" alias of "$destination" created.
+        echo \$identity_id $identity_id
+    else
+        echo Identities "$source" alias of "$user_id" failed to create.
+        echo -e '\033[0;31m'Script terminated.'\033[0m'
+        exit 1
+    fi
 done
 
 echo -n $'\n''########################################'
