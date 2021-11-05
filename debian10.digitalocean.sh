@@ -449,6 +449,10 @@ rmdir       phpMyAdmin-${VERSION_PHPMYADMIN}-all-languages
 echo $'\n''#' PHPMyAdmin Credential
 password=$(pwgen -s 32 -1)
 blowfish=$(pwgen -s 32 -1)
+phpmyadmin_db_user=pma
+phpmyadmin_db_pass="$password"
+phpmyadmin_db_host=localhost
+phpmyadmin_db_name=phpmyadmin
 echo "CREATE USER 'pma'@'localhost' IDENTIFIED BY '${password}';" | mysql -u root
 echo "GRANT ALL PRIVILEGES ON phpmyadmin.* TO 'pma'@'localhost';" | mysql -u root
 echo "FLUSH PRIVILEGES;" | mysql -u root
@@ -511,6 +515,10 @@ rmdir       roundcubemail-${VERSION_ROUNDCUBE}
 echo $'\n''#' Roundcube Credential
 password=$(pwgen -s 32 -1)
 blowfish=$(pwgen -s 32 -1)
+roundcube_db_user=roundcube
+roundcube_db_pass="$password"
+roundcube_db_host=localhost
+roundcube_db_name=roundcubemail
 echo "CREATE DATABASE roundcubemail CHARACTER SET utf8 COLLATE utf8_general_ci;" | mysql -u root
 echo "CREATE USER 'roundcube'@'localhost' IDENTIFIED BY '${password}';" | mysql -u root
 echo "GRANT ALL PRIVILEGES ON roundcubemail.* TO 'roundcube'@'localhost';" | mysql -u root
@@ -562,6 +570,13 @@ chmod 0700 ~/mysql-root-passwd.txt
 mysql -e "UPDATE mysql.user SET Password = PASSWORD('"$(<~/mysql-root-passwd.txt)"') WHERE User = 'root'"
 mysql -e "FLUSH PRIVILEGES"
 
+echo $'\n''#' ISPConfig Credential
+password=$(pwgen -s 32 -1)
+ispconfig_db_user=ispconfig
+ispconfig_db_pass="$password"
+ispconfig_db_host=localhost
+ispconfig_db_name=dbispconfig
+
 echo $'\n''#' ISPConfig Install
 cd      /tmp/ispconfig3_install/install/
 cp      ../docs/autoinstall_samples/autoinstall.ini.sample ./autoinstall.ini
@@ -572,7 +587,7 @@ sed -i "s,ispconfig_use_ssl=y,ispconfig_use_ssl=n," autoinstall.ini
 echo $(pwgen 6 -1vA0B) > ~/ispconfig-admin-passwd.txt
 chmod 0700 ~/ispconfig-admin-passwd.txt
 sed -i "s,ispconfig_admin_password=admin,ispconfig_admin_password="$(<~/ispconfig-admin-passwd.txt)"," autoinstall.ini
-sed -i "s,mysql_ispconfig_password=.*,mysql_ispconfig_password="$(pwgen 32 -1)"," autoinstall.ini
+sed -i "s,mysql_ispconfig_password=.*,mysql_ispconfig_password="$password"," autoinstall.ini
 php install.php --autoinstall=autoinstall.ini
 
 echo $'\n''#' ISPConfig Adjust Web Root
@@ -1338,22 +1353,12 @@ echo -n $'\n''########################################'
 echo         '########################################'
 echo $'\n''#' Credentials
 echo PHPMyAdmin: "https://$FQCDN_PHPMYADMIN"
-user=$(php -r "include '$ispconfig_install_dir/interface/lib/config.inc.php';echo DB_USER;")
-pass=$(php -r "include '$ispconfig_install_dir/interface/lib/config.inc.php';echo DB_PASSWORD;")
-echo '   - 'username: $user
-echo '     'password: $pass
-user=$(php -r "include '/usr/local/share/phpmyadmin/$VERSION_PHPMYADMIN/config.inc.php';
-echo \$cfg['Servers'][1]['controluser'];")
-pass=$(php -r "include '/usr/local/share/phpmyadmin/$VERSION_PHPMYADMIN/config.inc.php';
-echo \$cfg['Servers'][1]['controlpass'];")
-echo '   - 'username: $user
-echo '     'password: $pass
-user=$(php -r "include '/usr/local/share/roundcube/$VERSION_ROUNDCUBE/config/config.inc.php';
-echo parse_url(\$config['db_dsnw'], PHP_URL_USER);")
-pass=$(php -r "include '/usr/local/share/roundcube/$VERSION_ROUNDCUBE/config/config.inc.php';
-echo parse_url(\$config['db_dsnw'], PHP_URL_PASS);")
-echo '   - 'username: $user
-echo '     'password: $pass
+echo '   - 'username: $ispconfig_db_user
+echo '     'password: $ispconfig_db_pass
+echo '   - 'username: $phpmyadmin_db_user
+echo '     'password: $phpmyadmin_db_pass
+echo '   - 'username: $roundcube_db_user
+echo '     'password: $roundcube_db_pass
 echo Roundcube: "https://$FQCDN_ROUNDCUBE"
 echo '   - 'username: $EMAIL_ADMIN
 echo '     'password: $(<~/roundcube-admin-passwd.txt)
