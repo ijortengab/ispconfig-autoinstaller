@@ -899,7 +899,7 @@ else
 fi
 
 echo $'\n''#' Modify TXT DNS Record for SPF
-spf_txt='v=spf1 a:'"$FQCDN_MX"' ip4:'"$IP_PUBLIC"' ~all'
+spf_txt='v=spf1 a:'"$FQCDN_MX"' ~all'
 spf_txt=$(php -r 'echo "\"".implode("\"\"", str_split("'"$spf_txt"'", 200))."\"";')
 _fqcdn=$DOMAIN
 _output=$(curl -X GET \
