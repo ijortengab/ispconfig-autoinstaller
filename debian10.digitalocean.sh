@@ -533,6 +533,7 @@ CONTENT=$(cat <<- EOF
 \$config['smtp_pass'] = '';
 \$config['identities_level'] = 3;
 \$config['username_domain'] = '%t';
+\$config['default_list_mode'] = 'threads';
 EOF
 )
 echo "" >> config/config.inc.php
