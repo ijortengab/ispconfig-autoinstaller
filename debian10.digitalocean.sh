@@ -97,23 +97,52 @@ else
     timedatectl status | grep 'Time zone:' | grep -o "$TIMEZONE"
 fi
 
+update_now=0
+
 echo $'\n''#' Update Repository
 sed -i 's/^deb/# deb/g' /etc/apt/sources.list
-echo >> /etc/apt/sources.list
+CONTENT=
+for string in \
+'deb http://deb.debian.org/debian/ buster main contrib non-free' \
+'deb http://security.debian.org/debian-security buster/updates main contrib non-free' \
+'deb http://deb.debian.org/debian/ buster-updates main' \
+'deb-src http://deb.debian.org/debian/ buster main contrib non-free' \
+'deb-src http://deb.debian.org/debian/ buster-updates main' \
+'deb-src http://security.debian.org/debian-security buster/updates main contrib non-free'
+do
+    if [[ -n $(grep "# $string" /etc/apt/sources.list) ]];then
+        sed -i 's,^# '"$string"','"$string"',' /etc/apt/sources.list
+    elif [[ -z $(grep "$string" /etc/apt/sources.list) ]];then
+        CONTENT+="$string"$'\n'
+    fi
+done
 NOW=$(date +%Y%m%d-%H%M%S)
-echo "# Customize. ${NOW}" >> /etc/apt/sources.list
-CONTENT=$(cat <<- 'EOF'
-deb http://deb.debian.org/debian/ buster main contrib non-free
-deb http://security.debian.org/debian-security buster/updates main contrib non-free
-deb http://deb.debian.org/debian/ buster-updates main
-deb-src http://deb.debian.org/debian/ buster main contrib non-free
-deb-src http://deb.debian.org/debian/ buster-updates main
-deb-src http://security.debian.org/debian-security buster/updates main contrib non-free
-EOF
-)
-echo "$CONTENT" >> /etc/apt/sources.list
-apt update
-apt -y upgrade
+[ -z "$CONTENT" ] || {
+    CONTENT=$'\n'"# Customize. ${NOW}"$'\n'"$CONTENT"
+    echo "$CONTENT" >> /etc/apt/sources.list
+    update_now=1
+}
+
+echo $'\n''#' Update Repository for PHP 7.4
+[ -f /etc/apt/trusted.gpg.d/php.gpg ] || {
+    wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
+}
+[ -f /etc/apt/sources.list.d/php.list ] || {
+    echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/php.list
+    update_now=1
+}
+
+if [[ $update_now == 1 ]];then
+    apt update
+    apt -y upgrade
+fi
+
+echo $'\n''#' Search PHP 7.4 in Cache
+if [ $(apt-cache search php7.4 | wc -l ) == 0 ];then
+    echo PHP-7.4 not found.
+    echo -e '\033[0;31m'Script terminated.'\033[0m'
+    exit 1
+fi
 
 echo $'\n''#' Install Basic Apps
 apt -y install \
@@ -143,18 +172,6 @@ dns_digitalocean_token = $DIGITALOCEAN_TOKEN
 EOF
 )
 echo "$CONTENT" > ~/digitalocean-token-ispconfig.ini
-
-echo $'\n''#' Update Repository for PHP 7.4
-wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
-echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/php.list
-apt update
-
-echo $'\n''#' Search PHP 7.4 in Cache
-if [ $(apt-cache search php7.4 | wc -l ) == 0 ];then
-    echo PHP-7.4 not found.
-    echo -e '\033[0;31m'Script terminated.'\033[0m'
-    exit 1
-fi
 
 echo $'\n''#' Disable Apache '(if any)'
 systemctl stop apache2
