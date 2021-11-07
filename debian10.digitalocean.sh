@@ -90,7 +90,12 @@ else
 fi
 
 echo $'\n''#' Set Timezone
-timedatectl set-timezone "$TIMEZONE"
+if [[ ! $(timedatectl status | grep 'Time zone:' | grep -o "$TIMEZONE") == "$TIMEZONE" ]];then
+    echo 'Timezone is not '"$TIMEZONE". Adjust now.
+    timedatectl set-timezone "$TIMEZONE"
+else
+    timedatectl status | grep 'Time zone:' | grep -o "$TIMEZONE"
+fi
 
 echo $'\n''#' Update Repository
 sed -i 's/^deb/# deb/g' /etc/apt/sources.list
