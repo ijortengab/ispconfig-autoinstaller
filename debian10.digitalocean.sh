@@ -145,16 +145,48 @@ if [ $(apt-cache search php7.4 | wc -l ) == 0 ];then
 fi
 
 echo $'\n''#' Install Basic Apps
-apt -y install \
-    lsb-release apt-transport-https ca-certificates \
-    sudo patch curl net-tools apache2-utils openssl rkhunter \
-    binutils dnsutils pwgen daemon apt-listchanges\
-    lrzip p7zip p7zip-full unrar zip unzip bzip2 lzop arj nomarch cabextract\
-    libnet-ldap-perl libnet-ident-perl libnet-dns-perl libdbd-mysql-perl \
-    libauthen-sasl-perl libio-string-perl libio-socket-ssl-perl
+string=
+command -v lsb_release > /dev/null || string+=" lsb-release apt-transport-https ca-certificates"
+command -v sudo > /dev/null || string+=" sudo"
+command -v patch > /dev/null || string+=" patch"
+command -v curl > /dev/null || string+=" curl"
+command -v netstat > /dev/null || string+=" net-tools"
+command -v ab > /dev/null || string+=" apache2-utils"
+command -v openssl > /dev/null || string+=" openssl"
+command -v rkhunter > /dev/null || string+=" rkhunter"
+command -v ar > /dev/null || string+=" binutils"
+command -v host > /dev/null || string+=" dnsutils"
+command -v pwgen > /dev/null || string+=" pwgen"
+command -v daemon > /dev/null || string+=" daemon"
+command -v apt-listchanges > /dev/null || string+=" apt-listchanges"
+command -v lrzip > /dev/null || string+=" lrzip"
+command -v 7zr > /dev/null || string+=" p7zip p7zip-full"
+command -v unrar > /dev/null || string+=" unrar"
+command -v unzip > /dev/null || string+=" zip unzip bzip2"
+command -v lzop > /dev/null || string+=" lzop"
+command -v arj > /dev/null || string+=" arj"
+command -v nomarch > /dev/null || string+=" nomarch"
+command -v cabextract > /dev/null || string+=" cabextract"
+[ -f /usr/share/perl5/Net/LDAP.pm ] || string+=" libnet-ldap-perl"
+[ -f /usr/share/perl5/Net/Ident.pm ] || string+=" libnet-ident-perl"
+[ -f /usr/share/perl5/Net/DNS.pm ] || string+=" libnet-dns-perl"
+[ -f /usr/share/perl5/Authen/SASL.pm ] || string+=" libauthen-sasl-perl"
+[ -f /usr/lib/x86_64-linux-gnu/perl5/5.28/DBD/mysql.pm ] || string+=" libdbd-mysql-perl"
+[ -f /usr/share/perl5/IO/String.pm ] || string+=" libio-string-perl"
+[ -f /usr/share/perl5/IO/Socket/SSL.pm ] || string+=" libio-socket-ssl-perl"
+[ -n "$string" ] && apt -y install $string
 
 echo $'\n''#' Disable Sendmail '(if any)'
-service sendmail stop; update-rc.d -f sendmail remove
+[ -z "$(systemctl list-unit-files --state=enabled | grep sendmail.service)" ] || {
+    service sendmail stop; update-rc.d -f sendmail remove
+}
+
+echo $'\n''#' Disable Apache '(if any)'
+[ -z "$(systemctl list-unit-files --state=enabled | grep apache2.service)" ] || {
+    systemctl stop apache2
+    systemctl disable apache2
+    apt-get remove apache2
+}
 
 echo $'\n''#' Install Snapd and Certbot
 apt -y install snapd
@@ -172,11 +204,6 @@ dns_digitalocean_token = $DIGITALOCEAN_TOKEN
 EOF
 )
 echo "$CONTENT" > ~/digitalocean-token-ispconfig.ini
-
-echo $'\n''#' Disable Apache '(if any)'
-systemctl stop apache2
-systemctl disable apache2
-apt-get remove apache2
 
 echo $'\n''#' Modify Domain DNS Record
 _code=$(curl -X GET \
