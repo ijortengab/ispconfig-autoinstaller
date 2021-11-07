@@ -81,8 +81,13 @@ echo -n $'\n''########################################'
 echo         '########################################'
 
 echo $'\n''#' Disable dash
-echo "dash dash/sh boolean false" | debconf-set-selections
-DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
+if [[ $(realpath /bin/sh) == '/usr/bin/dash' ]];then
+    echo '`sh` command link to dash. Disable now.'
+    echo "dash dash/sh boolean false" | debconf-set-selections
+    DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
+else
+    echo '`sh` command link to '$(realpath /bin/sh)
+fi
 
 echo $'\n''#' Set Timezone
 timedatectl set-timezone "$TIMEZONE"
