@@ -393,7 +393,7 @@ else
     echo DNS CNAME Record of FQCDN "'"${FQCDN}"'" NOT found in DNS Digital Ocean.
 fi
 
-echo $'\n''#' Modify FQCDN DNS Record
+echo $'\n''#' Modify A DNS Record for FQCDN "'"${FQCDN}"'"
 _total=$(curl -X GET \
     -s \
     -H "Content-Type: application/json" \
