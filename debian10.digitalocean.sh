@@ -830,10 +830,11 @@ echo parse_url(\$config['db_dsnw'], PHP_URL_PASS);")
 roundcube_db_host=localhost
 roundcube_db_name=roundcubemail
 
+[ -d "$scripts_dir" ] || {
+
 echo $'\n''#' Copy ISPConfig PHP Scripts
 mkdir -p "$ispconfig_install_dir"/scripts
 cp /tmp/ispconfig3_install/remoting_client/examples/* "$ispconfig_install_dir/scripts"
-scripts_dir="$ispconfig_install_dir"/scripts
 
 echo $'\n''#' Modify PHP Scripts
 cd "$ispconfig_install_dir"/scripts
@@ -849,6 +850,7 @@ find * -maxdepth 1 -type f \
            -e "s,\$client_id = 1;,\$client_id = 0;," \
     ${line}
     done
+}
 
 echo $'\n''#' Create ISPConfig Command '`'isp'`'.
 CONTENT=$(cat <<- 'EOF'
