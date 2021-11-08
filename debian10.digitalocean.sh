@@ -1053,15 +1053,12 @@ VALUES
     return 1
 }
 
-echo $'\n''#' Insert Remote User to ISPConfig Database - Username: root
-root_password=$(pwgen -s 32 -1)
-CONTENT=$(cat <<- EOF
-require '${ispconfig_install_dir}/interface/lib/classes/auth.inc.php';
-echo (new auth)->crypt_password('$root_password');
-EOF
-)
-root_password_hash=$(php -r "$CONTENT")
-root_access='server_get,server_config_set,get_function_list,client_templates_get_all,server_get_serverid_by_ip,server_ip_get,server_ip_add,server_ip_update,server_ip_delete,system_config_set,system_config_get,config_value_get,config_value_add,config_value_update,config_value_replace,config_value_delete
+echo $'\n''#' Insert Remote User to ISPConfig Database - Username: '"'$REMOTE_USER_ROOT'"'
+if isRemoteUsernameIspconfigExist "$REMOTE_USER_ROOT" ;then
+    echo Remote username "$REMOTE_USER_ROOT" already exists.
+    echo \$remote_userid $remote_userid
+else
+    functions='server_get,server_config_set,get_function_list,client_templates_get_all,server_get_serverid_by_ip,server_ip_get,server_ip_add,server_ip_update,server_ip_delete,system_config_set,system_config_get,config_value_get,config_value_add,config_value_update,config_value_replace,config_value_delete
 admin_record_permissions
 client_get_id,login,logout,mail_alias_get,mail_fetchmail_add,mail_fetchmail_delete,mail_fetchmail_get,mail_fetchmail_update,mail_policy_get,mail_spamfilter_blacklist_add,mail_spamfilter_blacklist_delete,mail_spamfilter_blacklist_get,mail_spamfilter_blacklist_update,mail_spamfilter_user_add,mail_spamfilter_user_get,mail_spamfilter_user_update,mail_spamfilter_whitelist_add,mail_spamfilter_whitelist_delete,mail_spamfilter_whitelist_get,mail_spamfilter_whitelist_update,mail_user_filter_add,mail_user_filter_delete,mail_user_filter_get,mail_user_filter_update,mail_user_get,mail_user_update,server_get,server_get_app_version
 client_get_all,client_get,client_add,client_update,client_delete,client_get_sites_by_user,client_get_by_username,client_get_by_customer_no,client_change_password,client_get_id,client_delete_everything,client_get_emailcontact
@@ -1118,27 +1115,27 @@ dns_sshfp_get,dns_sshfp_add,dns_sshfp_update,dns_sshfp_delete
 dns_tlsa_get,dns_tlsa_add,dns_tlsa_update,dns_tlsa_delete
 dns_txt_get,dns_txt_add,dns_txt_update,dns_txt_delete
 vm_openvz'
-root_access_joined=$(tr '\n' ';' <<< "$root_access")
-sql="INSERT INTO remote_user
-(sys_userid, sys_groupid, sys_perm_user, sys_perm_group, sys_perm_other, remote_username, remote_password, remote_access, remote_ips, remote_functions)
-VALUES
-(1, 1, 'riud', 'riud', '', '$REMOTE_USER_ROOT', '$root_password_hash', 'y', '$IP_PUBLIC','$root_access_joined');"
-u=root
-p=$(<~/mysql-root-passwd.txt)
-mysql --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
-    dbispconfig -e "$sql"
-
-echo $'\n''#' Configure SOAP Config for root remote user
-CONTENT=$(cat <<- EOF
+    password=$(pwgen -s 32 -1)
+    if insertRemoteUsernameIspconfig  "$REMOTE_USER_ROOT" "$password" "$functions" ;then
+        echo Remote username "$REMOTE_USER_ROOT" created.
+        echo \$remote_userid $remote_userid
+        echo $'\n''#' Configure SOAP Config for '"'$REMOTE_USER_ROOT'"' remote user
+        CONTENT=$(cat <<- EOF
 <?php
 
-\$username = 'root';
-\$password = '$root_password';
+\$username = '$REMOTE_USER_ROOT';
+\$password = '$password';
 \$soap_location = 'https://$FQCDN_ISPCONFIG/remote/index.php';
 \$soap_uri = 'https://$FQCDN_ISPCONFIG/remote/';
 EOF
-)
-echo "$CONTENT" > "$ispconfig_install_dir"/scripts/soap_config.php
+        )
+        echo "$CONTENT" > "$scripts_dir"/soap_config.php
+    else
+        echo Remote username "$REMOTE_USER_ROOT" failed to create.
+        echo -e '\033[0;31m'Script terminated.'\033[0m'
+        exit 1
+    fi
+fi
 
 echo $'\n''#' Insert Remote User to ISPConfig Database - Username: roundcube
 roundcube_password=$(pwgen -s 32 -1)
