@@ -2,12 +2,12 @@
 # http://ijortengab.id
 # https://github.com/ijortengab/ispconfig-autoinstaller
 
-# Required Value.
+# Input Value.
 DOMAIN="$1"
 DIGITALOCEAN_TOKEN="$2"
 IP_PUBLIC="$3"
 
-# Optional Value.
+# Default Value.
 SUBDOMAIN_FQCDN=server
 TIMEZONE='Asia/Jakarta'
 VERSION_ROUNDCUBE='1.4.11'
@@ -23,18 +23,25 @@ EMAIL_ADMIN=admin
 EMAIL_HOST=hostmaster
 EMAIL_WEB=webmaster
 EMAIL_POST=postmaster
+[ -n "$DIGITALOCEAN_TOKEN" ] || \
+[ -f ~/.digitalocean-token-ispconfig.txt ] && \
+DIGITALOCEAN_TOKEN=$(<~/.digitalocean-token-ispconfig.txt)
+[ -n "$IP_PUBLIC" ] || IP_PUBLIC=$(wget -T 3 -t 1 -4qO- "http://ip1.dynupdate.no-ip.com/")
 
 # Validate Required Value.
-until [[ ! -z "$DOMAIN" ]]; do
+until [[ -n "$DOMAIN" ]]; do
     read -p "Domain: " DOMAIN
 done
-until [[ ! -z "$DIGITALOCEAN_TOKEN" ]]; do
+until [[ -n "$DIGITALOCEAN_TOKEN" ]]; do
     read -p "DigitalOcean Token API: " DIGITALOCEAN_TOKEN
 done
-until [[ ! -z "$IP_PUBLIC" ]]; do
+until [[ -n "$IP_PUBLIC" ]]; do
+    read -p "IP Address Public: " IP_PUBLIC
     IP_PUBLIC=$(wget -T 3 -t 1 -4qO- "http://ip1.dynupdate.no-ip.com/")
-    echo IP Address Public is "'"$IP_PUBLIC"'".
 done
+echo "Domain is: ${DOMAIN}"
+echo "DigitalOcean token is: $DIGITALOCEAN_TOKEN"
+echo "IP Address Public is: ${IP_PUBLIC}"
 
 # Additional Value.
 FQCDN="${SUBDOMAIN_FQCDN}.${DOMAIN}"
@@ -268,14 +275,15 @@ echo -e '\033[0;31m'Script terminated.'\033[0m'
 }
 
 echo $'\n''#' Save DigitalOcean Token as File
-[ -f ~/digitalocean-token-ispconfig.ini ] || {
-touch      ~/digitalocean-token-ispconfig.ini
-chmod 0700 ~/digitalocean-token-ispconfig.ini
+[ -f ~/.digitalocean-token-ispconfig.ini ] || {
+touch      ~/.digitalocean-token-ispconfig.ini
+chmod 0700 ~/.digitalocean-token-ispconfig.ini
 CONTENT=$(cat <<- EOF
 dns_digitalocean_token = $DIGITALOCEAN_TOKEN
 EOF
 )
-echo "$CONTENT" > ~/digitalocean-token-ispconfig.ini
+echo "$CONTENT" > ~/.digitalocean-token-ispconfig.ini
+echo "$DIGITALOCEAN_TOKEN" > ~/.digitalocean-token-ispconfig.txt
 }
 
 echo $'\n''#' Modify DNS Record for Domain "'"${DOMAIN}"'"
@@ -624,7 +632,7 @@ echo $'\n''#' Certbot Request
 certbot -i nginx \
    -n --agree-tos --email "${EMAIL_HOST}@${DOMAIN}" \
    --dns-digitalocean \
-   --dns-digitalocean-credentials ~/digitalocean-token-ispconfig.ini \
+   --dns-digitalocean-credentials ~/.digitalocean-token-ispconfig.ini \
    -d "$FQCDN_ISPCONFIG" \
    -d "$FQCDN_PHPMYADMIN" \
    -d "$FQCDN_ROUNDCUBE"
@@ -767,9 +775,9 @@ sed -i  's|php7.3|php7.4|g' debian100.conf.php
 sed -i  's|php/7.3/|php/7.4/|g' debian100.conf.php
 
 echo $'\n''#' MySQL Setup Root Password
-echo $(pwgen -s 32 -1) > ~/mysql-root-passwd.txt
-chmod 0700 ~/mysql-root-passwd.txt
-mysql -e "UPDATE mysql.user SET Password = PASSWORD('"$(<~/mysql-root-passwd.txt)"') WHERE User = 'root'"
+echo $(pwgen -s 32 -1) > ~/.mysql-root-passwd.txt
+chmod 0700 ~/.mysql-root-passwd.txt
+mysql -e "UPDATE mysql.user SET Password = PASSWORD('"$(<~/.mysql-root-passwd.txt)"') WHERE User = 'root'"
 mysql -e "FLUSH PRIVILEGES"
 
 echo $'\n''#' ISPConfig Install
@@ -777,12 +785,12 @@ password=$(pwgen -s 32 -1)
 cd      /tmp/ispconfig3_install/install/
 cp      ../docs/autoinstall_samples/autoinstall.ini.sample ./autoinstall.ini
 sed -i "s,hostname=server1.example.com,hostname=${FQCDN}," autoinstall.ini
-sed -i "s,mysql_root_password=ispconfig,mysql_root_password="$(<~/mysql-root-passwd.txt)"," autoinstall.ini
+sed -i "s,mysql_root_password=ispconfig,mysql_root_password="$(<~/.mysql-root-passwd.txt)"," autoinstall.ini
 sed -i "s,http_server=apache,http_server=nginx," autoinstall.ini
 sed -i "s,ispconfig_use_ssl=y,ispconfig_use_ssl=n," autoinstall.ini
-echo $(pwgen 6 -1vA0B) > ~/ispconfig-admin-passwd.txt
-chmod 0700 ~/ispconfig-admin-passwd.txt
-sed -i "s,ispconfig_admin_password=admin,ispconfig_admin_password="$(<~/ispconfig-admin-passwd.txt)"," autoinstall.ini
+echo $(pwgen 6 -1vA0B) > ~/.ispconfig-admin-passwd.txt
+chmod 0700 ~/.ispconfig-admin-passwd.txt
+sed -i "s,ispconfig_admin_password=admin,ispconfig_admin_password="$(<~/.ispconfig-admin-passwd.txt)"," autoinstall.ini
 sed -i "s,mysql_ispconfig_password=.*,mysql_ispconfig_password="$password"," autoinstall.ini
 php install.php --autoinstall=autoinstall.ini
 
@@ -1566,7 +1574,7 @@ insertEmailIspconfig() {
         "$template_temp_path"
     password=$(pwgen 9 -1vA0B)
     echo "$password"
-    echo "$password" > ~/"roundcube-passwd-user-${user}-host-${host}.txt"
+    echo "$password" > ~/".roundcube-passwd-user-${user}-host-${host}.txt"
     CONTENT=$(cat <<- EOF
 \$replace = '';
 \$replace .= "\t\t"."'server_id' => '1',"                                 ."\n";
@@ -1989,10 +1997,14 @@ echo '   - 'username: $roundcube_db_user
 echo '     'password: $roundcube_db_pass
 echo Roundcube: "https://$FQCDN_ROUNDCUBE"
 echo '   - 'username: $EMAIL_ADMIN
-echo '     'password: $(<~/roundcube-admin-passwd.txt)
+user="$EMAIL_ADMIN"
+host="$DOMAIN"
+[ -f ~/".roundcube-passwd-user-${user}-host-${host}.txt" ] && \
+echo '     'password: $(<~/".roundcube-passwd-user-${user}-host-${host}.txt")
 echo ISP Config: "https://$FQCDN_ISPCONFIG"
 echo '   - 'username: admin
-echo '     'password: $(<~/ispconfig-admin-passwd.txt)
+[ -f ~/".ispconfig-admin-passwd.txt" ] && \
+echo '     'password: $(<~/.ispconfig-admin-passwd.txt)
 echo $'\n''#' Manual Action
 echo Command to make sure remote user working properly:
 echo -e '   '"\033[36m"isp"\033[m" "\033[33m"php"\033[m" "\033[35m"login.php"\033[m"
