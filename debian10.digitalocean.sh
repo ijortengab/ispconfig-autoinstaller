@@ -246,12 +246,26 @@ echo $'\n''#' Postfix Reload
 }
 
 echo $'\n''#' Install Snapd and Certbot
+command -v "snap" >/dev/null || {
 apt -y install snapd
-sudo snap install core; sudo snap refresh core
-export PATH=$PATH:/snap/bin
+snap install core
+snap refresh core
+}
+[ -f /etc/profile.d/apps-bin-path.sh ] && . /etc/profile.d/apps-bin-path.sh
+command -v "snap" >/dev/null || {
+echo '`snap` command not found.'
+echo -e '\033[0;31m'Script terminated.'\033[0m'
+}
+command -v "certbot" >/dev/null || {
 snap install --classic certbot
 snap set certbot trust-plugin-with-root=ok
 snap install certbot-dns-digitalocean
+snap refresh certbot
+}
+command -v "certbot" >/dev/null || {
+echo '`certbot` command not found.'
+echo -e '\033[0;31m'Script terminated.'\033[0m'
+}
 
 echo $'\n''#' Save DigitalOcean Token as File
 touch      ~/digitalocean-token-ispconfig.ini
