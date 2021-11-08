@@ -314,6 +314,50 @@ case $_code in
         exit 1
 esac
 
+echo $'\n''#' Modify A DNS Record for Domain "'"${DOMAIN}"'"
+type="A"
+name=$DOMAIN
+_output=$(curl -X GET \
+    -s \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+    "https://api.digitalocean.com/v2/domains/$DOMAIN/records?type=$type&name=$name")
+CONTENT=$(cat <<- EOF
+\$object = (json_decode('$_output'));
+if (is_object(\$object)) {
+    foreach (\$object->domain_records as \$domain_record) {
+        if (\$domain_record->data == '$IP_PUBLIC') {
+            exit(1);
+        }
+    }
+}
+EOF
+)
+php -r "$CONTENT"
+if [[ "$?" == "1" ]];then
+    echo DNS A Record of "'"${DOMAIN}"'" point to IP "'"${IP_PUBLIC}"'" found in DNS Digital Ocean.
+else
+    echo DNS A Record of "'"${DOMAIN}"'" point to IP "'"${IP_PUBLIC}"'" NOT found in DNS Digital Ocean.
+    echo -n Trying to create...
+    _data=$IP_PUBLIC
+    _code=$(curl -X POST \
+        -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+        -H "Content-Type: application/json" \
+        -o /dev/null -s -w "%{http_code}\n" \
+        -d '{"type":"A","name":"@","data":"'"$_data"'","priority":null,"port":null,"ttl":1800,"weight":null,"flags":null,"tag":null}' \
+        "https://api.digitalocean.com/v2/domains/$DOMAIN/records")
+    case "$_code" in
+        201)
+            echo ' 'Created.
+            ;;
+        *)
+            echo ' 'Failed.
+            echo Unexpected result with response code: $_code.
+            echo -e '\033[0;31m'Script terminated.'\033[0m'
+            exit 1
+    esac
+fi
+
 echo $'\n''#' Modify FQCDN DNS Record
 _total=$(curl -X GET \
     -s \
