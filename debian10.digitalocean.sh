@@ -970,6 +970,89 @@ chmod a+x /etc/profile.d/isp-completion.sh
 sed -i 's,|scripts_dir|,'"${scripts_dir}"',' /etc/profile.d/isp-completion.sh
 }
 
+# Get the remote_userid from table remote_user in ispconfig database.
+#
+# Globals:
+#   ispconfig_db_user, ispconfig_db_pass,
+#   ispconfig_db_host, ispconfig_db_name
+#
+# Arguments:
+#   $1: Filter by remote_username.
+#
+# Output:
+#   Write remote_userid to stdout.
+getRemoteUserIdIspconfigByRemoteUsername() {
+    local remote_username="$1"
+    local sql="SELECT remote_userid FROM remote_user WHERE remote_username = '$remote_username';"
+    local u="$ispconfig_db_user"
+    local p="$ispconfig_db_pass"
+    local remote_userid=$(mysql \
+        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
+        -h "$ispconfig_db_host" "$ispconfig_db_name" -r -N -s -e "$sql"
+    )
+    echo "$remote_userid"
+}
+
+# Check if the remote_username from table remote_user exists in ispconfig database.
+#
+# Globals:
+#   Modified: remote_userid
+#
+# Arguments:
+#   $1: remote_username to be checked.
+#
+# Return:
+#   0 if exists.
+#   1 if not exists.
+isRemoteUsernameIspconfigExist() {
+    local remote_username="$1"
+    remote_userid=$(getRemoteUserIdIspconfigByRemoteUsername "$remote_username")
+    if [ -n "$remote_userid" ];then
+        return 0
+    fi
+    return 1
+}
+
+# Insert the remote_username to table remote_user in ispconfig database.
+#
+# Globals:
+#   Used: ispconfig_install_dir, IP_PUBLIC
+#   Modified: identity_id
+#
+# Arguments:
+#   $1: remote_username
+#   $2: remote_password
+#   $3: remote_functions
+#
+# Return:
+#   0 if exists.
+#   1 if not exists.
+insertRemoteUsernameIspconfig() {
+    local remote_username="$1"
+    local _remote_password="$2"
+    local _remote_functions="$3"
+    CONTENT=$(cat <<- EOF
+require '${ispconfig_install_dir}/interface/lib/classes/auth.inc.php';
+echo (new auth)->crypt_password('$_remote_password');
+EOF
+    )
+    local remote_password=$(php -r "$CONTENT")
+    local remote_functions=$(tr '\n' ';' <<< "$_remote_functions")
+    local sql="INSERT INTO remote_user
+(sys_userid, sys_groupid, sys_perm_user, sys_perm_group, sys_perm_other, remote_username, remote_password, remote_access, remote_ips, remote_functions)
+VALUES
+(1, 1, 'riud', 'riud', '', '$remote_username', '$remote_password', 'y', '$IP_PUBLIC','$remote_functions');"
+    local u="$ispconfig_db_user"
+    local p="$ispconfig_db_pass"
+    mysql --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
+        -h "$ispconfig_db_host" "$ispconfig_db_name" -e "$sql"
+    remote_userid=$(getRemoteUserIdIspconfigByRemoteUsername "$remote_username")
+    if [ -n "$remote_userid" ];then
+        return 0
+    fi
+    return 1
+}
+
 echo $'\n''#' Insert Remote User to ISPConfig Database - Username: root
 root_password=$(pwgen -s 32 -1)
 CONTENT=$(cat <<- EOF
