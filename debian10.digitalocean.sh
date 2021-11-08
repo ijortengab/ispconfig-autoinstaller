@@ -278,7 +278,7 @@ EOF
 echo "$CONTENT" > ~/digitalocean-token-ispconfig.ini
 }
 
-echo $'\n''#' Modify Domain DNS Record
+echo $'\n''#' Modify DNS Record for Domain "'"${DOMAIN}"'"
 _code=$(curl -X GET \
     -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
     -o /dev/null -s -w "%{http_code}\n" \
