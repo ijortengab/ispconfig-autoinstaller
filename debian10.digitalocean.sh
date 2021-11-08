@@ -424,12 +424,49 @@ else
     esac
 fi
 
-echo $'\n''#' Modify CNAME DNS Record for PHPMyAdmin
+echo $'\n''#' Modify CNAME DNS Record for ISPConfig
+type="CNAME"
+name="$FQCDN_ISPCONFIG"
 _total=$(curl -X GET \
     -s \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
-    "https://api.digitalocean.com/v2/domains/$DOMAIN/records?type=CNAME&name=$FQCDN_PHPMYADMIN" | \
+    "https://api.digitalocean.com/v2/domains/$DOMAIN/records?type=$type&name=$name" | \
+    grep -o '"meta":{"total":.*}}' | \
+    sed -E 's/"meta":\{"total":(.*)\}\}/\1/')
+if [ $_total -gt 0 ];then
+    echo DNS CNAME Record of FQCDN "'"${FQCDN_ISPCONFIG}"'" found in DNS Digital Ocean.
+else
+    echo DNS CNAME Record of FQCDN "'"${FQCDN_ISPCONFIG}"'" NOT found in DNS Digital Ocean.
+    echo -n Trying to create...
+    type="CNAME"
+    name="$SUBDOMAIN_ISPCONFIG"
+    _code=$(curl -X POST \
+        -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+        -H "Content-Type: application/json" \
+        -o /dev/null -s -w "%{http_code}\n" \
+        -d '{"type":"'"$type"'","name":"'"$name"'","data":"@","priority":null,"port":null,"ttl":1800,"weight":null,"flags":null,"tag":null}' \
+        "https://api.digitalocean.com/v2/domains/$DOMAIN/records")
+    case $_code in
+        201)
+            echo ' 'Created.
+            ;;
+        *)
+            echo ' 'Failed.
+            echo Unexpected result with response code: $_code.
+            echo -e '\033[0;31m'Script terminated.'\033[0m'
+            exit 1
+    esac
+fi
+
+echo $'\n''#' Modify CNAME DNS Record for PHPMyAdmin
+type="CNAME"
+name="$FQCDN_PHPMYADMIN"
+_total=$(curl -X GET \
+    -s \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+    "https://api.digitalocean.com/v2/domains/$DOMAIN/records?type=$type&name=$name" | \
     grep -o '"meta":{"total":.*}}' | \
     sed -E 's/"meta":\{"total":(.*)\}\}/\1/')
 if [ $_total -gt 0 ];then
@@ -437,11 +474,13 @@ if [ $_total -gt 0 ];then
 else
     echo DNS CNAME Record of FQCDN "'"${FQCDN_PHPMYADMIN}"'" NOT found in DNS Digital Ocean.
     echo -n Trying to create...
+    type="CNAME"
+    name="$SUBDOMAIN_PHPMYADMIN"
     _code=$(curl -X POST \
         -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
         -H "Content-Type: application/json" \
         -o /dev/null -s -w "%{http_code}\n" \
-        -d '{"type":"CNAME","name":"'"$SUBDOMAIN_PHPMYADMIN"'","data":"@","priority":null,"port":null,"ttl":1800,"weight":null,"flags":null,"tag":null}' \
+        -d '{"type":"'"$type"'","name":"'"$name"'","data":"@","priority":null,"port":null,"ttl":1800,"weight":null,"flags":null,"tag":null}' \
         "https://api.digitalocean.com/v2/domains/$DOMAIN/records")
     case $_code in
         201)
@@ -456,11 +495,13 @@ else
 fi
 
 echo $'\n''#' Modify CNAME DNS Record for Roundcube
+type="CNAME"
+name="$FQCDN_ROUNDCUBE"
 _total=$(curl -X GET \
     -s \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
-    "https://api.digitalocean.com/v2/domains/$DOMAIN/records?type=CNAME&name=$FQCDN_ROUNDCUBE" | \
+    "https://api.digitalocean.com/v2/domains/$DOMAIN/records?type=$type&name=$name" | \
     grep -o '"meta":{"total":.*}}' | \
     sed -E 's/"meta":\{"total":(.*)\}\}/\1/')
 if [ $_total -gt 0 ];then
@@ -468,42 +509,13 @@ if [ $_total -gt 0 ];then
 else
     echo DNS CNAME Record of FQCDN "'"${FQCDN_ROUNDCUBE}"'" NOT found in DNS Digital Ocean.
     echo -n Trying to create...
+    type="CNAME"
+    name="$SUBDOMAIN_ROUNDCUBE"
     _code=$(curl -X POST \
         -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
         -H "Content-Type: application/json" \
         -o /dev/null -s -w "%{http_code}\n" \
-        -d '{"type":"CNAME","name":"'"$SUBDOMAIN_ROUNDCUBE"'","data":"@","priority":null,"port":null,"ttl":1800,"weight":null,"flags":null,"tag":null}' \
-        "https://api.digitalocean.com/v2/domains/$DOMAIN/records")
-    case $_code in
-        201)
-            echo ' 'Created.
-            ;;
-        *)
-            echo ' 'Failed.
-            echo Unexpected result with response code: $_code.
-            echo -e '\033[0;31m'Script terminated.'\033[0m'
-            exit 1
-    esac
-fi
-
-echo $'\n''#' Modify CNAME DNS Record for ISPConfig
-_total=$(curl -X GET \
-    -s \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
-    "https://api.digitalocean.com/v2/domains/$DOMAIN/records?type=CNAME&name=$FQCDN_ISPCONFIG" | \
-    grep -o '"meta":{"total":.*}}' | \
-    sed -E 's/"meta":\{"total":(.*)\}\}/\1/')
-if [ $_total -gt 0 ];then
-    echo DNS CNAME Record of FQCDN "'"${FQCDN_ISPCONFIG}"'" found in DNS Digital Ocean.
-else
-    echo DNS CNAME Record of FQCDN "'"${FQCDN_ISPCONFIG}"'" NOT found in DNS Digital Ocean.
-    echo -n Trying to create...
-    _code=$(curl -X POST \
-        -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
-        -H "Content-Type: application/json" \
-        -o /dev/null -s -w "%{http_code}\n" \
-        -d '{"type":"CNAME","name":"'"$SUBDOMAIN_ISPCONFIG"'","data":"@","priority":null,"port":null,"ttl":1800,"weight":null,"flags":null,"tag":null}' \
+        -d '{"type":"'"$type"'","name":"'"$name"'","data":"@","priority":null,"port":null,"ttl":1800,"weight":null,"flags":null,"tag":null}' \
         "https://api.digitalocean.com/v2/domains/$DOMAIN/records")
     case $_code in
         201)
