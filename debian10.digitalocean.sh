@@ -289,7 +289,7 @@ case $_code in
         ;;
     404)
         echo Domain "'""$DOMAIN""'" NOT found in DNS Digital Ocean.
-        echo -n  Trying to create...
+        echo -n Trying to create...
         _code_2=$(curl -X POST \
             -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
             -H "Content-Type: application/json" \
@@ -326,7 +326,7 @@ if [ $_total -gt 0 ];then
     echo DNS A Record of FQCDN "'"${FQCDN}"'" found in DNS Digital Ocean.
 else
     echo DNS A Record of FQCDN "'"${FQCDN}"'" NOT found in DNS Digital Ocean.
-    echo -n  Trying to create...
+    echo -n Trying to create...
     _code=$(curl -X POST \
         -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
         -H "Content-Type: application/json" \
@@ -357,7 +357,7 @@ if [ $_total -gt 0 ];then
     echo DNS CNAME Record of FQCDN "'"${FQCDN_PHPMYADMIN}"'" found in DNS Digital Ocean.
 else
     echo DNS CNAME Record of FQCDN "'"${FQCDN_PHPMYADMIN}"'" NOT found in DNS Digital Ocean.
-    echo -n  Trying to create...
+    echo -n Trying to create...
     _code=$(curl -X POST \
         -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
         -H "Content-Type: application/json" \
@@ -388,7 +388,7 @@ if [ $_total -gt 0 ];then
     echo DNS CNAME Record of FQCDN "'"${FQCDN_ROUNDCUBE}"'" found in DNS Digital Ocean.
 else
     echo DNS CNAME Record of FQCDN "'"${FQCDN_ROUNDCUBE}"'" NOT found in DNS Digital Ocean.
-    echo -n  Trying to create...
+    echo -n Trying to create...
     _code=$(curl -X POST \
         -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
         -H "Content-Type: application/json" \
@@ -419,7 +419,7 @@ if [ $_total -gt 0 ];then
     echo DNS CNAME Record of FQCDN "'"${FQCDN_ISPCONFIG}"'" found in DNS Digital Ocean.
 else
     echo DNS CNAME Record of FQCDN "'"${FQCDN_ISPCONFIG}"'" NOT found in DNS Digital Ocean.
-    echo -n  Trying to create...
+    echo -n Trying to create...
     _code=$(curl -X POST \
         -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
         -H "Content-Type: application/json" \
@@ -1006,7 +1006,7 @@ if [[ "$?" == "1" ]];then
     echo DNS MX Record of FQCDN "'"${DOMAIN}"'" target to "'"${FQCDN_MX}"'" found in DNS Digital Ocean.
 else
     echo DNS MX Record of FQCDN "'"${DOMAIN}"'" target to "'"${FQCDN_MX}"'" NOT found in DNS Digital Ocean.
-    echo -n  Trying to create...
+    echo -n Trying to create...
     _data=$FQCDN_MX"."
     _priority=10
     _code=$(curl -X POST \
@@ -1052,7 +1052,7 @@ if [[ "$?" == "1" ]];then
     echo DNS TXT Record of FQCDN "'"${DOMAIN}"'" for SPF found in DNS Digital Ocean.
 else
     echo DNS TXT Record of FQCDN "'"${DOMAIN}"'" for SPF NOT found in DNS Digital Ocean.
-    echo -n  Trying to create...
+    echo -n Trying to create...
     spf_txt_json=$(echo "$spf_txt" | sed 's,",\\",g')
     _code=$(curl -X POST \
         -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
@@ -1205,7 +1205,7 @@ if [[ "$?" == "1" ]];then
     echo DNS TXT Record of FQCDN "'"${dkim_fqcdn}"'" for DKIM found in DNS Digital Ocean.
 else
     echo DNS TXT Record of FQCDN "'"${dkim_fqcdn}"'" for DKIM NOT found in DNS Digital Ocean.
-    echo -n  Trying to create...
+    echo -n Trying to create...
     dkim_txt_json=$(echo "$dkim_txt" | sed 's,",\\",g')
     _code=$(curl -X POST \
         -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
@@ -1250,7 +1250,7 @@ if [[ "$?" == "1" ]];then
     echo DNS TXT Record of FQCDN "'"${DOMAIN}"'" for DMARC found in DNS Digital Ocean.
 else
     echo DNS TXT Record of FQCDN "'"${DOMAIN}"'" for DMARC NOT found in DNS Digital Ocean.
-    echo -n  Trying to create...
+    echo -n Trying to create...
     dmarc_txt_json=$(echo "$dmarc_txt" | sed 's,",\\",g')
     _code=$(curl -X POST \
         -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
