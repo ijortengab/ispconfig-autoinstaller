@@ -268,6 +268,7 @@ echo -e '\033[0;31m'Script terminated.'\033[0m'
 }
 
 echo $'\n''#' Save DigitalOcean Token as File
+[ -f ~/digitalocean-token-ispconfig.ini ] || {
 touch      ~/digitalocean-token-ispconfig.ini
 chmod 0700 ~/digitalocean-token-ispconfig.ini
 CONTENT=$(cat <<- EOF
@@ -275,6 +276,7 @@ dns_digitalocean_token = $DIGITALOCEAN_TOKEN
 EOF
 )
 echo "$CONTENT" > ~/digitalocean-token-ispconfig.ini
+}
 
 echo $'\n''#' Modify Domain DNS Record
 _code=$(curl -X GET \
