@@ -137,13 +137,6 @@ if [[ $update_now == 1 ]];then
     apt -y upgrade
 fi
 
-echo $'\n''#' Search PHP 7.4 in Cache
-if [ $(apt-cache search php7.4 | wc -l ) == 0 ];then
-    echo PHP-7.4 not found.
-    echo -e '\033[0;31m'Script terminated.'\033[0m'
-    exit 1
-fi
-
 echo $'\n''#' Install Basic Apps
 string=
 command -v lsb_release > /dev/null || string+=" lsb-release apt-transport-https ca-certificates"
@@ -186,6 +179,70 @@ echo $'\n''#' Disable Apache '(if any)'
     systemctl stop apache2
     systemctl disable apache2
     apt-get remove apache2
+}
+
+echo $'\n''#' Install Web Server Application
+command -v nginx > /dev/null || apt -y install nginx
+command -v php > /dev/null || {
+
+echo $'\n''#' Search PHP 7.4 in Cache
+if [ $(apt-cache search php7.4 | wc -l ) == 0 ];then
+    echo PHP-7.4 not found.
+    echo -e '\033[0;31m'Script terminated.'\033[0m'
+    exit 1
+fi
+
+apt -y install nginx php7.4 \
+php7.4-{common,gd,mysql,imap,cli,fpm,curl,intl,pspell,sqlite3,tidy,xmlrpc,xsl,zip,mbstring,soap,opcache}
+cd      /etc/php/7.4/fpm/
+sed -i  's|^;date\.timezone =$|date.timezone = '"$TIMEZONE"'|' php.ini
+/etc/init.d/php7.4-fpm restart
+}
+command -v mysql > /dev/null || {
+apt -y install mariadb-client mariadb-server
+cd      /etc/mysql/mariadb.conf.d/
+sed -i  "s/bind-address/# bind-address/" 50-server.cnf
+echo    "update mysql.user set plugin = 'mysql_native_password' where user='root';" | mysql -u root
+echo    "" >> /etc/security/limits.conf
+echo    "# Custom" >> /etc/security/limits.conf
+echo    "mysql soft nofile 65535" >> /etc/security/limits.conf
+echo    "mysql hard nofile 65535" >> /etc/security/limits.conf
+mkdir -p /etc/systemd/system/mysql.service.d/
+CONTENT=$(cat <<- 'EOF'
+[Service]
+LimitNOFILE=infinity
+EOF
+)
+echo "$CONTENT" >> /etc/systemd/system/mysql.service.d/limits.conf
+systemctl daemon-reload
+systemctl restart mariadb
+}
+
+echo $'\n''#' Install Mail Server Application
+command -v postfix > /dev/null || {
+debconf-set-selections <<< "postfix postfix/mailname string ${FQCDN}"
+debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
+apt -y install postfix postfix-mysql postfix-doc
+apt -y install \
+dovecot-core dovecot-imapd dovecot-pop3d dovecot-mysql dovecot-sieve dovecot-lmtpd \
+getmail4 amavisd-new postgrey spamassassin
+echo $'\n''#' Disable SpamAssassin service
+systemctl stop spamassassin
+systemctl disable spamassassin
+
+echo $'\n''#' Postfix Configuration
+sed -i 's|^#submission|submission|' /etc/postfix/master.cf
+sed -i 's|^#smtps|smtps|' /etc/postfix/master.cf
+sed -i 's|^#  -o syslog_name=postfix/submission|  -o syslog_name=postfix/submission|' /etc/postfix/master.cf
+sed -i 's|^#  -o syslog_name=postfix/smtps|  -o syslog_name=postfix/smtps|' /etc/postfix/master.cf
+sed -i 's|^#  -o smtpd_tls_security_level=encrypt|  -o smtpd_tls_security_level=encrypt|' /etc/postfix/master.cf
+sed -i 's|^#  -o smtpd_tls_auth_only=yes|  -o smtpd_tls_auth_only=yes|' /etc/postfix/master.cf
+sed -i 's|^#  -o smtpd_tls_wrappermode=yes|  -o smtpd_tls_wrappermode=yes|' /etc/postfix/master.cf
+sed -i 's|^#  -o smtpd_sasl_auth_enable=yes|  -o smtpd_sasl_auth_enable=yes|' /etc/postfix/master.cf
+sed -i 's|^#  -o smtpd_client_restrictions=|  -o smtpd_client_restrictions=permit_sasl_authenticated,reject # |' /etc/postfix/master.cf
+
+echo $'\n''#' Postfix Reload
+/etc/init.d/postfix restart
 }
 
 echo $'\n''#' Install Snapd and Certbot
@@ -365,14 +422,6 @@ else
     esac
 fi
 
-echo $'\n''#' Install Web Server Application
-apt -y install nginx php7.4 \
-php7.4-{common,gd,mysql,imap,cli,fpm,curl,intl,pspell,sqlite3,tidy,xmlrpc,xsl,zip,mbstring,soap,opcache}
-
-cd      /etc/php/7.4/fpm/
-sed -i  's|^;date\.timezone =$|date.timezone = '"$TIMEZONE"'|' php.ini
-/etc/init.d/php7.4-fpm restart
-
 CONTENT=$(cat <<- 'EOF'
 server {
     listen 80;
@@ -472,25 +521,6 @@ if [[ ! $(curl -s https://"$FQCDN_ISPCONFIG") == "$FQCDN_ISPCONFIG" ]];then
     exit 1
 fi
 
-echo $'\n''#' MariaDB
-apt -y install mariadb-client mariadb-server
-cd      /etc/mysql/mariadb.conf.d/
-sed -i  "s/bind-address/# bind-address/" 50-server.cnf
-echo    "update mysql.user set plugin = 'mysql_native_password' where user='root';" | mysql -u root
-echo    "" >> /etc/security/limits.conf
-echo    "# Custom" >> /etc/security/limits.conf
-echo    "mysql soft nofile 65535" >> /etc/security/limits.conf
-echo    "mysql hard nofile 65535" >> /etc/security/limits.conf
-mkdir -p /etc/systemd/system/mysql.service.d/
-CONTENT=$(cat <<- 'EOF'
-[Service]
-LimitNOFILE=infinity
-EOF
-)
-echo "$CONTENT" >> /etc/systemd/system/mysql.service.d/limits.conf
-systemctl daemon-reload
-systemctl restart mariadb
-
 echo $'\n''#' PHPMyAdmin Download
 cd          /tmp
 wget        https://files.phpmyadmin.net/phpMyAdmin/${VERSION_PHPMYADMIN}/phpMyAdmin-${VERSION_PHPMYADMIN}-all-languages.tar.gz
@@ -530,32 +560,6 @@ ln -sf  /usr/local/share/phpmyadmin/${VERSION_PHPMYADMIN} /usr/local/phpmyadmin
 cd      /etc/nginx/sites-available
 sed -i  "s,/var/www/${FQCDN_PHPMYADMIN},/usr/local/phpmyadmin," \
         "${FQCDN_PHPMYADMIN}"
-
-echo $'\n''#' Install Mail Server Application
-debconf-set-selections <<< "postfix postfix/mailname string ${FQCDN}"
-debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
-apt -y install postfix postfix-mysql postfix-doc
-apt -y install \
-    dovecot-core dovecot-imapd dovecot-pop3d dovecot-mysql dovecot-sieve dovecot-lmtpd \
-    getmail4 amavisd-new postgrey spamassassin
-
-echo $'\n''#' Disable SpamAssassin service
-systemctl stop spamassassin
-systemctl disable spamassassin
-
-echo $'\n''#' Postfix Configuration
-sed -i 's|^#submission|submission|' /etc/postfix/master.cf
-sed -i 's|^#smtps|smtps|' /etc/postfix/master.cf
-sed -i 's|^#  -o syslog_name=postfix/submission|  -o syslog_name=postfix/submission|' /etc/postfix/master.cf
-sed -i 's|^#  -o syslog_name=postfix/smtps|  -o syslog_name=postfix/smtps|' /etc/postfix/master.cf
-sed -i 's|^#  -o smtpd_tls_security_level=encrypt|  -o smtpd_tls_security_level=encrypt|' /etc/postfix/master.cf
-sed -i 's|^#  -o smtpd_tls_auth_only=yes|  -o smtpd_tls_auth_only=yes|' /etc/postfix/master.cf
-sed -i 's|^#  -o smtpd_tls_wrappermode=yes|  -o smtpd_tls_wrappermode=yes|' /etc/postfix/master.cf
-sed -i 's|^#  -o smtpd_sasl_auth_enable=yes|  -o smtpd_sasl_auth_enable=yes|' /etc/postfix/master.cf
-sed -i 's|^#  -o smtpd_client_restrictions=|  -o smtpd_client_restrictions=permit_sasl_authenticated,reject # |' /etc/postfix/master.cf
-
-echo $'\n''#' Postfix Reload
-/etc/init.d/postfix restart
 
 echo $'\n''#' Roundcube Download
 cd          /tmp
