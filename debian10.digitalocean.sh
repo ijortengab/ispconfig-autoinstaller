@@ -548,6 +548,7 @@ EOF
 )
 
 echo $'\n''#' Setup ISPConfig Virtual Host
+[[ -f /etc/nginx/sites-available/"$FQCDN_ISPCONFIG" && -L /etc/nginx/sites-enabled/"$FQCDN_ISPCONFIG" ]] || {
 cd      /etc/nginx/sites-available
 touch   "$FQCDN_ISPCONFIG"
 cd      /etc/nginx/sites-enabled
@@ -558,8 +559,20 @@ sed -i 's/|SERVER_NAME|/'"$FQCDN_ISPCONFIG"'/' "$FQCDN_ISPCONFIG"
 mkdir -p    /var/www/"$FQCDN_ISPCONFIG"
 cd          /var/www/"$FQCDN_ISPCONFIG"
 echo        "<?php echo '$FQCDN_ISPCONFIG'.PHP_EOL;?>" > index.php
+nginx -s reload
+sleep 1
+curl -s http://127.0.0.1 -H "Host: $FQCDN_ISPCONFIG"
+if [[ ! $(curl -s http://127.0.0.1 -H "Host: $FQCDN_ISPCONFIG") == "$FQCDN_ISPCONFIG" ]];then
+    rm /etc/nginx/sites-available/"$FQCDN_ISPCONFIG"
+    rm /etc/nginx/sites-enabled/"$FQCDN_ISPCONFIG"
+    echo Failed to request http://"$FQCDN_ISPCONFIG"
+    echo -e '\033[0;31m'Script terminated.'\033[0m'
+    exit 1
+fi
+}
 
 echo $'\n''#' Setup PHPMyAdmin Virtual Host
+[[ -f /etc/nginx/sites-available/"$FQCDN_PHPMYADMIN" && -L /etc/nginx/sites-enabled/"$FQCDN_PHPMYADMIN" ]] || {
 cd      /etc/nginx/sites-available
 touch   "$FQCDN_PHPMYADMIN"
 cd      /etc/nginx/sites-enabled
@@ -570,8 +583,20 @@ sed -i 's/|SERVER_NAME|/'"$FQCDN_PHPMYADMIN"'/' "$FQCDN_PHPMYADMIN"
 mkdir -p    /var/www/"$FQCDN_PHPMYADMIN"
 cd          /var/www/"$FQCDN_PHPMYADMIN"
 echo        "<?php echo '$FQCDN_PHPMYADMIN'.PHP_EOL;?>" > index.php
+nginx -s reload
+sleep 1
+curl -s http://127.0.0.1 -H "Host: $FQCDN_PHPMYADMIN"
+if [[ ! $(curl -s http://127.0.0.1 -H "Host: $FQCDN_PHPMYADMIN") == "$FQCDN_PHPMYADMIN" ]];then
+    rm /etc/nginx/sites-available/"$FQCDN_PHPMYADMIN"
+    rm /etc/nginx/sites-enabled/"$FQCDN_PHPMYADMIN"
+    echo Failed to request http://"$FQCDN_PHPMYADMIN"
+    echo -e '\033[0;31m'Script terminated.'\033[0m'
+    exit 1
+fi
+}
 
 echo $'\n''#' Setup Roundcube Virtual Host
+[[ -f /etc/nginx/sites-available/"$FQCDN_ROUNDCUBE" && -L /etc/nginx/sites-enabled/"$FQCDN_ROUNDCUBE" ]] || {
 cd      /etc/nginx/sites-available
 touch   "$FQCDN_ROUNDCUBE"
 cd      /etc/nginx/sites-enabled
@@ -582,25 +607,17 @@ sed -i 's/|SERVER_NAME|/'"$FQCDN_ROUNDCUBE"'/' "$FQCDN_ROUNDCUBE"
 mkdir -p    /var/www/"$FQCDN_ROUNDCUBE"
 cd          /var/www/"$FQCDN_ROUNDCUBE"
 echo        "<?php echo '$FQCDN_ROUNDCUBE'.PHP_EOL;?>" > index.php
-
-echo $'\n''#' HTTP Request Verification
 nginx -s reload
 sleep 1
-if [[ ! $(curl -s http://"$FQCDN_PHPMYADMIN") == "$FQCDN_PHPMYADMIN" ]];then
-    echo Failed to request http://"$FQCDN_PHPMYADMIN"
-    echo -e '\033[0;31m'Script terminated.'\033[0m'
-    exit 1
-fi
-if [[ ! $(curl -s http://"$FQCDN_ROUNDCUBE") == "$FQCDN_ROUNDCUBE" ]];then
+curl -s http://127.0.0.1 -H "Host: $FQCDN_ROUNDCUBE"
+if [[ ! $(curl -s http://127.0.0.1 -H "Host: $FQCDN_ROUNDCUBE") == "$FQCDN_ROUNDCUBE" ]];then
+    rm /etc/nginx/sites-available/"$FQCDN_ROUNDCUBE"
+    rm /etc/nginx/sites-enabled/"$FQCDN_ROUNDCUBE"
     echo Failed to request http://"$FQCDN_ROUNDCUBE"
     echo -e '\033[0;31m'Script terminated.'\033[0m'
     exit 1
 fi
-if [[ ! $(curl -s http://"$FQCDN_ISPCONFIG") == "$FQCDN_ISPCONFIG" ]];then
-    echo Failed to request http://"$FQCDN_ISPCONFIG"
-    echo -e '\033[0;31m'Script terminated.'\033[0m'
-    exit 1
-fi
+}
 
 echo $'\n''#' Certbot Request
 certbot -i nginx \
