@@ -852,6 +852,7 @@ find * -maxdepth 1 -type f \
     done
 }
 
+command -v isp > /dev/null || {
 echo $'\n''#' Create ISPConfig Command '`'isp'`'.
 CONTENT=$(cat <<- 'EOF'
 #!/bin/bash
@@ -967,10 +968,7 @@ EOF
 echo "$CONTENT" >> /etc/profile.d/isp-completion.sh
 chmod a+x /etc/profile.d/isp-completion.sh
 sed -i 's,|scripts_dir|,'"${scripts_dir}"',' /etc/profile.d/isp-completion.sh
-
-echo $'\n''#' Implement Autocompletion for '`'isp'`' Command.
-echo 'Execute: `source /etc/profile.d/isp-completion.sh`'
-source /etc/profile.d/isp-completion.sh
+}
 
 echo $'\n''#' Insert Remote User to ISPConfig Database - Username: root
 root_password=$(pwgen -s 32 -1)
