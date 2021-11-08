@@ -662,6 +662,9 @@ else
     exit 1
 fi
 
+echo $'\n''#' PHPMyAdmin Setup
+[ -d /usr/local/share/phpmyadmin/${VERSION_PHPMYADMIN} ] || {
+
 echo $'\n''#' PHPMyAdmin Download
 cd          /tmp
 wget        https://files.phpmyadmin.net/phpMyAdmin/${VERSION_PHPMYADMIN}/phpMyAdmin-${VERSION_PHPMYADMIN}-all-languages.tar.gz
@@ -671,13 +674,8 @@ mv          phpMyAdmin-${VERSION_PHPMYADMIN}-all-languages/* -t /usr/local/share
 mv          phpMyAdmin-${VERSION_PHPMYADMIN}-all-languages/.[!.]* -t /usr/local/share/phpmyadmin/${VERSION_PHPMYADMIN}
 rmdir       phpMyAdmin-${VERSION_PHPMYADMIN}-all-languages
 
-echo $'\n''#' PHPMyAdmin Credential
 password=$(pwgen -s 32 -1)
 blowfish=$(pwgen -s 32 -1)
-phpmyadmin_db_user=pma
-phpmyadmin_db_pass="$password"
-phpmyadmin_db_host=localhost
-phpmyadmin_db_name=phpmyadmin
 echo "CREATE USER 'pma'@'localhost' IDENTIFIED BY '${password}';" | mysql -u root
 echo "GRANT ALL PRIVILEGES ON phpmyadmin.* TO 'pma'@'localhost';" | mysql -u root
 echo "FLUSH PRIVILEGES;" | mysql -u root
@@ -701,6 +699,11 @@ ln -sf  /usr/local/share/phpmyadmin/${VERSION_PHPMYADMIN} /usr/local/phpmyadmin
 cd      /etc/nginx/sites-available
 sed -i  "s,/var/www/${FQCDN_PHPMYADMIN},/usr/local/phpmyadmin," \
         "${FQCDN_PHPMYADMIN}"
+rm -rf /var/www/"$FQCDN_PHPMYADMIN"
+}
+
+echo $'\n''#' Roundcube Setup
+[ -d /usr/local/share/roundcube/${VERSION_ROUNDCUBE} ] || {
 
 echo $'\n''#' Roundcube Download
 cd          /tmp
@@ -711,13 +714,8 @@ mv          roundcubemail-${VERSION_ROUNDCUBE}/* -t /usr/local/share/roundcube/$
 mv          roundcubemail-${VERSION_ROUNDCUBE}/.[!.]* -t /usr/local/share/roundcube/${VERSION_ROUNDCUBE}/
 rmdir       roundcubemail-${VERSION_ROUNDCUBE}
 
-echo $'\n''#' Roundcube Credential
 password=$(pwgen -s 32 -1)
 blowfish=$(pwgen -s 32 -1)
-roundcube_db_user=roundcube
-roundcube_db_pass="$password"
-roundcube_db_host=localhost
-roundcube_db_name=roundcubemail
 echo "CREATE DATABASE roundcubemail CHARACTER SET utf8 COLLATE utf8_general_ci;" | mysql -u root
 echo "CREATE USER 'roundcube'@'localhost' IDENTIFIED BY '${password}';" | mysql -u root
 echo "GRANT ALL PRIVILEGES ON roundcubemail.* TO 'roundcube'@'localhost';" | mysql -u root
@@ -751,6 +749,11 @@ ln -sf  /usr/local/share/roundcube/${VERSION_ROUNDCUBE} /usr/local/roundcube
 cd      /etc/nginx/sites-available
 sed -i  "s,/var/www/${FQCDN_ROUNDCUBE},/usr/local/roundcube," \
         "${FQCDN_ROUNDCUBE}"
+rm -rf /var/www/"$FQCDN_ROUNDCUBE"
+}
+
+echo $'\n''#' ISPConfig Setup
+[ -d /usr/local/ispconfig ] || {
 
 echo $'\n''#' ISPConfig Download
 cd      /tmp
@@ -769,14 +772,8 @@ chmod 0700 ~/mysql-root-passwd.txt
 mysql -e "UPDATE mysql.user SET Password = PASSWORD('"$(<~/mysql-root-passwd.txt)"') WHERE User = 'root'"
 mysql -e "FLUSH PRIVILEGES"
 
-echo $'\n''#' ISPConfig Credential
-password=$(pwgen -s 32 -1)
-ispconfig_db_user=ispconfig
-ispconfig_db_pass="$password"
-ispconfig_db_host=localhost
-ispconfig_db_name=dbispconfig
-
 echo $'\n''#' ISPConfig Install
+password=$(pwgen -s 32 -1)
 cd      /tmp/ispconfig3_install/install/
 cp      ../docs/autoinstall_samples/autoinstall.ini.sample ./autoinstall.ini
 sed -i "s,hostname=server1.example.com,hostname=${FQCDN}," autoinstall.ini
@@ -795,18 +792,18 @@ sed -i  "s,/var/www/${FQCDN_ISPCONFIG},/usr/local/ispconfig/interface/web," \
         "${FQCDN_ISPCONFIG}"
 sed -i  "s,/var/run/php/php7.4-fpm.sock,/var/lib/php7.4-fpm/ispconfig.sock," \
         "${FQCDN_ISPCONFIG}"
+rm -rf /var/www/"$FQCDN_ISPCONFIG"
 
 echo $'\n''#' Nginx Cleaning
 cd  /etc/nginx/sites-enabled
 rm  000-ispconfig.vhost
 rm  000-apps.vhost
 rm  999-acme.vhost
-rm -rf /var/www/"$FQCDN_PHPMYADMIN"
-rm -rf /var/www/"$FQCDN_ROUNDCUBE"
-rm -rf /var/www/"$FQCDN_ISPCONFIG"
 nginx -s reload
 sleep 1
-echo $'\n''#' Retrieve ISP Config Directory
+}
+
+echo $'\n''#' Populate Variable
 CONTENT=$(cat <<- EOF
 include "/tmp/ispconfig3_install/install/dist/conf/$DEBIAN_CONF";
 echo \$conf['ispconfig_install_dir'];
@@ -815,6 +812,23 @@ EOF
 ispconfig_install_dir=$(php -r "$CONTENT")
 phpmyadmin_install_dir=/usr/local/share/phpmyadmin/"$VERSION_PHPMYADMIN"
 roundcube_install_dir=/usr/local/share/roundcube/"$VERSION_ROUNDCUBE"
+scripts_dir="$ispconfig_install_dir"/scripts
+ispconfig_db_user=$(php -r "include '$ispconfig_install_dir/interface/lib/config.inc.php';echo DB_USER;")
+ispconfig_db_pass=$(php -r "include '$ispconfig_install_dir/interface/lib/config.inc.php';echo DB_PASSWORD;")
+ispconfig_db_host=localhost
+ispconfig_db_name=dbispconfig
+phpmyadmin_db_user=$(php -r "include '/usr/local/share/phpmyadmin/$VERSION_PHPMYADMIN/config.inc.php';
+echo \$cfg['Servers'][1]['controluser'];")
+phpmyadmin_db_pass=$(php -r "include '/usr/local/share/phpmyadmin/$VERSION_PHPMYADMIN/config.inc.php';
+echo \$cfg['Servers'][1]['controlpass'];")
+phpmyadmin_db_host=localhost
+phpmyadmin_db_name=phpmyadmin
+roundcube_db_user=$(php -r "include '/usr/local/share/roundcube/$VERSION_ROUNDCUBE/config/config.inc.php';
+echo parse_url(\$config['db_dsnw'], PHP_URL_USER);")
+roundcube_db_pass=$(php -r "include '/usr/local/share/roundcube/$VERSION_ROUNDCUBE/config/config.inc.php';
+echo parse_url(\$config['db_dsnw'], PHP_URL_PASS);")
+roundcube_db_host=localhost
+roundcube_db_name=roundcubemail
 
 echo $'\n''#' Copy ISPConfig PHP Scripts
 mkdir -p "$ispconfig_install_dir"/scripts
