@@ -631,18 +631,33 @@ certbot -i nginx \
 }
 
 echo $'\n''#' HTTPS Request Verification
-if [[ ! $(curl -s https://"$FQCDN_PHPMYADMIN") == "$FQCDN_PHPMYADMIN" ]];then
+_code=$(curl -L \
+    -o /dev/null -s -w "%{http_code}\n" \
+    https://"$FQCDN_ISPCONFIG")
+if [[ "$_code" == 200 ]];then
+    echo Success to request https://"$FQCDN_ISPCONFIG"
+else
+    echo Failed to request https://"$FQCDN_ISPCONFIG"
+    echo -e '\033[0;31m'Script terminated.'\033[0m'
+    exit 1
+fi
+_code=$(curl -L \
+    -o /dev/null -s -w "%{http_code}\n" \
+    https://"$FQCDN_PHPMYADMIN")
+if [[ "$_code" == 200 ]];then
+    echo Success to request https://"$FQCDN_PHPMYADMIN"
+else
     echo Failed to request https://"$FQCDN_PHPMYADMIN"
     echo -e '\033[0;31m'Script terminated.'\033[0m'
     exit 1
 fi
-if [[ ! $(curl -s https://"$FQCDN_ROUNDCUBE") == "$FQCDN_ROUNDCUBE" ]];then
+_code=$(curl -L \
+    -o /dev/null -s -w "%{http_code}\n" \
+    https://"$FQCDN_ROUNDCUBE")
+if [[ "$_code" == 200 ]];then
+    echo Success to request https://"$FQCDN_ROUNDCUBE"
+else
     echo Failed to request https://"$FQCDN_ROUNDCUBE"
-    echo -e '\033[0;31m'Script terminated.'\033[0m'
-    exit 1
-fi
-if [[ ! $(curl -s https://"$FQCDN_ISPCONFIG") == "$FQCDN_ISPCONFIG" ]];then
-    echo Failed to request https://"$FQCDN_ISPCONFIG"
     echo -e '\033[0;31m'Script terminated.'\033[0m'
     exit 1
 fi
