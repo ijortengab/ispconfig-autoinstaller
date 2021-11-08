@@ -1137,15 +1137,12 @@ EOF
     fi
 fi
 
-echo $'\n''#' Insert Remote User to ISPConfig Database - Username: roundcube
-roundcube_password=$(pwgen -s 32 -1)
-CONTENT=$(cat <<- EOF
-require '${ispconfig_install_dir}/interface/lib/classes/auth.inc.php';
-echo (new auth)->crypt_password('$roundcube_password');
-EOF
-)
-roundcube_password_hash=$(php -r "$CONTENT")
-roundcube_access='server_get,server_config_set,get_function_list,client_templates_get_all,server_get_serverid_by_ip,server_ip_get,server_ip_add,server_ip_update,server_ip_delete,system_config_set,system_config_get,config_value_get,config_value_add,config_value_update,config_value_replace,config_value_delete
+echo $'\n''#' Insert Remote User to ISPConfig Database - Username: '"'$REMOTE_USER_ROUNDCUBE'"'
+if isRemoteUsernameIspconfigExist "$REMOTE_USER_ROUNDCUBE" ;then
+    echo Remote username "$REMOTE_USER_ROUNDCUBE" already exists.
+    echo \$remote_userid $remote_userid
+else
+    functions='server_get,server_config_set,get_function_list,client_templates_get_all,server_get_serverid_by_ip,server_ip_get,server_ip_add,server_ip_update,server_ip_delete,system_config_set,system_config_get,config_value_get,config_value_add,config_value_update,config_value_replace,config_value_delete
 client_get_all,client_get,client_add,client_update,client_delete,client_get_sites_by_user,client_get_by_username,client_get_by_customer_no,client_change_password,client_get_id,client_delete_everything,client_get_emailcontact
 mail_user_get,mail_user_add,mail_user_update,mail_user_delete
 mail_alias_get,mail_alias_add,mail_alias_update,mail_alias_delete
@@ -1156,33 +1153,28 @@ mail_fetchmail_get,mail_fetchmail_add,mail_fetchmail_update,mail_fetchmail_delet
 mail_spamfilter_whitelist_get,mail_spamfilter_whitelist_add,mail_spamfilter_whitelist_update,mail_spamfilter_whitelist_delete
 mail_spamfilter_blacklist_get,mail_spamfilter_blacklist_add,mail_spamfilter_blacklist_update,mail_spamfilter_blacklist_delete
 mail_user_filter_get,mail_user_filter_add,mail_user_filter_update,mail_user_filter_delete'
-roundcube_access_joined=$(tr '\n' ';' <<< "$roundcube_access")
-sql="INSERT INTO remote_user
-(sys_userid, sys_groupid, sys_perm_user, sys_perm_group, sys_perm_other, remote_username, remote_password, remote_access, remote_ips, remote_functions)
-VALUES
-(1, 1, 'riud', 'riud', '', '$REMOTE_USER_ROUNDCUBE', '$roundcube_password_hash', 'y', '$IP_PUBLIC', '$roundcube_access_joined');"
-u=root
-p=$(<~/mysql-root-passwd.txt)
-mysql --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
-    dbispconfig -e "$sql"
+    password=$(pwgen -s 32 -1)
+    if insertRemoteUsernameIspconfig  "$REMOTE_USER_ROUNDCUBE" "$password" "$functions" ;then
+        echo Remote username "$REMOTE_USER_ROUNDCUBE" created.
+        echo \$remote_userid $remote_userid
 
-echo $'\n''#' Download Plugin ISP Config Roundcube Integration
-cd /tmp
-wget https://github.com/w2c/ispconfig3_roundcube/archive/master.zip
-unzip -qq master.zip
-cd ./ispconfig3_roundcube-master
-cp -r ./ispconfig3_* /usr/local/share/roundcube/$VERSION_ROUNDCUBE/plugins/
+        echo $'\n''#' Download Plugin ISP Config Roundcube Integration
+        cd /tmp
+        wget https://github.com/w2c/ispconfig3_roundcube/archive/master.zip
+        unzip -qq master.zip
+        cd ./ispconfig3_roundcube-master
+        cp -r ./ispconfig3_* /usr/local/share/roundcube/$VERSION_ROUNDCUBE/plugins/
 
-echo $'\n''#' Configure Plugin Credential
-cd  /usr/local/share/roundcube/$VERSION_ROUNDCUBE/plugins/ispconfig3_account/config
-cp  config.inc.php.dist config.inc.php
-sed -i "s/\$config\['remote_soap_user'\] = '.*';/\$config['remote_soap_user'] = '$REMOTE_USER_ROUNDCUBE';/" config.inc.php
-sed -i "s/\$config\['remote_soap_pass'\] = '.*';/\$config['remote_soap_pass'] = '$roundcube_password';/" config.inc.php
-sed -i "s|\$config\['soap_url'\] = '.*';|\$config['soap_url'] = 'https://$FQCDN_ISPCONFIG/remote/';|" config.inc.php
+        echo $'\n''#' Configure Plugin Credential
+        cd  /usr/local/share/roundcube/$VERSION_ROUNDCUBE/plugins/ispconfig3_account/config
+        cp  config.inc.php.dist config.inc.php
+        sed -i "s/\$config\['remote_soap_user'\] = '.*';/\$config['remote_soap_user'] = '$REMOTE_USER_ROUNDCUBE';/" config.inc.php
+        sed -i "s/\$config\['remote_soap_pass'\] = '.*';/\$config['remote_soap_pass'] = '$roundcube_password';/" config.inc.php
+        sed -i "s|\$config\['soap_url'\] = '.*';|\$config['soap_url'] = 'https://$FQCDN_ISPCONFIG/remote/';|" config.inc.php
 
-echo $'\n''#' Enables Plugins
-cd /usr/local/share/roundcube/${VERSION_ROUNDCUBE}
-CONTENT=$(cat <<- 'EOF'
+        echo $'\n''#' Enables Plugins
+        cd /usr/local/share/roundcube/${VERSION_ROUNDCUBE}
+        CONTENT=$(cat <<- 'EOF'
 $config['plugins'][] = 'ispconfig3_account';
 $config['plugins'][] = 'ispconfig3_autoreply';
 $config['plugins'][] = 'ispconfig3_pass';
@@ -1192,9 +1184,15 @@ $config['plugins'][] = 'ispconfig3_wblist';
 $config['plugins'][] = 'identity_select';
 $config['identity_select_headers'] = array('To');
 EOF
-)
-echo "" >> config/config.inc.php
-echo "$CONTENT" >> config/config.inc.php
+        )
+        echo "" >> config/config.inc.php
+        echo "$CONTENT" >> config/config.inc.php
+    else
+        echo Remote username "$REMOTE_USER_ROUNDCUBE" failed to create.
+        echo -e '\033[0;31m'Script terminated.'\033[0m'
+        exit 1
+    fi
+fi
 
 echo -n $'\n''########################################'
 echo         '########################################'
