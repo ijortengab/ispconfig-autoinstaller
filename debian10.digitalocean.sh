@@ -358,6 +358,41 @@ else
     esac
 fi
 
+echo $'\n''#' Modify CNAME DNS Record for FQCDN "'"${FQCDN}"'"
+type="CNAME"
+name="$FQCDN"
+_output=$(curl -X GET \
+    -s \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+    "https://api.digitalocean.com/v2/domains/$DOMAIN/records?type=$type&name=$name")
+_total=$(echo "$_output" | grep -o '"meta":{"total":.*}}' | \
+    sed -E 's/"meta":\{"total":(.*)\}\}/\1/')
+
+if [ $_total -gt 0 ];then
+    echo DNS CNAME Record of FQCDN "'"${FQCDN}"'" found in DNS Digital Ocean.
+    echo -n Trying to delete...
+    _id=$(echo "$_output" | grep -o -E '"id":[[:digit:]]+' | \
+    sed -E 's/"id":([[:digit:]]+)/\1/')
+    _code=$(curl -X DELETE \
+        -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+        -H "Content-Type: application/json" \
+        -o /dev/null -s -w "%{http_code}\n" \
+        "https://api.digitalocean.com/v2/domains/$DOMAIN/records/$_id")
+    case $_code in
+        204)
+            echo ' 'Deleted.
+            ;;
+        *)
+            echo ' 'Failed.
+            echo Unexpected result with response code: $_code.
+            echo -e '\033[0;31m'Script terminated.'\033[0m'
+            exit 1
+    esac
+else
+    echo DNS CNAME Record of FQCDN "'"${FQCDN}"'" NOT found in DNS Digital Ocean.
+fi
+
 echo $'\n''#' Modify FQCDN DNS Record
 _total=$(curl -X GET \
     -s \
