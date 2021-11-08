@@ -620,13 +620,15 @@ fi
 }
 
 echo $'\n''#' Certbot Request
+[ -d /etc/letsencrypt/live/"$FQCDN_ISPCONFIG" ] || {
 certbot -i nginx \
    -n --agree-tos --email "${EMAIL_HOST}@${DOMAIN}" \
    --dns-digitalocean \
    --dns-digitalocean-credentials ~/digitalocean-token-ispconfig.ini \
+   -d "$FQCDN_ISPCONFIG" \
    -d "$FQCDN_PHPMYADMIN" \
-   -d "$FQCDN_ROUNDCUBE" \
-   -d "$FQCDN_ISPCONFIG"
+   -d "$FQCDN_ROUNDCUBE"
+}
 
 echo $'\n''#' HTTPS Request Verification
 if [[ ! $(curl -s https://"$FQCDN_PHPMYADMIN") == "$FQCDN_PHPMYADMIN" ]];then
