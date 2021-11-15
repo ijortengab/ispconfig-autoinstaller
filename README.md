@@ -61,3 +61,14 @@ ISP Config: https://cp.example.com
    - username: admin
      password: -
 ```
+
+## Add on domain
+
+Assume your next domain is `other-example.com` and you want to add on existing domain (example.com).
+
+Download and execute this script inside server.
+
+```
+wget https://raw.githubusercontent.com/ijortengab/ispconfig-autoinstaller/master/addon-mail.digitalocean.sh
+bash addon-mail.digitalocean.sh
+```
