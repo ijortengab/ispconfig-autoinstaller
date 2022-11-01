@@ -1724,45 +1724,159 @@ yellow Memasang password MySQL untuk root
 ToggleMysqlRootPassword yes
 ____
 
-FQDN='rojimantabjiwa.com'
+databaseCredentialIspconfig() {
+    if [ -f /usr/local/share/ispconfig/credential/database ];then
+        local ISPCONFIG_DB_USER ISPCONFIG_DB_USER_PASSWORD ISPCONFIG_BLOWFISH
+        . /usr/local/share/ispconfig/credential/database
+        ispconfig_db_user=$ISPCONFIG_DB_USER
+        ispconfig_db_user_password=$ISPCONFIG_DB_USER_PASSWORD
+    else
+        ispconfig_db_user=$ISPCONFIG_DB_USER # global variable
+        ispconfig_db_user_password=$(pwgen -s 32 -1)
+        mkdir -p /usr/local/share/ispconfig/credential
+        cat << EOF > /usr/local/share/ispconfig/credential/database
+ISPCONFIG_DB_USER=$ispconfig_db_user
+ISPCONFIG_DB_USER_PASSWORD=$ispconfig_db_user_password
+EOF
+        chmod 0500 /usr/local/share/ispconfig/credential
+        chmod 0400 /usr/local/share/ispconfig/credential/database
+    fi
+}
+websiteCredentialIspconfig() {
+    if [ -f /usr/local/share/ispconfig/credential/website ];then
+        local ISPCONFIG_WEB_USER ISPCONFIG_WEB_USER_PASSWORD
+        . /usr/local/share/ispconfig/credential/website
+        ispconfig_web_user_password=$ISPCONFIG_WEB_USER_PASSWORD
+    else
+        ispconfig_web_user_password=$(pwgen 6 -1vA0B)
+        mkdir -p /usr/local/share/ispconfig/credential
+        cat << EOF > /usr/local/share/ispconfig/credential/website
+ISPCONFIG_WEB_USER_PASSWORD=$ispconfig_web_user_password
+EOF
+        chmod 0500 /usr/local/share/ispconfig/credential
+        chmod 0400 /usr/local/share/ispconfig/credential/website
+    fi
+}
 
-# cd      /tmp
-# wget    http://www.ispconfig.org/downloads/ISPConfig-3-stable.tar.gz
-# tar xfz ISPConfig-3-stable.tar.gz
-# cd      ispconfig3_install/install/
+yellow Mengecek credentials ISPConfig.
+databaseCredentialIspconfig
+if [[ -z "$ispconfig_db_user" || -z "$ispconfig_db_user_password" ]];then
+    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/database'`'.; exit
+else
+    magenta ispconfig_db_user="$ispconfig_db_user"
+    magenta ispconfig_db_user_password="$ispconfig_db_user_password"
+fi
+websiteCredentialIspconfig
+if [[ -z "$ispconfig_web_user_password" ]];then
+    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/website'`'.; exit
+else
+    magenta ispconfig_web_user_password="$ispconfig_web_user_password"
+fi
+____
 
-# password=$(pwgen -s 32 -1)
-# cd      /tmp/ispconfig3_install/install/
-# cp      ../docs/autoinstall_samples/autoinstall.ini.sample ./autoinstall.ini
-# sed -i "s,hostname=server1.example.com,hostname=${FQDN}," autoinstall.ini
-# sed -i "s,mysql_root_password=ispconfig,mysql_root_password="$(<~/.mysql-root-passwd.txt)"," autoinstall.ini
-# sed -i "s,http_server=apache,http_server=nginx," autoinstall.ini
-# sed -i "s,ispconfig_use_ssl=y,ispconfig_use_ssl=n," autoinstall.ini
-# echo $(pwgen 6 -1vA0B) > ~/.ispconfig-admin-passwd.txt
-# chmod 0700 ~/.ispconfig-admin-passwd.txt
-# sed -i "s,ispconfig_admin_password=admin,ispconfig_admin_password="$(<~/.ispconfig-admin-passwd.txt)"," autoinstall.ini
-# sed -i "s,mysql_ispconfig_password=.*,mysql_ispconfig_password="$password"," autoinstall.ini
-# php install.php --autoinstall=autoinstall.ini
+php=$(cat <<'EOF'
+$args = $_SERVER['argv'];
+$mode = $args[1];
+$file = $args[2];
+$array = unserialize($args[3]);
+include($file);
+if (!isset($autoinstall)) {
+    exit(1);
+}
+$result = array_diff_assoc($array, $autoinstall);
+$is_different = !empty(array_diff_assoc($array, $autoinstall));
 
-# FQCDN_ISPCONFIG=ispconfig.localhost
+// var_dump($is_different);
+// var_dump($array);
+// var_dump($result);
+// var_dump($mysql_root_passwd);
+// var_dump($hostname);
+switch ($mode) {
+    case 'is_different':
+        $is_different ? exit(0) : exit(1);
+        break;
+    case 'replace':
+        if ($is_different) {
+            $autoinstall = array_replace_recursive($autoinstall, $array);
+            $content = '$cfg = '.var_export($autoinstall, true).';'.PHP_EOL;
+            $content = <<< EOF
+<?php
+$content
+EOF;
+            file_put_contents($file, $content);
+        }
+        break;
+}
+EOF
+)
 
-# echo $'\n''#' ISPConfig Adjust Web Root
-# cd      /etc/nginx/sites-available
-# sed -i  "s,/var/www/${FQCDN_ISPCONFIG},/usr/local/ispconfig/interface/web," \
-        # "${FQCDN_ISPCONFIG}"
-# sed -i  "s,/var/run/php/php7.4-fpm.sock,/var/lib/php7.4-fpm/ispconfig.sock," \
-        # "${FQCDN_ISPCONFIG}"
-# rm -rf /var/www/"$FQCDN_ISPCONFIG"
+yellow Mengecek file '`'index.php'`' untuk '`'ISPConfig'`'.
+notfound=
+if [ -f /usr/local/ispconfig/interface/web/index.php ];then
+    __ File '`'index.php'`' ditemukan.
+else
+    __ File '`'index.php'`' tidak ditemukan.
+    notfound=1
+fi
+____
 
-# echo $'\n''#' Nginx Cleaning
-# cd  /etc/nginx/sites-enabled
-# rm  000-ispconfig.vhost
-# rm  000-apps.vhost
-# rm  999-acme.vhost
-# nginx -s reload
-# sleep 1
+if [ -n "$notfound" ];then
+    yellow Menginstall ISPConfig
+    if [ ! -f /tmp/ispconfig3_install/install/install.php ];then
+        __ Mendownload ISPConfig
+        cd /tmp
+        if [ ! -f /tmp/ISPConfig-3-stable.tar.gz ];then
+            wget http://www.ispconfig.org/downloads/ISPConfig-3-stable.tar.gz
+        fi
+        __ Mengextract ISPConfig
+        tar xfz ISPConfig-3-stable.tar.gz
+    fi
+    if [ ! -f /tmp/ispconfig3_install/install/autoinstall.php ];then
+        __ Membuat file '`'autoinstall.php'`'.
+        cp /tmp/ispconfig3_install/docs/autoinstall_samples/autoinstall.conf_sample.php \
+           /tmp/ispconfig3_install/install/autoinstall.php
+    fi
+    __ Verifikasi file '`'autoinstall.php'`'.
+    mysql_root_passwd="$(<$MYSQL_ROOT_PASSWD)"
+    reference="$(php -r "echo serialize([
+        'hostname' => '$FQDN',
+        'mysql_root_password' => '$mysql_root_passwd',
+        'http_server' => 'nginx',
+        'ispconfig_use_ssl' => 'n',
+        'mysql_ispconfig_password' => '$ispconfig_db_user_password',
+        'ispconfig_admin_password' => '$ispconfig_web_user_password',
+    ]);")"
+    is_different=
+    if php -r "$php" is_different \
+        /tmp/ispconfig3_install/install/autoinstall.php \
+        "$reference";then
+        echo -n
+        is_different=1
+        __ Diperlukan modifikasi file '`'autoinstall.php'`'.
+    else
+        __ File '`'autoinstall.php'`' tidak ada perubahan.
+    fi
+    if [ -n "$is_different" ];then
+        __ Memodifikasi file '`'autoinstall.php'`'.
+        __ Backup file /tmp/ispconfig3_install/install/autoinstall.php
+        backupFile copy /tmp/ispconfig3_install/install/autoinstall.php
+        php -r "$php" replace \
+            /tmp/ispconfig3_install/install/autoinstall.php \
+            "$reference"
+        if php -r "$php" is_different \
+            /tmp/ispconfig3_install/install/autoinstall.php \
+            "$reference";then
+            __; red Modifikasi file '`'autoinstall.php'`' gagal.; exit
+        else
+            __; green File '`'autoinstall.php'`' tidak ada perubahan.
+        fi
+    fi
+    cd /tmp/ispconfig3_install/install/
+    php install.php \
+         --autoinstall=autoinstall.php
+    ____
 
-# --------------------------------------------------------------------------------
+fi
 
 yellow -- FINISH ------------------------------------------------------------
 ____
