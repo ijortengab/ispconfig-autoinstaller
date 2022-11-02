@@ -46,20 +46,52 @@ PHPMYADMIN_DB_USER=pma
 ROUNDCUBE_DB_USER=roundcube
 PHPMYADMIN_NGINX_CONFIG_FILE=phpmyadmin
 ROUNDCUBE_NGINX_CONFIG_FILE=roundcube
+ISPCONFIG_NGINX_CONFIG_FILE=ispconfig
 PHPMYADMIN_SUBDOMAIN_LOCALHOST=phpmyadmin.localhost
 ROUNDCUBE_SUBDOMAIN_LOCALHOST=roundcube.localhost
+ISPCONFIG_SUBDOMAIN_LOCALHOST=ispconfig.localhost
 POSTFIX_CONFIG_FILE=/etc/postfix/master.cf
 MYSQL_ROOT_PASSWD=/root/.mysql-root-passwd.txt
 MYSQL_ROOT_PASSWD_INI=/root/.mysql-root-passwd.ini
+
+# @todo
+FQDN=server1.mantab.com
 
 red() { echo -ne "\e[91m"; echo -n "$@"; echo -e "\e[39m"; }
 green() { echo -ne "\e[92m"; echo -n "$@"; echo -e "\e[39m"; }
 yellow() { echo -ne "\e[93m"; echo -n "$@"; echo -e "\e[39m"; }
 blue() { echo -ne "\e[94m"; echo -n "$@"; echo -e "\e[39m"; }
 magenta() { echo -ne "\e[95m"; echo -n "$@"; echo -e "\e[39m"; }
-_() { echo "$@"; }
+x() { exit; }
+e() { echo "$@"; }
 __() { echo -n '    '; [ -n "$1" ] && echo "$@" || echo -n ; }
 ____() { echo; }
+
+# global used:
+# global modified:
+# function used: __, green, red, x
+fileMustExists() {
+    if [ -f "$1" ];then
+        __; green File '`'$(basename "$1")'`' ditemukan.
+    else
+        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
+    fi
+}
+
+# global used:
+# global modified: found, notfound
+# function used: __
+isFileExists() {
+    found=
+    notfound=
+    if [ -f "$1" ];then
+        __ File '`'$(basename "$1")'`' ditemukan.
+        found=1
+    else
+        __ File '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
+    fi
+}
 
 pregQuote() {
     local string="$1"
@@ -98,7 +130,8 @@ blue '# GAK PAKE LAMA                                                      #'
 blue '#                                                                    #'
 blue '######################################################################'
 ____
-_ Version 0.1.0
+
+e Version 0.1.0
 ____
 
 yellow User variable.
@@ -117,8 +150,10 @@ magenta 'PHPMYADMIN_DB_USER="'$PHPMYADMIN_DB_USER'"'
 magenta 'ROUNDCUBE_DB_USER="'$ROUNDCUBE_DB_USER'"'
 magenta 'PHPMYADMIN_NGINX_CONFIG_FILE="'$PHPMYADMIN_NGINX_CONFIG_FILE'"'
 magenta 'ROUNDCUBE_NGINX_CONFIG_FILE="'$ROUNDCUBE_NGINX_CONFIG_FILE'"'
+magenta 'ISPCONFIG_NGINX_CONFIG_FILE="'$ISPCONFIG_NGINX_CONFIG_FILE'"'
 magenta 'PHPMYADMIN_SUBDOMAIN_LOCALHOST="'$PHPMYADMIN_SUBDOMAIN_LOCALHOST'"'
 magenta 'ROUNDCUBE_SUBDOMAIN_LOCALHOST="'$ROUNDCUBE_SUBDOMAIN_LOCALHOST'"'
+magenta 'ISPCONFIG_SUBDOMAIN_LOCALHOST="'$ISPCONFIG_SUBDOMAIN_LOCALHOST'"'
 magenta 'POSTFIX_CONFIG_FILE="'$POSTFIX_CONFIG_FILE'"'
 magenta 'MYSQL_ROOT_PASSWD="'$MYSQL_ROOT_PASSWD'"'
 magenta 'MYSQL_ROOT_PASSWD_INI="'$MYSQL_ROOT_PASSWD_INI'"'
@@ -858,7 +893,7 @@ ____
 yellow Mencari informasi nginx.
 conf_path=$(nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)')
 magenta conf_path="$conf_path"
-user_nginx=$(cat "$conf_path" | grep -o -P 'user\s+\K([^;]+)')
+user_nginx=$(cat "$conf_path" | grep -o -P 'user\s+\K([^;]+);' | sed 's/;//')
 magenta user_nginx="$user_nginx"
 ____
 
@@ -935,6 +970,7 @@ ToggleMysqlRootPassword no
 ____
 
 blue PHPMyAdmin
+sleep .5
 ____
 
 yellow Mengecek database '`'$PHPMYADMIN_DB_NAME'`'.
@@ -1214,10 +1250,10 @@ if [ -n "$is_different" ];then
     ____
 fi
 
-yellow Mengecek apakah nginx configuration
+yellow Mengecek nginx configuration apakah terdapat web root dari PHPMyAdmin
 notfound=
-string=/usr/local/share/phpmyadmin/${phpmyadmin_version}
-string_quoted=$(pregQuote "$string")
+root=/usr/local/share/phpmyadmin/${phpmyadmin_version}
+string_quoted=$(pregQuote "$root")
 file_config=$(grep -R -l -E "^\s*root\s+${string_quoted}\s*;" /etc/nginx/sites-enabled | head -1)
 [ -n "$file_config" ] && {
     file_config=$(realpath $file_config)
@@ -1252,7 +1288,7 @@ server {
     }
 }
 EOF
-    sed -i "s|ROOT|/usr/local/share/phpmyadmin/${phpmyadmin_version}|g" /etc/nginx/sites-available/$nginx_config_file
+    sed -i "s|ROOT|${root}|g" /etc/nginx/sites-available/$nginx_config_file
     sed -i "s|SUBDOMAIN_LOCALHOST|${subdomain_localhost}|g" /etc/nginx/sites-available/$nginx_config_file
     sed -i "s|PHP_VERSION|${PHP_VERSION}|g" /etc/nginx/sites-available/$nginx_config_file
     # @todo, ubah juga di drupal
@@ -1316,6 +1352,10 @@ code=$(curl -L \
     -o /dev/null -s -w "%{http_code}\n" \
     http://127.0.0.1 -H "Host: ${subdomain_localhost}")
 __ HTTP Response code '`'$code'`'.
+____
+
+blue RoundCube
+sleep .5
 ____
 
 yellow Mengecek database '`'$ROUNDCUBE_DB_NAME'`'.
@@ -1615,12 +1655,11 @@ if [ -n "$is_different" ];then
     ____
 fi
 
-yellow Mengecek apakah nginx configuration
+yellow Mengecek nginx configuration apakah terdapat web root dari RoundCube
 notfound=
-string=/usr/local/share/roundcube/${roundcube_version}
-string_quoted=$(pregQuote "$string")
+root=/usr/local/share/roundcube/${roundcube_version}
+string_quoted=$(pregQuote "$root")
 file_config=$(grep -R -l -E "^\s*root\s+${string_quoted}\s*;" /etc/nginx/sites-enabled | head -1)
-
 [ -n "$file_config" ] && {
     file_config=$(realpath $file_config)
     __ File config found: '`'$file_config'`'.;
@@ -1654,7 +1693,7 @@ server {
     }
 }
 EOF
-    sed -i "s|ROOT|/usr/local/share/roundcube/${roundcube_version}|g" /etc/nginx/sites-available/$nginx_config_file
+    sed -i "s|ROOT|${root}|g" /etc/nginx/sites-available/$nginx_config_file
     sed -i "s|SUBDOMAIN_LOCALHOST|${subdomain_localhost}|g" /etc/nginx/sites-available/$nginx_config_file
     sed -i "s|PHP_VERSION|${PHP_VERSION}|g" /etc/nginx/sites-available/$nginx_config_file
     # @todo, ubah juga di drupal
@@ -1720,22 +1759,17 @@ code=$(curl -L \
 __ HTTP Response code '`'$code'`'.
 ____
 
-yellow Memasang password MySQL untuk root
-ToggleMysqlRootPassword yes
-____
-
 databaseCredentialIspconfig() {
     if [ -f /usr/local/share/ispconfig/credential/database ];then
-        local ISPCONFIG_DB_USER ISPCONFIG_DB_USER_PASSWORD ISPCONFIG_BLOWFISH
+        local ISPCONFIG_DB_NAME ISPCONFIG_DB_USER ISPCONFIG_DB_USER_PASSWORD
         . /usr/local/share/ispconfig/credential/database
+        ispconfig_db_name=$ISPCONFIG_DB_NAME
         ispconfig_db_user=$ISPCONFIG_DB_USER
         ispconfig_db_user_password=$ISPCONFIG_DB_USER_PASSWORD
     else
-        ispconfig_db_user=$ISPCONFIG_DB_USER # global variable
         ispconfig_db_user_password=$(pwgen -s 32 -1)
         mkdir -p /usr/local/share/ispconfig/credential
         cat << EOF > /usr/local/share/ispconfig/credential/database
-ISPCONFIG_DB_USER=$ispconfig_db_user
 ISPCONFIG_DB_USER_PASSWORD=$ispconfig_db_user_password
 EOF
         chmod 0500 /usr/local/share/ispconfig/credential
@@ -1760,10 +1794,9 @@ EOF
 
 yellow Mengecek credentials ISPConfig.
 databaseCredentialIspconfig
-if [[ -z "$ispconfig_db_user" || -z "$ispconfig_db_user_password" ]];then
+if [[ -z "$ispconfig_db_user_password" ]];then
     __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/database'`'.; exit
 else
-    magenta ispconfig_db_user="$ispconfig_db_user"
     magenta ispconfig_db_user_password="$ispconfig_db_user_password"
 fi
 websiteCredentialIspconfig
@@ -1779,32 +1812,15 @@ $args = $_SERVER['argv'];
 $mode = $args[1];
 $file = $args[2];
 $array = unserialize($args[3]);
-include($file);
+$autoinstall = parse_ini_file($file);
 if (!isset($autoinstall)) {
-    exit(1);
+    exit(255);
 }
 $result = array_diff_assoc($array, $autoinstall);
 $is_different = !empty(array_diff_assoc($array, $autoinstall));
-
-// var_dump($is_different);
-// var_dump($array);
-// var_dump($result);
-// var_dump($mysql_root_passwd);
-// var_dump($hostname);
 switch ($mode) {
     case 'is_different':
         $is_different ? exit(0) : exit(1);
-        break;
-    case 'replace':
-        if ($is_different) {
-            $autoinstall = array_replace_recursive($autoinstall, $array);
-            $content = '$cfg = '.var_export($autoinstall, true).';'.PHP_EOL;
-            $content = <<< EOF
-<?php
-$content
-EOF;
-            file_put_contents($file, $content);
-        }
         break;
 }
 EOF
@@ -1821,6 +1837,30 @@ fi
 ____
 
 if [ -n "$notfound" ];then
+    yellow Mengecek apakah database ISPConfig siap digunakan.
+    db_found=
+    # Variable di populate oleh `databaseCredentialIspconfig()`.
+    if [[ -n "$ispconfig_db_name" ]];then
+        __ Mengecek database '`'$ispconfig_db_name'`'.
+        msg=$(mysql --silent --skip-column-names -e "select schema_name from information_schema.schemata where schema_name = '$ispconfig_db_name'")
+        if [[ $msg == $ispconfig_db_name ]];then
+            __ Database ditemukan.
+            db_found=1
+        else
+            __ Database tidak ditemukan
+        fi
+    fi
+    if [[ -n "$db_found" ]];then
+        msg=$(mysql \
+            --silent --skip-column-names \
+            $ispconfig_db_name -e "show tables;" | wc -l)
+        if [[ $msg -gt 0 ]];then
+            __; red Database sudah terdapat table sejumlah '`'$msg'`'.; x
+        fi
+    fi
+    __ Database siap digunakan.
+    ____
+
     yellow Menginstall ISPConfig
     if [ ! -f /tmp/ispconfig3_install/install/install.php ];then
         __ Mendownload ISPConfig
@@ -1831,12 +1871,12 @@ if [ -n "$notfound" ];then
         __ Mengextract ISPConfig
         tar xfz ISPConfig-3-stable.tar.gz
     fi
-    if [ ! -f /tmp/ispconfig3_install/install/autoinstall.php ];then
-        __ Membuat file '`'autoinstall.php'`'.
-        cp /tmp/ispconfig3_install/docs/autoinstall_samples/autoinstall.conf_sample.php \
-           /tmp/ispconfig3_install/install/autoinstall.php
+    if [ ! -f /tmp/ispconfig3_install/install/autoinstall.ini ];then
+        __ Membuat file '`'autoinstall.ini'`'.
+        cp /tmp/ispconfig3_install/docs/autoinstall_samples/autoinstall.ini.sample \
+           /tmp/ispconfig3_install/install/autoinstall.ini
     fi
-    __ Verifikasi file '`'autoinstall.php'`'.
+    __ Verifikasi file '`'autoinstall.ini'`'.
     mysql_root_passwd="$(<$MYSQL_ROOT_PASSWD)"
     reference="$(php -r "echo serialize([
         'hostname' => '$FQDN',
@@ -1848,35 +1888,190 @@ if [ -n "$notfound" ];then
     ]);")"
     is_different=
     if php -r "$php" is_different \
-        /tmp/ispconfig3_install/install/autoinstall.php \
+        /tmp/ispconfig3_install/install/autoinstall.ini \
         "$reference";then
-        echo -n
         is_different=1
-        __ Diperlukan modifikasi file '`'autoinstall.php'`'.
+        __ Diperlukan modifikasi file '`'autoinstall.ini'`'.
     else
-        __ File '`'autoinstall.php'`' tidak ada perubahan.
+        if [ $? -eq 255 ];then
+            __; red Terjadi kesalahan dalam parsing file '`'autoinstall.ini'`'.; x
+        fi
+        __ File '`'autoinstall.ini'`' tidak ada perubahan.
     fi
     if [ -n "$is_different" ];then
-        __ Memodifikasi file '`'autoinstall.php'`'.
-        __ Backup file /tmp/ispconfig3_install/install/autoinstall.php
-        backupFile copy /tmp/ispconfig3_install/install/autoinstall.php
-        php -r "$php" replace \
-            /tmp/ispconfig3_install/install/autoinstall.php \
-            "$reference"
+        __ Memodifikasi file '`'autoinstall.ini'`'.
+        __ Backup file /tmp/ispconfig3_install/install/autoinstall.ini
+        backupFile copy /tmp/ispconfig3_install/install/autoinstall.ini
+        VarDump mysql_root_passwd
+        sed -e "s,^hostname=.*$,hostname=${FQDN}," \
+            -e "s,^mysql_root_password=.*$,mysql_root_password=${mysql_root_passwd}," \
+            -e "s,^http_server=.*$,http_server=nginx," \
+            -e "s,^ispconfig_use_ssl=.*$,ispconfig_use_ssl=n," \
+            -e "s,^ispconfig_admin_password=.*$,ispconfig_admin_password=${ispconfig_web_user_password}," \
+            -e "s,^mysql_ispconfig_password=.*$,mysql_ispconfig_password=${ispconfig_db_user_password}," \
+            -i /tmp/ispconfig3_install/install//autoinstall.ini
         if php -r "$php" is_different \
-            /tmp/ispconfig3_install/install/autoinstall.php \
+            /tmp/ispconfig3_install/install/autoinstall.ini \
             "$reference";then
-            __; red Modifikasi file '`'autoinstall.php'`' gagal.; exit
+            __; red Modifikasi file '`'autoinstall.ini'`' gagal.; exit
         else
-            __; green File '`'autoinstall.php'`' tidak ada perubahan.
+            __; green Modifikasi file '`'autoinstall.ini'`' berhasil.
         fi
     fi
-    cd /tmp/ispconfig3_install/install/
-    php install.php \
-         --autoinstall=autoinstall.php
+
+    __ Memasang password MySQL untuk root
+    ToggleMysqlRootPassword yes
+
+    __ Mulai autoinstall.
+    php /tmp/ispconfig3_install/install/install.php \
+         --autoinstall=/tmp/ispconfig3_install/install/autoinstall.ini
+
+    __ Mengecek file '`'index.php'`' untuk '`'ISPConfig'`'.
+    if [ -f /usr/local/ispconfig/interface/web/index.php ];then
+        __; green File '`'index.php'`' ditemukan.
+    else
+        __; red File '`'index.php'`' tidak ditemukan.; x
+    fi
+
+    __ Mencopot password MySQL untuk root
+    ToggleMysqlRootPassword no
+
+    __ Menyimpan informasi database.
+    ISPCONFIG_DB_USER=$(php -r "include '/usr/local/ispconfig/interface/lib/config.inc.php';echo DB_USER;")
+    ISPCONFIG_DB_NAME=$(php -r "include '/usr/local/ispconfig/interface/lib/config.inc.php'; echo DB_DATABASE;")
+    databaseCredentialIspconfig
+    if [[ -z "$ispconfig_db_name" ]];then
+            cat << EOF >> /usr/local/share/ispconfig/credential/database
+ISPCONFIG_DB_NAME=$ISPCONFIG_DB_NAME
+EOF
+    fi
+    if [[ -z "$ispconfig_db_user" ]];then
+            cat << EOF >> /usr/local/share/ispconfig/credential/database
+ISPCONFIG_DB_USER=$ISPCONFIG_DB_USER
+EOF
+    fi
     ____
 
+    __ Mengubah kepemelikan directory '`'ISPConfig'`'.
+    magenta chown -R $user_nginx:$user_nginx /usr/local/ispconfig
+    chown -R $user_nginx:$user_nginx /usr/local/ispconfig
+
 fi
+
+yellow Mengecek credentials ISPConfig.
+databaseCredentialIspconfig
+if [[ -z "$ispconfig_db_name" || -z "$ispconfig_db_user" ]];then
+    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/database'`'.; exit
+else
+    magenta ispconfig_db_name="$ispconfig_db_name"
+    magenta ispconfig_db_user="$ispconfig_db_user"
+fi
+____
+
+yellow Mengecek nginx configuration apakah terdapat web root dari ISPConfig
+notfound=
+root=/usr/local/ispconfig/interface/web
+string_quoted=$(pregQuote "$root")
+file_config=$(grep -R -l -E "^\s*root\s+${string_quoted}\s*;" /etc/nginx/sites-enabled | head -1)
+[ -n "$file_config" ] && {
+    file_config=$(realpath $file_config)
+    __ File config found: '`'$file_config'`'.;
+} || {
+    __ File config not found.;
+    notfound=1
+}
+____
+
+nginx_config_file=$ISPCONFIG_NGINX_CONFIG_FILE
+subdomain_localhost=$ISPCONFIG_SUBDOMAIN_LOCALHOST
+
+if [ -n "$notfound" ];then
+    yellow Membuat nginx config.
+    if [ -f /etc/nginx/sites-available/$nginx_config_file ];then
+        __ Backup file /etc/nginx/sites-available/$nginx_config_file
+        backupFile move /etc/nginx/sites-available/$nginx_config_file
+    fi
+    cat <<'EOF' > /etc/nginx/sites-available/$nginx_config_file
+server {
+    listen 80;
+    listen [::]:80;
+    root ROOT;
+    index index.php;
+    server_name SUBDOMAIN_LOCALHOST;
+    location / {
+        try_files $uri /index.php$is_args$args;
+    }
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/phpPHP_VERSION-fpm.sock;
+    }
+}
+EOF
+    sed -i "s|ROOT|${root}|g" /etc/nginx/sites-available/$nginx_config_file
+    sed -i "s|SUBDOMAIN_LOCALHOST|${subdomain_localhost}|g" /etc/nginx/sites-available/$nginx_config_file
+    sed -i "s|PHP_VERSION|${PHP_VERSION}|g" /etc/nginx/sites-available/$nginx_config_file
+    # @todo, ubah juga di drupal
+    cd /etc/nginx/sites-enabled/
+    ln -sf ../sites-available/$nginx_config_file
+    if nginx -t 2> /dev/null;then
+        nginx -s reload
+    else
+        red Terjadi kesalahan konfigurasi nginx. Gagal reload nginx.; exit
+    fi
+    file_config=$(grep -R -l -E "^\s*root\s+${string_quoted}\s*;" /etc/nginx/sites-enabled | head -1)
+    [ -n "$file_config" ] && {
+        file_config=$(realpath $file_config)
+        __; green File config found: '`'$file_config'`'.;
+    } || {
+        __; red File config not found.; exit
+    }
+    ____
+fi
+
+yellow Mengecek subdomain '`'$subdomain_localhost'`'.
+notfound=
+string_quoted=$(pregQuote "$subdomain_localhost")
+if grep -q -E "^\s*127\.0\.0\.1\s+${string_quoted}" /etc/hosts;then
+    __ Subdomain terdapat pada local DNS resolver '`'/etc/hosts'`'.
+else
+    __ Subdomain tidak terdapat pada local DNS resolver '`'/etc/hosts'`'.
+    notfound=1
+fi
+____
+
+if [ -n "$notfound" ];then
+    yellow Menambahkan subdomain '`'$subdomain_localhost'`'.
+    echo "127.0.0.1"$'\t'"${subdomain_localhost}" >> /etc/hosts
+    if grep -q -E "^\s*127\.0\.0\.1\s+${string_quoted}" /etc/hosts;then
+        __; green Subdomain terdapat pada local DNS resolver '`'/etc/hosts'`'.
+    else
+        __; red Subdomain tidak terdapat pada local DNS resolver '`'/etc/hosts'`'.; exit
+    fi
+    ____
+fi
+
+yellow Mengecek HTTP Response Code.
+if nginx -t 2> /dev/null;then
+    magenta nginx -s reload
+    nginx -s reload
+else
+    red Terjadi kesalahan konfigurasi nginx. Gagal reload nginx.; exit
+fi
+magenta curl -L http://127.0.0.1/keepalive.php -H '"'Host: ${subdomain_localhost}'"'
+code=$(curl -L \
+    -o /dev/null -s -w "%{http_code}\n" \
+    http://127.0.0.1/keepalive.php -H "Host: ${subdomain_localhost}")
+[ $code -eq 200 ] && {
+    __ HTTP Response code '`'$code'`' '('Required')'.
+} || {
+    __; red Terjadi kesalahan. HTTP Response code '`'$code'`'.; exit
+}
+magenta curl http://${subdomain_localhost}/keepalive.php
+code=$(curl -L \
+    -o /dev/null -s -w "%{http_code}\n" \
+    http://127.0.0.1/keepalive.php -H "Host: ${subdomain_localhost}")
+__ HTTP Response code '`'$code'`'.
+____
 
 yellow -- FINISH ------------------------------------------------------------
 ____
