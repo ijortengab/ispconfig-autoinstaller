@@ -5,7 +5,7 @@
 dir=$(realpath "$1")
 this_file=$(realpath "$0")
 
-echo "Watching Directory: $dir"
+
 while true; do
     n=3
     until [[ $n == 0 ]]; do
@@ -15,18 +15,18 @@ while true; do
         sleep 1
     done
     printf "\r\033[K" >&2
+    echo "Watching Directory: $dir"
     inotifywait -q -e modify --format "%f" "$dir" | while read -r LINE
     do
         echo "The modify of file ${LINE} is detected."
         if [[ "$this_file" == "$dir/$LINE" ]];then
-            sleep 1
+            sleep .5
             echo This file
         else
             [[ -x "$LINE" ]] &&  {
                 echo Executing....
-                sleep 1
-                cd "$dir"
-                . "$LINE"
+                sleep .5
+                "$dir"/"$LINE"
             }
         fi
     done
