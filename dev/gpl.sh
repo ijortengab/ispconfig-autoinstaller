@@ -1,5 +1,7 @@
 # !/bin/bash
+
 source /home/ijortengab/gist/var-dump.function.sh
+
 # Reference:
 # - https://www.howtoforge.com/perfect-server-debian-10-buster-apache-bind-dovecot-ispconfig-3-1/
 # - https://www.howtoforge.com/perfect-server-debian-10-nginx-bind-dovecot-ispconfig-3.1/
@@ -1759,6 +1761,10 @@ code=$(curl -L \
 __ HTTP Response code '`'$code'`'.
 ____
 
+blue ISPConfig
+sleep .5
+____
+
 databaseCredentialIspconfig() {
     if [ -f /usr/local/share/ispconfig/credential/database ];then
         local ISPCONFIG_DB_NAME ISPCONFIG_DB_USER ISPCONFIG_DB_USER_PASSWORD
@@ -1999,7 +2005,7 @@ server {
     index index.php;
     server_name SUBDOMAIN_LOCALHOST;
     location / {
-        try_files $uri /index.php$is_args$args;
+        try_files $uri $uri/ =404;
     }
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
@@ -2057,19 +2063,19 @@ if nginx -t 2> /dev/null;then
 else
     red Terjadi kesalahan konfigurasi nginx. Gagal reload nginx.; exit
 fi
-magenta curl -L http://127.0.0.1/keepalive.php -H '"'Host: ${subdomain_localhost}'"'
+magenta curl -L http://127.0.0.1/ -H '"'Host: ${subdomain_localhost}'"'
 code=$(curl -L \
     -o /dev/null -s -w "%{http_code}\n" \
-    http://127.0.0.1/keepalive.php -H "Host: ${subdomain_localhost}")
+    http://127.0.0.1/ -H "Host: ${subdomain_localhost}")
 [ $code -eq 200 ] && {
     __ HTTP Response code '`'$code'`' '('Required')'.
 } || {
     __; red Terjadi kesalahan. HTTP Response code '`'$code'`'.; exit
 }
-magenta curl http://${subdomain_localhost}/keepalive.php
+magenta curl http://${subdomain_localhost}/
 code=$(curl -L \
     -o /dev/null -s -w "%{http_code}\n" \
-    http://127.0.0.1/keepalive.php -H "Host: ${subdomain_localhost}")
+    http://127.0.0.1/ -H "Host: ${subdomain_localhost}")
 __ HTTP Response code '`'$code'`'.
 ____
 
