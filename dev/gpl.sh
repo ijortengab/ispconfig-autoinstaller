@@ -2,6 +2,8 @@
 
 source /home/ijortengab/gist/var-dump.function.sh
 
+# todo, check lagi db password ispconfig saat di dump file
+
 # Reference:
 # - https://www.howtoforge.com/perfect-server-debian-10-buster-apache-bind-dovecot-ispconfig-3-1/
 # - https://www.howtoforge.com/perfect-server-debian-10-nginx-bind-dovecot-ispconfig-3.1/
@@ -34,6 +36,24 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# this_file=$(realpath "$0")
+# directory_this_file=$(dirname "$this_file")
+
+# VarDump this_file directory_this_file
+
+# exit
+# if [ -n "$1" ];then
+    # module_name="$1"
+    # @todo, tidak boleh ada spasi.
+    # echo module dijalnkan
+    # exit
+# fi
+# "$this_file" mantab "$@" mantab
+# echo aku
+# echo $1
+# echo bisa
+# exit
+
 [ -n "$timezone" ] || { timezone='Asia/Jakarta'; }
 [ -n "$phpmyadmin_version" ] || { phpmyadmin_version='5.2.0'; }
 [ -n "${roundcube_version}" ] || { roundcube_version='1.6.0'; }
@@ -55,6 +75,7 @@ ISPCONFIG_SUBDOMAIN_LOCALHOST=ispconfig.localhost
 POSTFIX_CONFIG_FILE=/etc/postfix/master.cf
 MYSQL_ROOT_PASSWD=/root/.mysql-root-passwd.txt
 MYSQL_ROOT_PASSWD_INI=/root/.mysql-root-passwd.ini
+ISPCONFIG_INSTALL_DIR=/usr/local/ispconfig
 
 # @todo
 FQDN=server1.mantab.com
@@ -64,7 +85,7 @@ green() { echo -ne "\e[92m"; echo -n "$@"; echo -e "\e[39m"; }
 yellow() { echo -ne "\e[93m"; echo -n "$@"; echo -e "\e[39m"; }
 blue() { echo -ne "\e[94m"; echo -n "$@"; echo -e "\e[39m"; }
 magenta() { echo -ne "\e[95m"; echo -n "$@"; echo -e "\e[39m"; }
-x() { exit; }
+x() { exit 1; }
 e() { echo "$@"; }
 __() { echo -n '    '; [ -n "$1" ] && echo "$@" || echo -n ; }
 ____() { echo; }
@@ -1784,7 +1805,7 @@ EOF
 }
 websiteCredentialIspconfig() {
     if [ -f /usr/local/share/ispconfig/credential/website ];then
-        local ISPCONFIG_WEB_USER ISPCONFIG_WEB_USER_PASSWORD
+        local ISPCONFIG_WEB_USER_PASSWORD
         . /usr/local/share/ispconfig/credential/website
         ispconfig_web_user_password=$ISPCONFIG_WEB_USER_PASSWORD
     else
@@ -2078,6 +2099,215 @@ code=$(curl -L \
     http://127.0.0.1/ -H "Host: ${subdomain_localhost}")
 __ HTTP Response code '`'$code'`'.
 ____
+
+yellow Dump variable from shell.
+ispconfig_db_user_host="$ISPCONFIG_DB_USER_HOST"
+magenta ispconfig_db_user="$ispconfig_db_user"
+magenta ispconfig_db_user_host="$ispconfig_db_user_host"
+magenta ispconfig_db_user_password="$ispconfig_db_user_password"
+magenta ispconfig_db_name="$ispconfig_db_name"
+_ispconfig_db_user=$(php -r "include '$ISPCONFIG_INSTALL_DIR/interface/lib/config.inc.php';echo DB_USER;")
+_ispconfig_db_user_password=$(php -r "include '$ISPCONFIG_INSTALL_DIR/interface/lib/config.inc.php';echo DB_PASSWORD;")
+_ispconfig_db_user_host=$(php -r "include '$ISPCONFIG_INSTALL_DIR/interface/lib/config.inc.php';echo DB_HOST;")
+_ispconfig_db_name=$(php -r "include '$ISPCONFIG_INSTALL_DIR/interface/lib/config.inc.php';echo DB_DATABASE;")
+has_different=
+for string in ispconfig_db_name ispconfig_db_user ispconfig_db_user_host ispconfig_db_user_password
+do
+    parameter=$string
+    parameter_from_shell=${!string}
+    string="_${string}"
+    parameter_from_php=${!string}
+    if [[ ! "$parameter_from_shell" == "$parameter_from_php" ]];then
+        __ Different from PHP Scripts found.
+        __; echo -n Value of '`'"$parameter"'`' from shell:' '
+        echo "$parameter_from_shell"
+        __; echo -n Value of '`'"$parameter"'`' from PHP script:' '
+        echo "$parameter_from_php"
+        has_different=1
+    fi
+done
+if [ -n "$has_different" ];then
+    __; red Terdapat perbedaan value.;exit
+fi
+____
+
+yellow Populate variable.
+
+phpmyadmin_install_dir=/usr/local/share/phpmyadmin/"$phpmyadmin_version"
+roundcube_install_dir=/usr/local/share/roundcube/"$roundcube_version"
+scripts_dir=/usr/local/share/ispconfig/scripts
+magenta phpmyadmin_install_dir="$phpmyadmin_install_dir"
+magenta roundcube_install_dir="$roundcube_install_dir"
+magenta scripts_dir="$scripts_dir"
+____
+
+yellow Mengecek ISPConfig PHP scripts.
+isFileExists /usr/local/share/ispconfig/scripts/soap_config.php
+____
+
+if [ -n "$notfound" ];then
+    yellow Copy ISPConfig PHP scripts.
+    mkdir -p /usr/local/share/ispconfig/scripts
+    cp -f /tmp/ispconfig3_install/remoting_client/examples/* /usr/local/share/ispconfig/scripts
+    fileMustExists /usr/local/share/ispconfig/scripts/soap_config.php
+    __ Memodifikasi scripts.
+    cd /usr/local/share/ispconfig/scripts
+    find * -maxdepth 1 -type f \
+    -not -path 'soap_config.php' \
+    -not -path 'rest_example.php' \
+    -not -path 'ispc-import-csv-email.php' | while read line; do
+    sed -i -e 's,^?>$,echo PHP_EOL;,' \
+           -e "s,'<br />',PHP_EOL," \
+           -e 's,"<br>",PHP_EOL,' \
+           -e "s,<br />','.PHP_EOL," \
+           -e "s,die('SOAP Error: '.\$e->getMessage());,die('SOAP Error: '.\$e->getMessage().PHP_EOL);," \
+           -e "s,\$client_id = 1;,\$client_id = 0;," \
+    ${line}
+    done
+    ____
+fi
+
+yellow Mengecek '`'ispconfig.sh'`' command.
+isFileExists /usr/local/share/ispconfig/bin/ispconfig.sh
+if command -v "ispconfig.sh" >/dev/null;then
+    __ Command found.
+else
+    __ Command not found.
+    notfound=1
+fi
+____
+
+if [ -n "$notfound" ];then
+    yellow Create ISPConfig Command '`'ispconfig.sh'`'.
+    mkdir -p /usr/local/share/ispconfig/bin
+    cat << 'EOF' > /usr/local/share/ispconfig/bin/ispconfig.sh
+#!/bin/bash
+s=|scripts_dir|
+Usage() {
+    echo -e "Usage: ispconfig.sh \e[33m<command>\e[0m [<args>]" >&2
+    echo >&2
+    echo "Available commands: " >&2
+    echo -e '   \e[33mls\e[0m       \e[35m[<prefix>]\e[0m   List PHP Script. Filter by prefix.' >&2
+    echo -e '   \e[33mmktemp\e[0m   \e[35m<script>\e[0m     Create a temporary file based on Script.' >&2
+    echo -e '   \e[33meditor\e[0m   \e[35m<script>\e[0m     Edit PHP Script.' >&2
+    echo -e '   \e[33mphp\e[0m      \e[35m<script>\e[0m     Execute PHP Script.' >&2
+    echo -e '   \e[33mcat\e[0m      \e[35m<script>\e[0m     Get the contents of PHP Script.' >&2
+    echo -e '   \e[33mrealpath\e[0m \e[35m<script>\e[0m     Return the real path of PHP Script.' >&2
+    echo -e '   \e[33mexport\e[0m                Export some variables.' >&2
+    echo >&2
+    echo -e 'Command for switch editor: \e[35mupdate-alternatives --config editor\e[0m' >&2
+}
+if [ -z "$1" ];then
+    Usage
+    exit
+fi
+case "$1" in
+    -h|--help)
+        Usage
+        exit
+        ;;
+    ls)
+        if [ -z "$2" ];then
+            ls "$s"
+        else
+            cd "$s"
+            ls "$2"*
+        fi
+        ;;
+    mktemp)
+        if [ -f "$s/$2" ];then
+            filename="${2%.*}"
+            temp=$(mktemp -p "$s" \
+                -t "$filename"_temp_XXXXX.php)
+            cd "$s"
+            cp "$2" "$temp"
+            echo $(basename $temp)
+        fi
+        ;;
+    editor)
+        if [ -f "$s/$2" ];then
+            editor "$s/$2"
+        fi
+        ;;
+    php)
+        if [ -f "$s/$2" ];then
+            php "$s/$2"
+        fi
+        ;;
+    cat)
+        if [ -f "$s/$2" ];then
+            cat "$s/$2"
+        fi
+        ;;
+    realpath)
+        if [ -f "$s/$2" ];then
+            echo "$s/$2"
+        fi
+        ;;
+    export)
+        echo phpmyadmin_install_dir=|phpmyadmin_install_dir|
+        echo roundcube_install_dir=|roundcube_install_dir|
+        echo ispconfig_install_dir=|ispconfig_install_dir|
+        echo scripts_dir=|scripts_dir|
+        phpmyadmin_install_dir=|phpmyadmin_install_dir|
+        roundcube_install_dir=|roundcube_install_dir|
+        ispconfig_install_dir=|ispconfig_install_dir|
+        scripts_dir=|scripts_dir|
+esac
+EOF
+    chmod a+x /usr/local/share/ispconfig/bin/ispconfig.sh
+    sed -i 's,|phpmyadmin_install_dir|,'"${phpmyadmin_install_dir}"',' /usr/local/share/ispconfig/bin/ispconfig.sh
+    sed -i 's,|roundcube_install_dir|,'"${roundcube_install_dir}"',' /usr/local/share/ispconfig/bin/ispconfig.sh
+    sed -i 's,|ispconfig_install_dir|,'"${ISPCONFIG_INSTALL_DIR}"',' /usr/local/share/ispconfig/bin/ispconfig.sh
+    sed -i 's,|scripts_dir|,'"${scripts_dir}"',' /usr/local/share/ispconfig/bin/ispconfig.sh
+    ln -sf /usr/local/share/ispconfig/bin/ispconfig.sh /usr/local/bin/ispconfig.sh
+    if command -v "ispconfig.sh" >/dev/null;then
+        __; green Command found.
+    else
+        __; red Command not found.; x
+    fi
+    ____
+fi
+
+yellow Mengecek '`'ispconfig.sh'`' autocompletion.
+isFileExists /etc/profile.d/ispconfig-completion.sh
+____
+
+if [ -n "$notfound" ];then
+    yellow Create ISPConfig Command '`'ispconfig.sh'`' Autocompletion.
+    cat << 'EOF' > /etc/profile.d/ispconfig-completion.sh
+#!/bin/bash
+_ispconfig_sh() {
+    local scripts_dir=|scripts_dir|
+    local cur
+    cur=${COMP_WORDS[COMP_CWORD]}
+    prev=${COMP_WORDS[COMP_CWORD-1]}
+    case ${COMP_CWORD} in
+        1)
+            COMPREPLY=($(compgen -W "ls php editor mktemp cat realpath export" -- ${cur}))
+            ;;
+        2)
+            if [[ "${prev}" == 'export' ]];then
+                COMPREPLY=()
+            elif [ -z ${cur} ];then
+                COMPREPLY=($(ls "$scripts_dir" | awk -F '_' '!x[$1]++{print $1}'))
+            else
+                words_merge=$(ls "$scripts_dir" | xargs)
+                COMPREPLY=($(compgen -W "$words_merge" -- ${cur}))
+            fi
+            ;;
+        *)
+            COMPREPLY=()
+            ;;
+    esac
+}
+complete -F _ispconfig_sh ispconfig.sh
+EOF
+    chmod a+x /etc/profile.d/ispconfig-completion.sh
+    sed -i 's,|scripts_dir|,'"${scripts_dir}"',' /etc/profile.d/ispconfig-completion.sh
+    fileMustExists /etc/profile.d/ispconfig-completion.sh
+    ____
+fi
 
 yellow -- FINISH ------------------------------------------------------------
 ____
