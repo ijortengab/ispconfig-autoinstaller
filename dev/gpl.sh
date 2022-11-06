@@ -1222,7 +1222,7 @@ switch ($mode) {
     case 'is_different':
         $is_different ? exit(0) : exit(1);
         break;
-    case 'replace':
+    case 'save':
         if ($is_different) {
             $cfg = array_replace_recursive($cfg, $append);
             $content = '$cfg = '.var_export($cfg, true).';'.PHP_EOL;
@@ -1254,7 +1254,7 @@ if [ -n "$is_different" ];then
     yellow Memodifikasi file '`'config.inc.php'`'.
     __ Backup file /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php
     backupFile copy /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php
-    php -r "$php" replace \
+    php -r "$php" save \
         /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php \
         $phpmyadmin_blowfish \
         $PHPMYADMIN_DB_USER_HOST \
@@ -1621,7 +1621,7 @@ switch ($mode) {
     case 'is_different':
         $is_different ? exit(0) : exit(1);
         break;
-    case 'replace':
+    case 'save':
         if ($is_different) {
             $config = array_replace_recursive($config, $append);
             $content = '$config = '.var_export($config, true).';'.PHP_EOL;
@@ -1661,7 +1661,7 @@ if [ -n "$is_different" ];then
     yellow Memodifikasi file '`'config.inc.php'`'.
     __ Backup file /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php
     backupFile copy /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php
-    php -r "$php" replace \
+    php -r "$php" save \
         /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php \
         $roundcube_blowfish \
         "mysql://${roundcube_db_user}:${roundcube_db_user_password}@${ROUNDCUBE_DB_USER_HOST}/${ROUNDCUBE_DB_NAME}" \
@@ -1891,10 +1891,10 @@ if [ -n "$notfound" ];then
     yellow Menginstall ISPConfig
     if [ ! -f /tmp/ispconfig3_install/install/install.php ];then
         __ Mendownload ISPConfig
-        cd /tmp
         if [ ! -f /tmp/ISPConfig-3-stable.tar.gz ];then
             wget http://www.ispconfig.org/downloads/ISPConfig-3-stable.tar.gz
         fi
+        cd /tmp
         __ Mengextract ISPConfig
         tar xfz ISPConfig-3-stable.tar.gz
     fi
