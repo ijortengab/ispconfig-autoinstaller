@@ -81,6 +81,12 @@ if [[ ! $(hostname -f) == $FQCDN ]];then
     exit
 fi
 
+echo -n $'\n''########################################'
+echo         '########################################'
+echo $'\n''#' CHAPTER 1. SETUP SERVER
+echo -n $'\n''########################################'
+echo         '########################################'
+
 echo $'\n''#' Update Repository for PHP 7.4
 [ -f /etc/apt/trusted.gpg.d/php.gpg ] || {
     wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
@@ -98,6 +104,43 @@ fi
 echo $'\n''#' Disable Sendmail '(if any)'
 [ -z "$(systemctl list-unit-files --state=enabled | grep sendmail.service)" ] || {
     service sendmail stop; update-rc.d -f sendmail remove
+}
+
+command -v php > /dev/null || {
+
+echo $'\n''#' Search PHP 7.4 in Cache
+if [ $(apt-cache search php7.4 | wc -l ) == 0 ];then
+    echo PHP-7.4 not found.
+    echo -e '\033[0;31m'Script terminated.'\033[0m'
+    exit 1
+fi
+
+apt -y install nginx php7.4 \
+php7.4-{common,gd,mysql,imap,cli,fpm,curl,intl,pspell,sqlite3,tidy,xmlrpc,xsl,zip,mbstring,soap,opcache}
+cd      /etc/php/7.4/fpm/
+sed -i  's|^;date\.timezone =$|date.timezone = '"$TIMEZONE"'|' php.ini
+/etc/init.d/php7.4-fpm restart
+}
+command -v mysql > /dev/null || {
+apt -y install mariadb-client mariadb-server
+cd      /etc/mysql/mariadb.conf.d/
+sed -i  "s/bind-address/# bind-address/" 50-server.cnf
+echo    "update mysql.user set plugin = 'mysql_native_password' where user='root';" | mysql -u root
+echo    "" >> /etc/security/limits.conf
+echo    "# Custom" >> /etc/security/limits.conf
+echo    "mysql soft nofile 65535" >> /etc/security/limits.conf
+echo    "mysql hard nofile 65535" >> /etc/security/limits.conf
+mkdir -p /etc/systemd/system/mysql.service.d/
+CONTENT=$(cat <<- 'EOF'
+[Service]
+LimitNOFILE=infinity
+EOF
+)
+echo "$CONTENT" >> /etc/systemd/system/mysql.service.d/limits.conf
+systemctl daemon-reload
+systemctl restart mariadb
+}
+
 }
 
 echo $'\n''#' Install Snapd and Certbot

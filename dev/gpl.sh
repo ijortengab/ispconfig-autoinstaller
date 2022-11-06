@@ -1853,14 +1853,12 @@ switch ($mode) {
 EOF
 )
 
-yellow Mengecek file '`'index.php'`' untuk '`'ISPConfig'`'.
-notfound=
-if [ -f /usr/local/ispconfig/interface/web/index.php ];then
-    __ File '`'index.php'`' ditemukan.
-else
-    __ File '`'index.php'`' tidak ditemukan.
-    notfound=1
-fi
+filename_path=/usr/local/ispconfig/interface/web/index.php
+filename=$(basename "$filename_path")
+yellow Mengecek existing '`'$filename'`'
+magenta filename_path=$filename_path
+isFileExists "$filename_path"
+# VarDump notfound found
 ____
 
 if [ -n "$notfound" ];then
@@ -1953,12 +1951,8 @@ if [ -n "$notfound" ];then
     php /tmp/ispconfig3_install/install/install.php \
          --autoinstall=/tmp/ispconfig3_install/install/autoinstall.ini
 
-    __ Mengecek file '`'index.php'`' untuk '`'ISPConfig'`'.
-    if [ -f /usr/local/ispconfig/interface/web/index.php ];then
-        __; green File '`'index.php'`' ditemukan.
-    else
-        __; red File '`'index.php'`' tidak ditemukan.; x
-    fi
+    __ Mengecek existing '`'$filename'`'
+    fileMustExists "$filename_path" #@todo, apakah ini bisa?
 
     __ Mencopot password MySQL untuk root
     ToggleMysqlRootPassword no
