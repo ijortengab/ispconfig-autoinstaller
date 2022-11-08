@@ -3,6 +3,11 @@
 source /home/ijortengab/gist/var-dump.function.sh
 
 # todo, check lagi db password ispconfig saat di dump file
+# todo, beritahu kalo script ini memproduksi command bernama
+# `ispconfig.sh`
+
+# @todo, roundcube versi kesekian udah gak ada lagi
+# smtp port. hati2.
 
 # Reference:
 # - https://www.howtoforge.com/perfect-server-debian-10-buster-apache-bind-dovecot-ispconfig-3-1/
@@ -79,6 +84,10 @@ ISPCONFIG_INSTALL_DIR=/usr/local/ispconfig
 
 # @todo
 FQDN=server1.mantab.com
+
+# @todo
+# https://forum.howtoforge.com/threads/postfix-filter-lmtp.87071/#post-423707
+# @ todo amavis nyala ternyata, matikan
 
 red() { echo -ne "\e[91m"; echo -n "$@"; echo -e "\e[39m"; }
 green() { echo -ne "\e[92m"; echo -n "$@"; echo -e "\e[39m"; }
