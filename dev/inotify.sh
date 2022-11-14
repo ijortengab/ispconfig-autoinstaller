@@ -3,7 +3,7 @@
 [ -z "$1" ] && { echo Argument Directory required; exit; }
 [ -d "$1" ] || { echo Directory not exists; exit; }
 delay_before_start="$2"
-[ -n "$delay_before_start" ] || { delay_before_start=1; }
+[ -n "$delay_before_start" ] || { delay_before_start=0; }
 dir=$(realpath "$1")
 this_file=$(realpath "$0")
 n="$delay_before_start"
