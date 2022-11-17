@@ -32,6 +32,11 @@ subdomain_ispconfig=cp
 subdomain_phpmyadmin=db
 subdomain_roundcube=mail
 
+email_admin=admin
+email_host=hostmaster
+email_web=webmaster
+email_post=postmaster
+
 # populate variable
 fqdn="${subdomain_fqdn}.${domain}"
 fqdn_phpmyadmin="${subdomain_phpmyadmin}.${domain}"
@@ -422,6 +427,7 @@ fi
 # @todo: devel.
 mail_provider=server1.systemix.id
 domain=bta.my.id
+# domain=batakx.my.id
 
 # data="v=spf1 a:${mail_provider} ~all"
 # php=$(cat <<-'EOF'
@@ -431,42 +437,78 @@ domain=bta.my.id
 # )
 # data=$(php -r "$php" "$data" )
 # if isRecordExist TXT $domain $domain "$data";then
-    # __ DNS TXT Record of "'"${domain}"'" for SPF found in DNS Digital Ocean.
+    # __ DNS TXT Record of '`'$domain'`' for SPF found in DNS Digital Ocean.
 # elif insertRecord TXT $domain '@' "$data";then
-    # __; green DNS TXT Record of "'"${domain}"'" for SPF created in DNS Digital Ocean.
+    # __; green DNS TXT Record of '`'$domain'`' for SPF created in DNS Digital Ocean.
 # fi
 
-# yellow Mengecek domain '`'$domain'`' di Module Mail ISPConfig.
-# php=$(cat <<-'EOF'
-# $result = unserialize(fgets(STDIN));
-# if ($result === false) {
-    # exit(1);
-# }
-# exit(0);
-# EOF
-# )
-# notfound=
-# __ Create PHP Script from template '`'mail_domain_get_by_domain'`'.
-# template=mail_domain_get_by_domain
-# template_temp=$(ispconfig.sh mktemp "${template}.php")
-# template_temp_path=$(ispconfig.sh realpath "$template_temp")
-# __; magenta template_temp_path="$template_temp_path"
-# sed -i -E -e '/echo/d' -e '/^\s*$/d' -e 's,\t,    ,g' -e 's/print_r/echo serialize/' \
-    # -e 's/\$domain\s+=\s+[^;]+;/\$domain = "'"$DOMAIN"'";/' \
-    # "$template_temp_path"
-# contents=$(<"$template_temp_path")
-# __ Execute PHP Script.
-# magenta "$contents"
-# ispconfig.sh php "$template_temp" | php -r "$php" || notfound=1
-# __ Cleaning temporary file.
-# __; magenta rm "$template_temp_path"
-# rm "$template_temp_path"
-# ____
+yellow Mengecek domain '`'$domain'`' di Module Mail ISPConfig.
+php=$(cat <<-'EOF'
+$stdin = '';
+while (FALSE !== ($line = fgets(STDIN))) {
+   $stdin .= $line;
+}
+$result = unserialize($stdin);
+$mode = $_SERVER['argv'][1];
+switch ($mode) {
+    case 'get_dkim_public':
+        echo $result[0]['dkim_public'];
+        break;
+
+    case 'get_dkim_selector':
+        echo $result[0]['dkim_selector'];
+        break;
+
+    case 'get_dkim_private':
+        echo $result[0]['dkim_private'];
+        break;
+
+    case 'isset':
+        if ($result === []) { // empty array
+            exit(1); // not found.
+        }
+        exit(0);
+        break;
+}
+EOF
+)
+notfound=
+__ Create PHP Script from template '`'mail_domain_get_by_domain'`'.
+template=mail_domain_get_by_domain
+template_temp=$(ispconfig.sh mktemp "${template}.php")
+template_temp_path=$(ispconfig.sh realpath "$template_temp")
+__; magenta template_temp_path="$template_temp_path"
+sed -i -E -e '/echo/d' -e '/^\s*$/d' -e 's,\t,    ,g' -e 's/print_r/echo serialize/' \
+    -e 's/\$domain\s+=\s+[^;]+;/\$domain = "'"$domain"'";/' \
+    "$template_temp_path"
+contents=$(<"$template_temp_path")
+__ Execute PHP Script.
+magenta "$contents"
+stdout=$(ispconfig.sh php "$template_temp")
+php -r "$php" isset <<< "$stdout" || notfound=1
+if [ -z "$notfound" ];then
+    _dkim_selector=$(php -r "$php" get_dkim_selector <<< "$stdout")
+    dkim_public=$(php -r "$php" get_dkim_public <<< "$stdout")
+    VarDump dkim_selector _dkim_selector  dkim_public
+    if [[ ! "$dkim_selector" == "$_dkim_selector" ]];then
+        __; red Terdapat perbedaan antara dkim_selector versi database dengan user input.
+        __; red Menggunakan value versi database.
+        __; magenta dkim_selector="$_dkim_selector"
+        dkim_selector="$_dkim_selector"
+    fi
+    dns_record=$(echo "$dkim_public" | sed -e "/-----BEGIN PUBLIC KEY-----/d" -e "/-----END PUBLIC KEY-----/d" | tr '\n' ' ' | sed 's/\ //g')
+fi
+
+__ Cleaning temporary file.
+__; magenta rm "$template_temp_path"
+rm "$template_temp_path"
+____
 
 # @todo: devel.
+VarDump dkim_selector _dkim_selector  dkim_public dns_record
 VarDump notfound
-notfound=1
-
+# notfound=1
+# x
 # @todo: jika false,maka nggak ada, maka generate pair code.
 json=
 if [ -n "$notfound" ];then
@@ -483,10 +525,11 @@ if [ -n "$notfound" ];then
     fileMustExists "${dirname}/${temp_ajax_get_json}"
     sed -i "/\$app->auth->check_module_permissions('mail');/d" "${dirname}/${temp_ajax_get_json}"
     php=$(cat <<- 'EOF'
-$file = $_SERVER['argv'][1];
-$domain = $_SERVER['argv'][2];
-$dkim_selector = $_SERVER['argv'][3];
-chdir(dirname($file));
+$dirname = $_SERVER['argv'][1];
+$file = $_SERVER['argv'][2];
+$domain = $_SERVER['argv'][3];
+$dkim_selector = $_SERVER['argv'][4];
+chdir($dirname);
 $_GET['type'] = 'create_dkim';
 $_GET['domain_id'] = $domain;
 $_GET['dkim_selector'] = $dkim_selector;
@@ -494,7 +537,7 @@ $_GET['dkim_public'] = '';
 include_once $file;
 EOF
 )
-    json=$(php -r "$php" "${dirname}/${temp_ajax_get_json}" "$domain" "$dkim_selector")
+    json=$(php -r "$php" "$dirname" "${dirname}/${temp_ajax_get_json}" "$domain" "$dkim_selector")
     __ Cleaning temporary file.
     __; magenta rm "$temp_ajax_get_json"
     rm "${dirname}/${temp_ajax_get_json}"
@@ -504,13 +547,6 @@ if [ -n "$json" ];then
     dkim_private=$(php -r "echo (json_decode(fgets(STDIN)))->dkim_private;" <<< "$json")
     dkim_public=$(php -r "echo (json_decode(fgets(STDIN)))->dkim_public;" <<< "$json")
     dns_record=$(php -r "echo (json_decode(fgets(STDIN)))->dns_record;" <<< "$json")
-    data="v=DKIM1; t=s; p=${dns_record}"
-    php=$(cat <<-'EOF'
-$data = $_SERVER['argv'][1];
-echo '"'.implode('""', str_split($data, 200)).'"';
-EOF
-)
-    data=$(php -r "$php" "$data" )
     yellow Mendaftarkan domain '`'$domain'`' di Module Mail ISPConfig.
     __ Create PHP Script from template '`'mail_domain_add'`'.
     template=mail_domain_add
@@ -522,35 +558,40 @@ EOF
     parameter+="\t\t'domain' => '${domain}',\n"
     parameter+="\t\t'active' => 'y',\n"
     parameter+="\t\t'dkim' => 'y',\n"
-    # parameter+="\t\t'dkim_selector' => '\${dkim_selector}',\n"
-    # parameter+="\t\t'dkim_private' => '\${dkim_private}',\n"
-    # parameter+="\t\t'dkim_public' => '\${dkim_public}',\n"
     parameter+="\t\t'dkim_selector' => '${dkim_selector}',\n"
-    parameter+="\t\t'dkim_private' => '',\n"
-    parameter+="\t\t'dkim_public' => '',\n"
-
-    # pe er disini
-    # ganti pake php ajah.
-    VarDump parameter dkim_public
+    parameter+="\t\t'dkim_private' => '"
+    while IFS= read -r line; do
+        parameter+="${line}\n"
+    done <<< "$dkim_private"
+    parameter="${parameter:0:-2}"
+    parameter+="',\n"
+    parameter+="\t\t'dkim_public' => '"
+    while IFS= read -r line; do
+        parameter+="${line}\n"
+    done <<< "$dkim_public"
+    parameter="${parameter:0:-2}"
+    parameter+="',\n"
     sed -i -E \
         -e ':a;N;$!ba;s|\$params\s+=\s+[^;]+;|\$params = array(\n'"${parameter}"'\n\t);|g' \
         "$template_temp_path"
     sed -i -E -e '/echo/d' -e '/^\s*$/d' -e 's,\t,    ,g' \
         "$template_temp_path"
-    sed -i "s.'dkim_public' => '',.'dkim_public' => '${dkim_public}'." \
-        "$template_temp_path"
     contents=$(<"$template_temp_path")
     __ Execute PHP Script.
     magenta "$contents"
-    # ispconfig.sh php "$template_temp"
+    ispconfig.sh php "$template_temp"
     __ Cleaning temporary file.
     __; magenta rm "$template_temp_path"
     rm "$template_temp_path"
     __ Verifikasi:
     php=$(cat <<-'EOF'
-$result = unserialize(fgets(STDIN));
-if ($result === false) {
-    exit(1);
+$stdin = '';
+while (FALSE !== ($line = fgets(STDIN))) {
+   $stdin .= $line;
+}
+$result = unserialize($stdin);
+if ($result === []) { // empty array
+    exit(1); // not found.
 }
 exit(0);
 EOF
@@ -563,17 +604,48 @@ EOF
         "$template_temp_path"
     contents=$(<"$template_temp_path")
     magenta "$contents"
-    ispconfig.sh php "$template_temp"
-    # string=$(ispconfig.sh php "$template_temp")
-    # string=$(php -r "echo serialize($string);")
-    # rm "$template_temp_path"
-    # if php -r "$php" is_exists "$string";then
-        # __; green Domain berhasil terdaftar.
-    # else
-        # __; red Domain gagal terdaftar.; x
-    # fi
+    notfound=
+    ispconfig.sh php "$template_temp" | php -r "$php" || notfound=1
+    if [ -n "$notfound" ];then
+        __; red Domain gagal terdaftar.; x
+    else
+        __; green Domain berhasil terdaftar.
+    fi
+    ____
 fi
 
-x
+data="v=DKIM1; t=s; p=${dns_record}"
+php=$(cat <<-'EOF'
+$data = $_SERVER['argv'][1];
+echo '"'.implode('""', str_split($data, 200)).'"';
+EOF
+)
+data=$(php -r "$php" "$data" )
 
-__ Verifikasi:
+# name_find=$dkim_selector._domainkey.$domain
+# name_insert=$dkim_selector._domainkey
+# if isRecordExist TXT $domain $name_find "$data";then
+    # __ DNS TXT Record of '`'$domain'`' for DKIM found in DNS Digital Ocean.
+# elif insertRecord TXT $domain $name_insert "$data";then
+    # __; green DNS TXT Record of '`'$domain'`' for DKIM created in DNS Digital Ocean.
+# fi
+
+data="v=DMARC1; p=none; rua=${email_post}@${domain}"
+php=$(cat <<-'EOF'
+$data = $_SERVER['argv'][1];
+echo '"'.implode('""', str_split($data, 200)).'"';
+EOF
+)
+data=$(php -r "$php" "$data" )
+
+name_find=_dmarc.$domain
+name_insert=_dmarc
+if isRecordExist TXT $domain $name_find "$data";then
+    __ DNS TXT Record of '`'$domain'`' for DMARC found in DNS Digital Ocean.
+elif insertRecord TXT $domain $name_insert "$data";then
+    __; green DNS TXT Record of '`'$domain'`' for DMARC created in DNS Digital Ocean.
+fi
+
+yellow Script Finished
+
+blue PHPMyAdmin
