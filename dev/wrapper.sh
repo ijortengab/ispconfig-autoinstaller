@@ -1,4 +1,18 @@
 #!/bin/bash
+
+# ------------------------------------------------------------------------------
+
+this_file=$(realpath "$0")
+directory_this_file=$(dirname "$this_file")
+"${directory_this_file}/gpl-ispconfig-variation1.sh" \
+    --help
+
+# ------------------------------------------------------------------------------
+
+exit 0
+
+
+
 source /home/ijortengab/gist/var-dump.function.sh
 # @todo: devel
 
@@ -57,7 +71,7 @@ directory_this_file=$(dirname "$this_file")
 VarDump this_file directory_this_file
 
 mengapa() {
-echo mengapa 
+echo mengapa
 }
 # Jika ada module, maka
 if [ -n "$1" ];then
@@ -67,16 +81,13 @@ if [ -n "$1" ];then
         echo mantab
         . "$directory_this_file/$module_name" "${ORIGINAL_ARGUMENTS[@]}"
 
-    fi 
+    fi
     exit
 fi
 
 $this_file 'check.sh' "$@"
 
 exit
-
-this_file=$(realpath "$0")
-directory_this_file=$(dirname "$this_file")
 
 cleaning() {
     echo mantab
