@@ -1,96 +1,12 @@
-# !/bin/bash
+#!/bin/bash
 
-source /home/ijortengab/gist/var-dump.function.sh
-
-red() { echo -ne "\e[91m"; echo -n "$@"; echo -e "\e[39m"; }
-green() { echo -ne "\e[92m"; echo -n "$@"; echo -e "\e[39m"; }
-yellow() { echo -ne "\e[93m"; echo -n "$@"; echo -e "\e[39m"; }
-blue() { echo -ne "\e[94m"; echo -n "$@"; echo -e "\e[39m"; }
-magenta() { echo -ne "\e[95m"; echo -n "$@"; echo -e "\e[39m"; }
-x() { exit 1; }
-e() { echo "$@"; }
-__() { echo -n '    '; [ -n "$1" ] && echo "$@" || echo -n ; }
-____() { echo; }
+if [[ ! $parent_pid == $$ ]];then
+    echo This script cannot execute directly. >&2; exit 1
+fi
 
 # Dependencies.
 command -v "ispconfig.sh" >/dev/null || { __; red Command "ispconfig.sh" not found.; x; }
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --phpmyadmin-version=*) phpmyadmin_version="${1#*=}"; shift ;;
-        --phpmyadmin-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then phpmyadmin_version="$2"; shift; fi; shift ;;
-        --roundcube-version=*) roundcube_version="${1#*=}"; shift ;;
-        --roundcube-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then roundcube_version="$2"; shift; fi; shift ;;
-        --timezone=*) timezone="${1#*=}"; shift ;;
-        --timezone) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then timezone="$2"; shift; fi; shift ;;
-        --[^-]*) shift ;;
-        *) shift ;;
-    esac
-done
-
-# todo, define ini ditaro dimana sebaiknya.
-REMOTE_USER_ROUNDCUBE=roundcube
-REMOTE_USER_ROOT=root
-
-# Reference:
-# - https://www.howtoforge.com/perfect-server-debian-10-buster-apache-bind-dovecot-ispconfig-3-1/
-# - https://www.howtoforge.com/perfect-server-debian-10-nginx-bind-dovecot-ispconfig-3.1/
-
-# parse-options.sh \
-# --without-end-options-double-dash \
-# --compact \
-# --clean \
-# --no-hash-bang \
-# --no-rebuild-arguments \
-# --no-original-arguments \
-# --no-error-invalid-options \
-# --no-error-require-arguments << EOF | clip
-# VALUE=(
-# --timezone
-# --phpmyadmin-version
-# --roundcube-version
-# )
-# EOF
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --phpmyadmin-version=*) phpmyadmin_version="${1#*=}"; shift ;;
-        --phpmyadmin-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then phpmyadmin_version="$2"; shift; fi; shift ;;
-        --roundcube-version=*) roundcube_version="${1#*=}"; shift ;;
-        --roundcube-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then roundcube_version="$2"; shift; fi; shift ;;
-        --timezone=*) timezone="${1#*=}"; shift ;;
-        --timezone) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then timezone="$2"; shift; fi; shift ;;
-        --[^-]*) shift ;;
-        *) shift ;;
-    esac
-done
-
-[ -n "$timezone" ] || { timezone='Asia/Jakarta'; }
-[ -n "$phpmyadmin_version" ] || { phpmyadmin_version='5.2.0'; }
-[ -n "${roundcube_version}" ] || { roundcube_version='1.6.0'; }
-NOW=$(date +%Y%m%d-%H%M%S)
-PHP_VERSION=7.4
-PHPMYADMIN_DB_NAME=phpmyadmin
-ROUNDCUBE_DB_NAME=roundcubemail
-PHPMYADMIN_DB_USER_HOST=localhost
-ROUNDCUBE_DB_USER_HOST=localhost
-ISPCONFIG_DB_USER_HOST=localhost
-PHPMYADMIN_DB_USER=pma
-ROUNDCUBE_DB_USER=roundcube
-PHPMYADMIN_NGINX_CONFIG_FILE=phpmyadmin
-ROUNDCUBE_NGINX_CONFIG_FILE=roundcube
-ISPCONFIG_NGINX_CONFIG_FILE=ispconfig
-PHPMYADMIN_SUBDOMAIN_LOCALHOST=phpmyadmin.localhost
-ROUNDCUBE_SUBDOMAIN_LOCALHOST=roundcube.localhost
-ISPCONFIG_SUBDOMAIN_LOCALHOST=ispconfig.localhost
-POSTFIX_CONFIG_FILE=/etc/postfix/master.cf
-MYSQL_ROOT_PASSWD=/root/.mysql-root-passwd.txt
-MYSQL_ROOT_PASSWD_INI=/root/.mysql-root-passwd.ini
-ISPCONFIG_INSTALL_DIR=/usr/local/ispconfig
-
-# @todo
-FQDN=server1.mantab.com
-
-# gpl.sh ispconfig-manager $@
 command -v databaseCredentialIspconfig >/dev/null || {
 databaseCredentialIspconfig() {
     if [ -f /usr/local/share/ispconfig/credential/database ];then
@@ -108,53 +24,6 @@ EOF
         chmod 0500 /usr/local/share/ispconfig/credential
         chmod 0400 /usr/local/share/ispconfig/credential/database
     fi
-}
-}
-command -v fileMustExists >/dev/null || {
-fileMustExists() {
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
-}
-command -v isFileExists >/dev/null || {
-isFileExists() {
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
-}
-}
-command -v backupFile >/dev/null || {
-backupFile() {
-    local mode="$1"
-    local oldpath="$2" i newpath
-    i=1
-    newpath="${oldpath}.${i}"
-    if [ -f "$newpath" ]; then
-        let i++
-        newpath="${oldpath}.${i}"
-        while [ -f "$newpath" ] ; do
-            let i++
-            newpath="${oldpath}.${i}"
-        done
-    fi
-    case $mode in
-        move)
-            mv "$oldpath" "$newpath" ;;
-        copy)
-            local user=$(stat -c "%U" "$oldpath")
-            local group=$(stat -c "%G" "$oldpath")
-            cp "$oldpath" "$newpath"
-            chown ${user}:${group} "$newpath"
-    esac
 }
 }
 
@@ -276,9 +145,9 @@ EOF
     fi
 }
 
-yellow Mengecek Remote User ISPConfig '"'$REMOTE_USER_ROOT'"'
+yellow Mengecek Remote User ISPConfig '"'$remote_user_root'"'
 notfound=
-if isRemoteUsernameIspconfigExist "$REMOTE_USER_ROOT" ;then
+if isRemoteUsernameIspconfigExist "$remote_user_root" ;then
     __ Found '(remote_userid:'$remote_userid')'.
 else
     __ Not Found.
@@ -287,7 +156,7 @@ fi
 ____
 
 if [ -n "$notfound" ];then
-    yellow Insert Remote User ISPConfig '"'$REMOTE_USER_ROOT'"'
+    yellow Insert Remote User ISPConfig '"'$remote_user_root'"'
     functions='server_get,server_config_set,get_function_list,client_templates_get_all,server_get_serverid_by_ip,server_ip_get,server_ip_add,server_ip_update,server_ip_delete,system_config_set,system_config_get,config_value_get,config_value_add,config_value_update,config_value_replace,config_value_delete
 admin_record_permissions
 client_get_id,login,logout,mail_alias_get,mail_fetchmail_add,mail_fetchmail_delete,mail_fetchmail_get,mail_fetchmail_update,mail_policy_get,mail_spamfilter_blacklist_add,mail_spamfilter_blacklist_delete,mail_spamfilter_blacklist_get,mail_spamfilter_blacklist_update,mail_spamfilter_user_add,mail_spamfilter_user_get,mail_spamfilter_user_update,mail_spamfilter_whitelist_add,mail_spamfilter_whitelist_delete,mail_spamfilter_whitelist_get,mail_spamfilter_whitelist_update,mail_user_filter_add,mail_user_filter_delete,mail_user_filter_get,mail_user_filter_update,mail_user_get,mail_user_update,server_get,server_get_app_version
@@ -345,26 +214,26 @@ dns_sshfp_get,dns_sshfp_add,dns_sshfp_update,dns_sshfp_delete
 dns_tlsa_get,dns_tlsa_add,dns_tlsa_update,dns_tlsa_delete
 dns_txt_get,dns_txt_add,dns_txt_update,dns_txt_delete
 vm_openvz'
-    remoteUserCredentialIspconfig $REMOTE_USER_ROOT
+    remoteUserCredentialIspconfig $remote_user_root
     if [[ -z "$ispconfig_remote_user_password" ]];then
-        __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/remote/$REMOTE_USER_ROOT'`'.; x
+        __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/remote/$remote_user_root'`'.; x
     else
         magenta ispconfig_remote_user_password="$ispconfig_remote_user_password"
     fi
     # Populate Variable.
     . ispconfig.sh export >/dev/null
     magenta ispconfig_install_dir="$ispconfig_install_dir"
-    if insertRemoteUsernameIspconfig  "$REMOTE_USER_ROOT" "$ispconfig_remote_user_password" "$functions" ;then
-        __; green Remote username "$REMOTE_USER_ROOT" created '(remote_userid:'$remote_userid')'.
+    if insertRemoteUsernameIspconfig  "$remote_user_root" "$ispconfig_remote_user_password" "$functions" ;then
+        __; green Remote username "$remote_user_root" created '(remote_userid:'$remote_userid')'.
     else
-        __; red Remote username "$REMOTE_USER_ROOT" failed to create.; x
+        __; red Remote username "$remote_user_root" failed to create.; x
     fi
 fi
 
 yellow Mengecek file '`'soap_config.php'`'.
-remoteUserCredentialIspconfig $REMOTE_USER_ROOT
+remoteUserCredentialIspconfig $remote_user_root
 if [[ -z "$ispconfig_remote_user_password" ]];then
-    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/remote/$REMOTE_USER_ROOT'`'.; x
+    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/remote/$remote_user_root'`'.; x
 else
     magenta ispconfig_remote_user_password="$ispconfig_remote_user_password"
 fi
@@ -432,7 +301,7 @@ FQCDN_ISPCONFIG=$ISPCONFIG_SUBDOMAIN_LOCALHOST
 is_different=
 if php -r "$php" is_different \
     "$soap_config" \
-    $REMOTE_USER_ROOT \
+    $remote_user_root \
     $ispconfig_remote_user_password \
     $FQCDN_ISPCONFIG;then
     is_different=1
@@ -449,14 +318,14 @@ if [ -n "$is_different" ];then
     cat <<EOF > "$soap_config"
 <?php
 
-\$username = '$REMOTE_USER_ROOT';
+\$username = '$remote_user_root';
 \$password = '$ispconfig_remote_user_password';
 \$soap_location = 'http://$FQCDN_ISPCONFIG/remote/index.php';
 \$soap_uri = 'http://$FQCDN_ISPCONFIG/remote/';
 EOF
     if php -r "$php" is_different \
         "$soap_config" \
-        $REMOTE_USER_ROOT \
+        $remote_user_root \
         $ispconfig_remote_user_password \
         $FQCDN_ISPCONFIG;then
         __; red Modifikasi file '`'soap_config.php'`' gagal.; exit
@@ -466,9 +335,9 @@ EOF
     ____
 fi
 
-yellow Mengecek Remote User ISPConfig '"'$REMOTE_USER_ROUNDCUBE'"'
+yellow Mengecek Remote User ISPConfig '"'$remote_user_roundcube'"'
 notfound=
-if isRemoteUsernameIspconfigExist "$REMOTE_USER_ROUNDCUBE" ;then
+if isRemoteUsernameIspconfigExist "$remote_user_roundcube" ;then
     __ Found '(remote_userid:'$remote_userid')'.
 else
     __ Not Found.
@@ -477,7 +346,7 @@ fi
 ____
 
 if [ -n "$notfound" ];then
-    yellow Insert Remote User ISPConfig '"'$REMOTE_USER_ROUNDCUBE'"'
+    yellow Insert Remote User ISPConfig '"'$remote_user_roundcube'"'
     functions='server_get,server_config_set,get_function_list,client_templates_get_all,server_get_serverid_by_ip,server_ip_get,server_ip_add,server_ip_update,server_ip_delete,system_config_set,system_config_get,config_value_get,config_value_add,config_value_update,config_value_replace,config_value_delete
 client_get_all,client_get,client_add,client_update,client_delete,client_get_sites_by_user,client_get_by_username,client_get_by_customer_no,client_change_password,client_get_id,client_delete_everything,client_get_emailcontact
 mail_user_get,mail_user_add,mail_user_update,mail_user_delete
@@ -489,19 +358,19 @@ mail_fetchmail_get,mail_fetchmail_add,mail_fetchmail_update,mail_fetchmail_delet
 mail_spamfilter_whitelist_get,mail_spamfilter_whitelist_add,mail_spamfilter_whitelist_update,mail_spamfilter_whitelist_delete
 mail_spamfilter_blacklist_get,mail_spamfilter_blacklist_add,mail_spamfilter_blacklist_update,mail_spamfilter_blacklist_delete
 mail_user_filter_get,mail_user_filter_add,mail_user_filter_update,mail_user_filter_delete'
-    remoteUserCredentialIspconfig $REMOTE_USER_ROUNDCUBE
+    remoteUserCredentialIspconfig $remote_user_roundcube
     if [[ -z "$ispconfig_remote_user_password" ]];then
-        __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/remote/$REMOTE_USER_ROUNDCUBE'`'.; x
+        __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/remote/$remote_user_roundcube'`'.; x
     else
         magenta ispconfig_remote_user_password="$ispconfig_remote_user_password"
     fi
     # Populate Variable.
     . ispconfig.sh export >/dev/null
     magenta ispconfig_install_dir="$ispconfig_install_dir"
-    if insertRemoteUsernameIspconfig  "$REMOTE_USER_ROUNDCUBE" "$ispconfig_remote_user_password" "$functions" ;then
-        __; green Remote username "$REMOTE_USER_ROOT" created '(remote_userid:'$remote_userid')'.
+    if insertRemoteUsernameIspconfig  "$remote_user_roundcube" "$ispconfig_remote_user_password" "$functions" ;then
+        __; green Remote username "$remote_user_root" created '(remote_userid:'$remote_userid')'.
     else
-        __; red Remote username "$REMOTE_USER_ROUNDCUBE" failed to create.; x
+        __; red Remote username "$remote_user_roundcube" failed to create.; x
     fi
     ____
 fi
@@ -571,15 +440,15 @@ EOF
 # @todo, pake istilah ini aja.
 yellow Mengecek variable pada script '`'$filename'`'
 __ Mendapatkan informasi credential
-remoteUserCredentialIspconfig $REMOTE_USER_ROUNDCUBE
+remoteUserCredentialIspconfig $remote_user_roundcube
 if [[ -z "$ispconfig_remote_user_password" ]];then
-    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/remote/$REMOTE_USER_ROUNDCUBE'`'.; x
+    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/remote/$remote_user_roundcube'`'.; x
 else
     __; magenta ispconfig_remote_user_password="$ispconfig_remote_user_password"
 fi
 reference="$(php -r "echo serialize([
     'identity_limit' => false,
-    'remote_soap_user' => '$REMOTE_USER_ROUNDCUBE',
+    'remote_soap_user' => '$remote_user_roundcube',
     'remote_soap_pass' => '$ispconfig_remote_user_password',
     'soap_url' => 'http://${ISPCONFIG_SUBDOMAIN_LOCALHOST}/remote/',
     'soap_validate_cert' => false,

@@ -1,79 +1,11 @@
-# !/bin/bash
+#!/bin/bash
 
-source /home/ijortengab/gist/var-dump.function.sh
+if [[ ! $parent_pid == $$ ]];then
+    echo This script cannot execute directly. >&2; exit 1
+fi
 
-red() { echo -ne "\e[91m"; echo -n "$@"; echo -e "\e[39m"; }
-green() { echo -ne "\e[92m"; echo -n "$@"; echo -e "\e[39m"; }
-yellow() { echo -ne "\e[93m"; echo -n "$@"; echo -e "\e[39m"; }
-blue() { echo -ne "\e[94m"; echo -n "$@"; echo -e "\e[39m"; }
-magenta() { echo -ne "\e[95m"; echo -n "$@"; echo -e "\e[39m"; }
-x() { exit 1; }
-e() { echo "$@"; }
-__() { echo -n '    '; [ -n "$1" ] && echo "$@" || echo -n ; }
-____() { echo; }
-
-# Dependencies.
-command -v "ispconfig.sh" >/dev/null || { __; red Command "ispconfig.sh" not found.; x; }
-
-# parse-options.sh \
-# --without-end-options-double-dash \
-# --compact \
-# --clean \
-# --no-hash-bang \
-# --no-rebuild-arguments \
-# --no-original-arguments \
-# --no-error-invalid-options \
-# --no-error-require-arguments << EOF | clip
-# VALUE=(
-# --timezone
-# --phpmyadmin-version
-# --roundcube-version
-# )
-# EOF
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --phpmyadmin-version=*) phpmyadmin_version="${1#*=}"; shift ;;
-        --phpmyadmin-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then phpmyadmin_version="$2"; shift; fi; shift ;;
-        --roundcube-version=*) roundcube_version="${1#*=}"; shift ;;
-        --roundcube-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then roundcube_version="$2"; shift; fi; shift ;;
-        --timezone=*) timezone="${1#*=}"; shift ;;
-        --timezone) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then timezone="$2"; shift; fi; shift ;;
-        --[^-]*) shift ;;
-        *) shift ;;
-    esac
-done
-
-[ -n "$timezone" ] || { timezone='Asia/Jakarta'; }
-[ -n "$phpmyadmin_version" ] || { phpmyadmin_version='5.2.0'; }
-[ -n "${roundcube_version}" ] || { roundcube_version='1.6.0'; }
-NOW=$(date +%Y%m%d-%H%M%S)
-PHP_VERSION=7.4
-PHPMYADMIN_DB_NAME=phpmyadmin
-ROUNDCUBE_DB_NAME=roundcubemail
-PHPMYADMIN_DB_USER_HOST=localhost
-ROUNDCUBE_DB_USER_HOST=localhost
-ISPCONFIG_DB_USER_HOST=localhost
-PHPMYADMIN_DB_USER=pma
-ROUNDCUBE_DB_USER=roundcube
-PHPMYADMIN_NGINX_CONFIG_FILE=phpmyadmin
-ROUNDCUBE_NGINX_CONFIG_FILE=roundcube
-ISPCONFIG_NGINX_CONFIG_FILE=ispconfig
-PHPMYADMIN_SUBDOMAIN_LOCALHOST=phpmyadmin.localhost
-ROUNDCUBE_SUBDOMAIN_LOCALHOST=roundcube.localhost
-ISPCONFIG_SUBDOMAIN_LOCALHOST=ispconfig.localhost
-POSTFIX_CONFIG_FILE=/etc/postfix/master.cf
-MYSQL_ROOT_PASSWD=/root/.mysql-root-passwd.txt
-MYSQL_ROOT_PASSWD_INI=/root/.mysql-root-passwd.ini
-ISPCONFIG_INSTALL_DIR=/usr/local/ispconfig
-
-#@todo
-# define tambahan
-EMAIL_ADMIN=admin
-EMAIL_HOST=hostmaster
-EMAIL_WEB=webmaster
-EMAIL_POST=postmaster
-# @todo,sementara
-DOMAIN=$ROUNDCUBE_SUBDOMAIN_LOCALHOST
+# Dependencies of this script only.
+[ -n "$domain" ] || { red "Value of variable \$domain required."; x; }
 
 command -v databaseCredentialIspconfig >/dev/null || {
 databaseCredentialIspconfig() {
@@ -583,14 +515,16 @@ insertIdentitiesRoundcube() {
     return 1
 }
 
-yellow Mengecek domain '`'$DOMAIN'`' apakah terdaftar di Module Mail ISPConfig.
+# ini code untuk domain localhost.
+# bagaimana untuk domain beneran.
+yellow Mengecek domain '`'$domain'`' apakah terdaftar di Module Mail ISPConfig.
 __ Create PHP Script from template '`'mail_domain_get_by_domain'`'.
 template=mail_domain_get_by_domain
 template_temp=$(ispconfig.sh mktemp "${template}.php")
 template_temp_path=$(ispconfig.sh realpath "$template_temp")
 __; magenta template_temp_path="$template_temp_path"
 sed -i -E -e '/echo/d' -e '/^\s*$/d' -e 's,\t,    ,g' -e 's/print_r/var_export/' \
-    -e 's/\$domain\s+=\s+[^;]+;/\$domain = "'"$DOMAIN"'";/' \
+    -e 's/\$domain\s+=\s+[^;]+;/\$domain = "'"$domain"'";/' \
     "$template_temp_path"
 contents=$(<"$template_temp_path")
 __ Execute PHP Script.
@@ -633,7 +567,7 @@ fi
 ____
 
 if [ -n "$notfound" ];then
-    yellow Mendaftarkan domain '`'$DOMAIN'`' di Module Mail ISPConfig.
+    yellow Mendaftarkan domain '`'$domain'`' di Module Mail ISPConfig.
     __ Create PHP Script from template '`'mail_domain_add'`'.
     template=mail_domain_add
     template_temp=$(ispconfig.sh mktemp "${template}.php")
@@ -641,7 +575,7 @@ if [ -n "$notfound" ];then
     __; magenta template_temp_path="$template_temp_path"
     parameter=''
     parameter+="\t\t'server_id' => '1',\n"
-    parameter+="\t\t'domain' => '${DOMAIN}',\n"
+    parameter+="\t\t'domain' => '${domain}',\n"
     parameter+="\t\t'active' => 'y',\n"
     parameter+="\t\t'dkim' => 'n',\n"
     sed -i -E \
@@ -661,7 +595,7 @@ if [ -n "$notfound" ];then
     template_temp=$(ispconfig.sh mktemp "${template}.php")
     template_temp_path=$(ispconfig.sh realpath "$template_temp")
     sed -i -E -e '/echo/d' -e '/^\s*$/d' -e 's,\t,    ,g' -e 's/print_r/var_export/' \
-        -e 's/\$domain\s+=\s+[^;]+;/\$domain = "'"$DOMAIN"'";/' \
+        -e 's/\$domain\s+=\s+[^;]+;/\$domain = "'"$domain"'";/' \
         "$template_temp_path"
     contents=$(<"$template_temp_path")
     magenta "$contents"
@@ -679,8 +613,8 @@ fi
 blue Mailbox
 ____
 
-user="$EMAIL_ADMIN"
-host="$DOMAIN"
+user="$mailbox_admin"
+host="$domain"
 yellow Mengecek mailbox "$user"@"$host"
 if isEmailIspconfigExist "$user" "$host";then
     __ Email "$user"@"$host" already exists.
@@ -695,7 +629,7 @@ ____
 
 destination="$user"@"$host"
 
-for user in $EMAIL_HOST $EMAIL_WEB $EMAIL_POST
+for user in $mailbox_host $mailbox_web $mailbox_post
 do
     source="$user"@"$host"
     # VarDump source
@@ -712,7 +646,7 @@ do
     ____
 done
 
-username=$EMAIL_ADMIN@$DOMAIN
+username=$mailbox_admin@$domain
 yellow Mengecek username "$username" di Roundcube.
 if isUsernameRoundcubeExist "$username";then
     __ Username "$username" already exists.
@@ -729,7 +663,7 @@ yellow Mengecek Identities "$username" di Roundcube.
 if isIdentitiesRoundcubeExist 1 "$username" "$user_id";then
     __ Identities "$username" already exists.
     __; magenta identity_id=$identity_id
-elif insertIdentitiesRoundcube 1 "$username" "$user_id" "$EMAIL_ADMIN_IDENTITIES";then
+elif insertIdentitiesRoundcube 1 "$username" "$user_id" "$mailbox_admin";then
     __; green Identities "$username" created.
     __; magenta identity_id=$identity_id
 else
@@ -737,7 +671,7 @@ else
 fi
 ____
 
-for user in $EMAIL_HOST $EMAIL_WEB $EMAIL_POST
+for user in $mailbox_host $mailbox_web $mailbox_post
 do
     source="$user"@"$host"
     yellow Mengecek Identities "$source" di Roundcube.

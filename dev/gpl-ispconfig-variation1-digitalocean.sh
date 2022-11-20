@@ -1,49 +1,18 @@
 #!/bin/bash
 
-source /home/ijortengab/gist/var-dump.function.sh
+if [[ ! $parent_pid == $$ ]];then
+    echo This script cannot execute directly. >&2; exit 1
+fi
 
-# @todo, pakai command -v
-fileMustExists() {
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
-
-red() { echo -ne "\e[91m"; echo -n "$@"; echo -e "\e[39m"; }
-green() { echo -ne "\e[92m"; echo -n "$@"; echo -e "\e[39m"; }
-yellow() { echo -ne "\e[93m"; echo -n "$@"; echo -e "\e[39m"; }
-blue() { echo -ne "\e[94m"; echo -n "$@"; echo -e "\e[39m"; }
-magenta() { echo -ne "\e[95m"; echo -n "$@"; echo -e "\e[39m"; }
-x() { exit 1; }
-e() { echo "$@"; }
-__() { echo -n '    '; [ -n "$1" ] && echo "$@" || echo -n ; }
-____() { echo; }
-
-DIGITALOCEAN_TOKEN=c29d24b8c05aa65759f243639f8d868ba4635b3d524a2eb4f5412bae6b6be906
-
-# user input
-domain=devel.web.id
-subdomain_fqdn=server1
-ip_public=206.189.94.130
-
-subdomain_ispconfig=cp
-subdomain_phpmyadmin=db
-subdomain_roundcube=mail
-
-email_admin=admin
-email_host=hostmaster
-email_web=webmaster
-email_post=postmaster
+# Dependencies of this script only.
+[ -n "$domain" ] || { red "Value of variable \$domain required."; x; }
+[ -n "$ip_address" ] || { red "Value of variable \$ip_address required."; x; }
 
 # populate variable
-fqdn="${subdomain_fqdn}.${domain}"
 fqdn_phpmyadmin="${subdomain_phpmyadmin}.${domain}"
 fqdn_roundcube="${subdomain_roundcube}.${domain}"
 fqdn_ispconfig="${subdomain_ispconfig}.${domain}"
-mail_provider=$fqdn
-dkim_selector=default
+mail_provider="$fqdn"
 
 if [[ ! $(hostname -f) == $fqdn ]];then
     ____
@@ -56,13 +25,13 @@ if [[ ! $(hostname -f) == $fqdn ]];then
 
     yellow Suggestion.
     __ Execute command below then reboot server.
-    if [[ ! $(hostname) == $subdomain_fqdn ]];then
-        __; magenta echo $subdomain_fqdn' > /etc/hostname'
+    if [[ ! $(hostname) == $hostname ]];then
+        __; magenta echo $hostname' > /etc/hostname'
     fi
     _fqdn=$(hostname -f | sed 's/\./\\./g')
     _hostname=$(hostname)
     __; magenta sed -i -E \\
-    __; __; magenta \"s/^\\s*'(.*)'$_fqdn\\s+$_hostname/$ip_public $fqdn $subdomain_fqdn/\" \\
+    __; __; magenta \"s/^\\s*'(.*)'$_fqdn\\s+$_hostname/$ip_address $fqdn $hostname/\" \\
     __; __; magenta /etc/hosts
     ____
 fi
@@ -73,9 +42,10 @@ isDomainExists() {
     [ -z "$dumpfile" ] && dumpfile=$(mktemp -t digitalocean.XXXXXX)
     magenta "curl https://api.digitalocean.com/v2/domains/$domain"
     code=$(curl -X GET \
-        -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+        -H "Authorization: Bearer $digitalocean_token" \
         -o "$dumpfile" -s -w "%{http_code}\n" \
         "https://api.digitalocean.com/v2/domains/$domain")
+    sleep .5 # Delay
     json=$(<"$dumpfile")
     json_pretty=$(php -r "echo json_encode(json_decode(fgets(STDIN)), JSON_PRETTY_PRINT).PHP_EOL;" <<< "$json")
     magenta "$json_pretty"
@@ -97,11 +67,12 @@ insertDomain() {
     ]);")"
     magenta "curl -X POST -d '$reference' https://api.digitalocean.com/v2/domains/"
     code=$(curl -X POST \
-        -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+        -H "Authorization: Bearer $digitalocean_token" \
         -H "Content-Type: application/json" \
         -o "$dumpfile" -s -w "%{http_code}\n" \
         -d "$reference" \
         "https://api.digitalocean.com/v2/domains")
+    sleep .5 # Delay
     json=$(<"$dumpfile")
     json_pretty=$(php -r "echo json_encode(json_decode(fgets(STDIN)), JSON_PRETTY_PRINT).PHP_EOL;" <<< "$json")
     magenta "$json_pretty"
@@ -122,8 +93,9 @@ isRecordExist() {
     code=$(curl -X GET \
         -o "$dumpfile" -s -w "%{http_code}\n" \
         -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+        -H "Authorization: Bearer $digitalocean_token" \
         "https://api.digitalocean.com/v2/domains/$domain/records?type=$type&name=$name")
+    sleep .5 # Delay
     json=$(<"$dumpfile")
     json_pretty=$(php -r "echo json_encode(json_decode(fgets(STDIN)), JSON_PRETTY_PRINT).PHP_EOL;" <<< "$json")
     magenta "$json_pretty"
@@ -151,15 +123,16 @@ isARecordExist() {
     local type="A" php json json_pretty
     local domain="$1"
     local name="$2"
-    local ip_public="$3"
+    local ip_address="$3"
     local dumpfile="$4"
     [ -z "$dumpfile" ] && dumpfile=$(mktemp -t digitalocean.XXXXXX)
     magenta "curl https://api.digitalocean.com/v2/domains/$domain/records?type=$type&name=$name"
     code=$(curl -X GET \
         -o "$dumpfile" -s -w "%{http_code}\n" \
         -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+        -H "Authorization: Bearer $digitalocean_token" \
         "https://api.digitalocean.com/v2/domains/$domain/records?type=$type&name=$name")
+    sleep .5 # Delay
     json=$(<"$dumpfile")
     json_pretty=$(php -r "echo json_encode(json_decode(fgets(STDIN)), JSON_PRETTY_PRINT).PHP_EOL;" <<< "$json")
     magenta "$json_pretty"
@@ -168,10 +141,10 @@ isARecordExist() {
     fi
     php=$(cat <<-'EOF'
 $object = json_decode(fgets(STDIN));
-$ip_public = $_SERVER['argv'][1];
+$ip_address = $_SERVER['argv'][1];
 if (is_object($object) && isset($object->domain_records)) {
     foreach ($object->domain_records as $domain_record) {
-        if ($domain_record->data == $ip_public) {
+        if ($domain_record->data == $ip_address) {
             exit(0);
         }
     }
@@ -179,20 +152,20 @@ if (is_object($object) && isset($object->domain_records)) {
 exit(1);
 EOF
 )
-    php -r "$php" "$ip_public" <<< "$json"
+    php -r "$php" "$ip_address" <<< "$json"
     return $?
 }
 
-# global used: DIGITALOCEAN_TOKEN
+# global used: digitalocean_token
 insertARecord() {
     local domain="$1" name="$2" reference code
-    local ip_public="$3"
+    local ip_address="$3"
     local dumpfile="$4"
     [ -z "$dumpfile" ] && dumpfile=$(mktemp -t digitalocean.XXXXXX)
     reference="$(php -r "echo json_encode([
         'type' => 'A',
         'name' => '$name',
-        'data' => '$ip_public',
+        'data' => '$ip_address',
         'priority' => NULL,
         'port' => NULL,
         'ttl' => 1800,
@@ -202,11 +175,12 @@ insertARecord() {
     ]);")"
     magenta "curl -X POST -d '$reference' https://api.digitalocean.com/v2/domains/records"
     code=$(curl -X POST \
-        -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+        -H "Authorization: Bearer $digitalocean_token" \
         -H "Content-Type: application/json" \
         -o "$dumpfile" -s -w "%{http_code}\n" \
         -d "$reference" \
         "https://api.digitalocean.com/v2/domains/$domain/records")
+    sleep .5 # Delay
     json=$(<"$dumpfile")
     json_pretty=$(php -r "echo json_encode(json_decode(fgets(STDIN)), JSON_PRETTY_PRINT).PHP_EOL;" <<< "$json")
     magenta "$json_pretty"
@@ -236,11 +210,12 @@ insertRecord() {
     ]);")"
     magenta "curl -X POST -d '$reference' https://api.digitalocean.com/v2/domains/records"
     code=$(curl -X POST \
-        -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+        -H "Authorization: Bearer $digitalocean_token" \
         -H "Content-Type: application/json" \
         -o "$dumpfile" -s -w "%{http_code}\n" \
         -d "$reference" \
         "https://api.digitalocean.com/v2/domains/$domain/records")
+    sleep .5 # Delay
     json=$(<"$dumpfile")
     json_pretty=$(php -r "echo json_encode(json_decode(fgets(STDIN)), JSON_PRETTY_PRINT).PHP_EOL;" <<< "$json")
     magenta "$json_pretty"
@@ -250,7 +225,7 @@ insertRecord() {
     red Unexpected result with response code: $code.; x
 }
 
-# global used: DIGITALOCEAN_TOKEN
+# global used: digitalocean_token
 isCnameRecordExist() {
     local type="CNAME" php json json_pretty total
     local domain="$1"
@@ -261,8 +236,9 @@ isCnameRecordExist() {
     code=$(curl -X GET \
         -o "$dumpfile" -s -w "%{http_code}\n" \
         -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+        -H "Authorization: Bearer $digitalocean_token" \
         "https://api.digitalocean.com/v2/domains/$domain/records?type=$type&name=$name")
+    sleep .5 # Delay
     json=$(<"$dumpfile")
     json_pretty=$(php -r "echo json_encode(json_decode(fgets(STDIN)), JSON_PRETTY_PRINT).PHP_EOL;" <<< "$json")
     magenta "$json_pretty"
@@ -281,7 +257,7 @@ EOF
     return $?
 }
 
-# global used: DIGITALOCEAN_TOKEN
+# global used: digitalocean_token
 insertCnameRecord() {
     local domain="$1" reference code
     local name="$2"
@@ -300,11 +276,12 @@ insertCnameRecord() {
     ]);")"
     magenta "curl -X POST -d '$reference' https://api.digitalocean.com/v2/domains/records"
     code=$(curl -X POST \
-        -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+        -H "Authorization: Bearer $digitalocean_token" \
         -H "Content-Type: application/json" \
         -o "$dumpfile" -s -w "%{http_code}\n" \
         -d "$reference" \
         "https://api.digitalocean.com/v2/domains/$domain/records")
+    sleep .5 # Delay
     json=$(<"$dumpfile")
     json_pretty=$(php -r "echo json_encode(json_decode(fgets(STDIN)), JSON_PRETTY_PRINT).PHP_EOL;" <<< "$json")
     magenta "$json_pretty"
@@ -320,10 +297,11 @@ deleteRecord() {
     [ -z "$dumpfile" ] && dumpfile=$(mktemp -t digitalocean.XXXXXX)
     magenta "curl -X DELETE https://api.digitalocean.com/v2/domains/$domain/records/$id"
     code=$(curl -X DELETE \
-        -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+        -H "Authorization: Bearer $digitalocean_token" \
         -H "Content-Type: application/json" \
         -o "$dumpfile" -s -w "%{http_code}\n" \
         "https://api.digitalocean.com/v2/domains/$domain/records/$id")
+    sleep .5 # Delay
     json=$(<"$dumpfile")
     json_pretty=$(php -r "echo json_encode(json_decode(fgets(STDIN)), JSON_PRETTY_PRINT).PHP_EOL;" <<< "$json")
     magenta "$json_pretty"
@@ -348,99 +326,95 @@ EOF
     php -r "$php" <<< "$json"
 }
 
-# yellow Modify DNS Record for Domain '`'${domain}'`'
-# if isDomainExists $domain;then
-    # __ Domain '`'"$domain"'`' found in DNS Digital Ocean.
-# elif insertDomain $domain $ip_public;then
-    # __; green Domain '`'"$domain"'`' created in DNS Digital Ocean.
-# fi
-# ____
+yellow Modify DNS Record for Domain '`'${domain}'`'
+if isDomainExists $domain;then
+    __ Domain '`'"$domain"'`' found in DNS Digital Ocean.
+elif insertDomain $domain $ip_address;then
+    __; green Domain '`'"$domain"'`' created in DNS Digital Ocean.
+fi
+____
 
-# yellow Modify A DNS Record for Domain '`'${domain}'`'
-# if isRecordExist A $domain $domain $ip_public;then
-    # __ DNS A Record of '`'${domain}'`' point to IP '`'${ip_public}'`' found in DNS Digital Ocean.
-# elif insertARecord $domain '@' $ip_public;then
-    # __; green DNS A Record of '`'${domain}'`' point to IP '`'${ip_public}'`' created in DNS Digital Ocean.
-# fi
-# ____
+yellow Modify A DNS Record for Domain '`'${domain}'`'
+if isRecordExist A $domain $domain $ip_address;then
+    __ DNS A Record of '`'${domain}'`' point to IP '`'${ip_address}'`' found in DNS Digital Ocean.
+elif insertARecord $domain '@' $ip_address;then
+    __; green DNS A Record of '`'${domain}'`' point to IP '`'${ip_address}'`' created in DNS Digital Ocean.
+fi
+____
 
-# yellow Modify CNAME DNS Record for Domain '`'${domain}'`'
-# found=
-# mktemp=$(mktemp -t digitalocean.XXXXXX)
-# if isCnameRecordExist $domain $fqdn $mktemp;then
-    # __ DNS CNAME Record of '`'${subdomain_fqdn}'`' alias to '`'${domain}'`' found in DNS Digital Ocean.
-    # found=1
-# else
-    # __ DNS CNAME Record of '`'${subdomain_fqdn}'`' alias to '`'${domain}'`' NOT found in DNS Digital Ocean.
-# fi
-# ____
+yellow Modify CNAME DNS Record for Domain '`'${domain}'`'
+found=
+mktemp=$(mktemp -t digitalocean.XXXXXX)
+if isCnameRecordExist $domain $fqdn $mktemp;then
+    __ DNS CNAME Record of '`'$hostname'`' alias to '`'${domain}'`' found in DNS Digital Ocean.
+    found=1
+else
+    __ DNS CNAME Record of '`'$hostname'`' alias to '`'${domain}'`' NOT found in DNS Digital Ocean.
+fi
+____
 
 if [ -n "$found" ];then
     while IFS= read -r line; do
         __ Delete record id "$line" of domain "$domain"
         if deleteRecord $domain $line;then
-            __; green DNS CNAME Record of '`'${subdomain_fqdn}'`' alias to '`'${domain}'`' deleted in DNS Digital Ocean.
+            __; green DNS CNAME Record of '`'$hostname'`' alias to '`'${domain}'`' deleted in DNS Digital Ocean.
         fi
     done <<< $(getIdRecords "$mktemp")
     ____
 fi
 
-# yellow Modify A DNS Record for FQDN '`'$fqdn'`'
-# if isARecordExist $domain $fqdn $ip_public;then
-    # __ DNS A Record of '`'$fqdn'`' point to IP '`'$ip_public'`' found in DNS Digital Ocean.
-# elif insertARecord $domain $subdomain_fqdn $ip_public;then
-    # __; green DNS A Record of '`'$fqdn'`' point to IP '`'$ip_public'`' created in DNS Digital Ocean.
-# fi
-# ____
+yellow Modify A DNS Record for FQDN '`'$fqdn'`'
+if isARecordExist $domain $fqdn $ip_address;then
+    __ DNS A Record of '`'$fqdn'`' point to IP '`'$ip_address'`' found in DNS Digital Ocean.
+elif insertARecord $domain $hostname $ip_address;then
+    __; green DNS A Record of '`'$fqdn'`' point to IP '`'$ip_address'`' created in DNS Digital Ocean.
+fi
+____
 
-# yellow Modify CNAME DNS Record for FQDN '`'$fqdn_ispconfig'`'
-# if isCnameRecordExist $domain $fqdn_ispconfig;then
-    # __ DNS CNAME Record of '`'$fqdn_ispconfig'`' alias to '`'$domain'`' found in DNS Digital Ocean.
-# elif insertCnameRecord $domain $subdomain_ispconfig;then
-    # __; green DNS CNAME Record of '`'$fqdn_ispconfig'`' alias to '`'$domain'`' created in DNS Digital Ocean.
-# fi
-# ____
+yellow Modify CNAME DNS Record for FQDN '`'$fqdn_ispconfig'`'
+if isCnameRecordExist $domain $fqdn_ispconfig;then
+    __ DNS CNAME Record of '`'$fqdn_ispconfig'`' alias to '`'$domain'`' found in DNS Digital Ocean.
+elif insertCnameRecord $domain $subdomain_ispconfig;then
+    __; green DNS CNAME Record of '`'$fqdn_ispconfig'`' alias to '`'$domain'`' created in DNS Digital Ocean.
+fi
+____
 
-# yellow Modify CNAME DNS Record for FQDN '`'$fqdn_phpmyadmin'`'
-# if isCnameRecordExist $domain $fqdn_phpmyadmin;then
-    # __ DNS CNAME Record of '`'$fqdn_phpmyadmin'`' alias to '`'$domain'`' found in DNS Digital Ocean.
-# elif insertCnameRecord $domain $subdomain_phpmyadmin;then
-    # __; green DNS CNAME Record of '`'$fqdn_phpmyadmin'`' alias to '`'$domain'`' created in DNS Digital Ocean.
-# fi
-# ____
+yellow Modify CNAME DNS Record for FQDN '`'$fqdn_phpmyadmin'`'
+if isCnameRecordExist $domain $fqdn_phpmyadmin;then
+    __ DNS CNAME Record of '`'$fqdn_phpmyadmin'`' alias to '`'$domain'`' found in DNS Digital Ocean.
+elif insertCnameRecord $domain $subdomain_phpmyadmin;then
+    __; green DNS CNAME Record of '`'$fqdn_phpmyadmin'`' alias to '`'$domain'`' created in DNS Digital Ocean.
+fi
+____
 
-# yellow Modify CNAME DNS Record for FQDN '`'$fqdn_roundcube'`'
-# if isCnameRecordExist $domain $fqdn_roundcube;then
-    # __ DNS CNAME Record of '`'$fqdn_roundcube'`' alias to '`'$domain'`' found in DNS Digital Ocean.
-# elif insertCnameRecord $domain $subdomain_roundcube;then
-    # __; green DNS CNAME Record of '`'$fqdn_roundcube'`' alias to '`'$domain'`' created in DNS Digital Ocean.
-# fi
-# ____
+yellow Modify CNAME DNS Record for FQDN '`'$fqdn_roundcube'`'
+if isCnameRecordExist $domain $fqdn_roundcube;then
+    __ DNS CNAME Record of '`'$fqdn_roundcube'`' alias to '`'$domain'`' found in DNS Digital Ocean.
+elif insertCnameRecord $domain $subdomain_roundcube;then
+    __; green DNS CNAME Record of '`'$fqdn_roundcube'`' alias to '`'$domain'`' created in DNS Digital Ocean.
+fi
+____
 
-# yellow Modify MX DNS Record for Domain '`'$domain'`'
-# if isRecordExist MX $domain $domain $mail_provider;then
-    # __ DNS MX Record of '`'$domain'`' handled by '`'$mail_provider'`' found in DNS Digital Ocean.
-# elif insertRecord MX $domain '@' "${mail_provider}.";then
-    # __; green DNS MX Record of '`'$domain'`' handled by '`'$mail_provider'`' created in DNS Digital Ocean.
-# fi
+yellow Modify MX DNS Record for Domain '`'$domain'`'
+if isRecordExist MX $domain $domain $mail_provider;then
+    __ DNS MX Record of '`'$domain'`' handled by '`'$mail_provider'`' found in DNS Digital Ocean.
+elif insertRecord MX $domain '@' "${mail_provider}.";then
+    __; green DNS MX Record of '`'$domain'`' handled by '`'$mail_provider'`' created in DNS Digital Ocean.
+fi
 
-# @todo: devel.
-mail_provider=server1.systemix.id
-domain=bta.my.id
-# domain=batakx.my.id
 
-# data="v=spf1 a:${mail_provider} ~all"
-# php=$(cat <<-'EOF'
-# $data = $_SERVER['argv'][1];
-# echo '"'.implode('""', str_split($data, 200)).'"';
-# EOF
-# )
-# data=$(php -r "$php" "$data" )
-# if isRecordExist TXT $domain $domain "$data";then
-    # __ DNS TXT Record of '`'$domain'`' for SPF found in DNS Digital Ocean.
-# elif insertRecord TXT $domain '@' "$data";then
-    # __; green DNS TXT Record of '`'$domain'`' for SPF created in DNS Digital Ocean.
-# fi
+data="v=spf1 a:${mail_provider} ~all"
+php=$(cat <<-'EOF'
+$data = $_SERVER['argv'][1];
+echo '"'.implode('""', str_split($data, 200)).'"';
+EOF
+)
+data=$(php -r "$php" "$data" )
+if isRecordExist TXT $domain $domain "$data";then
+    __ DNS TXT Record of '`'$domain'`' for SPF found in DNS Digital Ocean.
+elif insertRecord TXT $domain '@' "$data";then
+    __; green DNS TXT Record of '`'$domain'`' for SPF created in DNS Digital Ocean.
+fi
 
 yellow Mengecek domain '`'$domain'`' di Module Mail ISPConfig.
 php=$(cat <<-'EOF'
@@ -489,7 +463,6 @@ php -r "$php" isset <<< "$stdout" || notfound=1
 if [ -z "$notfound" ];then
     _dkim_selector=$(php -r "$php" get_dkim_selector <<< "$stdout")
     dkim_public=$(php -r "$php" get_dkim_public <<< "$stdout")
-    VarDump dkim_selector _dkim_selector  dkim_public
     if [[ ! "$dkim_selector" == "$_dkim_selector" ]];then
         __; red Terdapat perbedaan antara dkim_selector versi database dengan user input.
         __; red Menggunakan value versi database.
@@ -504,11 +477,6 @@ __; magenta rm "$template_temp_path"
 rm "$template_temp_path"
 ____
 
-# @todo: devel.
-VarDump dkim_selector _dkim_selector  dkim_public dns_record
-VarDump notfound
-# notfound=1
-# x
 # @todo: jika false,maka nggak ada, maka generate pair code.
 json=
 if [ -n "$notfound" ];then
