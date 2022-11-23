@@ -402,7 +402,9 @@ if isRecordExist MX $domain $domain $mail_provider;then
 elif insertRecord MX $domain '@' "${mail_provider}.";then
     __; green DNS MX Record of '`'$domain'`' handled by '`'$mail_provider'`' created in DNS Digital Ocean.
 fi
+____
 
+yellow Modify TXT DNS Record for SPF
 data="v=spf1 a:${mail_provider} ~all"
 php=$(cat <<-'EOF'
 $data = $_SERVER['argv'][1];
@@ -415,7 +417,9 @@ if isRecordExist TXT $domain $domain "$data";then
 elif insertRecord TXT $domain '@' "$data";then
     __; green DNS TXT Record of '`'$domain'`' for SPF created in DNS Digital Ocean.
 fi
+____
 
+yellow Modify TXT DNS Record for DKIM
 data="v=DKIM1; t=s; p=${dns_record}"
 php=$(cat <<-'EOF'
 $data = $_SERVER['argv'][1];
@@ -430,7 +434,9 @@ if isRecordExist TXT $domain $name_find "$data";then
 elif insertRecord TXT $domain $name_insert "$data";then
     __; green DNS TXT Record of '`'$domain'`' for DKIM created in DNS Digital Ocean.
 fi
+____
 
+yellow Modify TXT DNS Record for DMARC
 data="v=DMARC1; p=none; rua=${email_post}@${domain}"
 php=$(cat <<-'EOF'
 $data = $_SERVER['argv'][1];
@@ -445,3 +451,4 @@ if isRecordExist TXT $domain $name_find "$data";then
 elif insertRecord TXT $domain $name_insert "$data";then
     __; green DNS TXT Record of '`'$domain'`' for DMARC created in DNS Digital Ocean.
 fi
+____
