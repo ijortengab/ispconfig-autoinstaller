@@ -50,7 +50,6 @@ set -- "${_new_arguments[@]}"
 
 unset _new_arguments
 
-
 # --- End.
 
 if [ -n "$help" ];then
@@ -203,30 +202,33 @@ this_file=$(realpath "$0")
 directory_this_file=$(dirname "$this_file")
 parent_pid=$$
 
-[ -f "${directory_this_file}/gpl-ispconfig-variation1-lib.sh" ] || {
-    red File not found: gpl-ispconfig-variation1-lib.sh; x
-}
-[ -f "${directory_this_file}/gpl-ispconfig-variation1-init.sh" ] || {
-    red File not found: gpl-ispconfig-variation1-init.sh; x
-}
-[ -f "${directory_this_file}/gpl-ispconfig-variation1-ispconfig.sh" ] || {
-    red File not found: gpl-ispconfig-variation1-ispconfig.sh; x
-}
-[ -f "${directory_this_file}/gpl-ispconfig-variation1-roundcube.sh" ] || {
-    red File not found: gpl-ispconfig-variation1-roundcube.sh; x
-}
-[ -f "${directory_this_file}/gpl-ispconfig-variation1-digitalocean.sh" ] || {
-    red File not found: gpl-ispconfig-variation1-roundcube.sh; x
-}
+files_required=$(cat <<EOF
+${directory_this_file}/gpl-ispconfig-variation1-lib.sh
+${directory_this_file}/gpl-ispconfig-variation1-init.sh
+${directory_this_file}/gpl-ispconfig-variation1-ispconfig-remote-user.sh
+${directory_this_file}/gpl-ispconfig-variation1-roundcube-plugin-ispconfig-integration.sh
+${directory_this_file}/gpl-ispconfig-variation1-domain-register-with-dkim.sh
+${directory_this_file}/gpl-ispconfig-variation1-mailbox.sh
+${directory_this_file}/gpl-ispconfig-variation1-digitalocean.sh
+EOF
+)
+while IFS= read -r line; do
+    [ -f "${line}" ] || {
+        red File not found: "${line}"; x
+    }
+done <<< "$files_required"
 
 source "${directory_this_file}/gpl-ispconfig-variation1-lib.sh"
 
 . "${directory_this_file}/gpl-ispconfig-variation1-init.sh"
 
-. "${directory_this_file}/gpl-ispconfig-variation1-ispconfig.sh"
+. "${directory_this_file}/gpl-ispconfig-variation1-ispconfig-remote-user.sh"
+
+. "${directory_this_file}/gpl-ispconfig-variation1-roundcube-plugin-ispconfig-integration.sh"
 
 if [ -n "$domain" ];then
-    . "${directory_this_file}/gpl-ispconfig-variation1-roundcube.sh"
+    . "${directory_this_file}/gpl-ispconfig-variation1-domain-register-with-dkim.sh"
+    . "${directory_this_file}/gpl-ispconfig-variation1-mailbox.sh"
 fi
 
 if [[ -n "$domain" && -n "$digitalocean_token" ]];then

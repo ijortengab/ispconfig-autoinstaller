@@ -38,7 +38,7 @@ while true; do
                 done
                 printf "\r\033[K"  >&2
                 # "$dir"/"$LINE"
-                "$dir"/gpl-ispconfig-variation1.sh
+                "$dir"/wrapper.sh
             }
         fi
     done

@@ -440,10 +440,6 @@ fi
 ____
 
 if [ -n "$notfound" ];then
-    # @todo, butuh fqcdn
-    # atau kita skip dulu deh.
-    # @ todo postfix here.
-    # @todo, sementara kita gunakan rojimantabjiwa.com
     yellow Menginstall Postfix
     debconf-set-selections <<< "postfix postfix/mailname string ${fqdn}"
     debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
@@ -1005,39 +1001,19 @@ fi
 
 yellow Mengecek informasi file konfigurasi PHPMyAdmin pada server index 1.
 php=$(cat <<'EOF'
-$args = $_SERVER['argv'];
-$mode = $args[1];
-$file = $args[2];
-$arg_blowfish = $args[3];
-$arg_db_user_host = $args[4];
-$arg_db_user = $args[5];
-$arg_db_user_password = $args[6];
-$append = array();
+$mode = $_SERVER['argv'][1];
+$file = $_SERVER['argv'][2];
+$array = unserialize($_SERVER['argv'][3]);
 include($file);
+$cfg = isset($cfg) ? $cfg : [];
+$cfg['blowfish_secret'] = isset($cfg['blowfish_secret']) ? $cfg['blowfish_secret'] : NULL;
+$cfg['Servers']['1'] = isset($cfg['Servers']['1']) ? $cfg['Servers']['1'] : [];
 $is_different = false;
-$blowfish_secret = isset($cfg['blowfish_secret']) ? $cfg['blowfish_secret'] : NULL;
-if (empty($blowfish_secret)) {
-    $append['blowfish_secret'] = $arg_blowfish;
+if ($cfg['blowfish_secret'] != $array['blowfish_secret']) {
     $is_different = true;
 }
-$controlhost = isset($cfg['Servers'][1]['controlhost']) ? $cfg['Servers'][1]['controlhost'] : NULL;
-// $controlport = isset($cfg['Servers'][1]['controlport']) ? $cfg['Servers'][1]['controlport'] : NULL;
-$controluser = isset($cfg['Servers'][1]['controluser']) ? $cfg['Servers'][1]['controluser'] : NULL;
-$controlpass = isset($cfg['Servers'][1]['controlpass']) ? $cfg['Servers'][1]['controlpass'] : NULL;
-//@todo: cleaning.
-//if (empty($controlhost)) {
-if ($controlhost != $arg_db_user_host) {
-    $append['Servers'][1]['controlhost'] = $arg_db_user_host;
-    $is_different = true;
-}
-//if (empty($controluser)) {
-if ($controluser != $arg_db_user) {
-    $append['Servers'][1]['controluser'] = $arg_db_user;
-    $is_different = true;
-}
-//if (empty($controlpass)) {
-if ($controlpass != $arg_db_user_password) {
-    $append['Servers'][1]['controlpass'] = $arg_db_user_password;
+$result = array_diff_assoc($array['Servers']['1'], $cfg['Servers']['1']);
+if (!empty($result)) {
     $is_different = true;
 }
 switch ($mode) {
@@ -1046,7 +1022,7 @@ switch ($mode) {
         break;
     case 'save':
         if ($is_different) {
-            $cfg = array_replace_recursive($cfg, $append);
+            $cfg = array_replace_recursive($cfg, $array);
             $content = '$cfg = '.var_export($cfg, true).';'.PHP_EOL;
             $content = <<< EOF
 <?php
@@ -1058,13 +1034,20 @@ EOF;
 }
 EOF
 )
+reference="$(php -r "echo serialize([
+    'blowfish_secret' => '$phpmyadmin_blowfish',
+    'Servers' => [
+        '1' => [
+            'controlhost' => '$PHPMYADMIN_DB_USER_HOST',
+            'controluser' => '$phpmyadmin_db_user',
+            'controlpass' => '$phpmyadmin_db_user_password',
+        ],
+    ],
+]);")"
 is_different=
 if php -r "$php" is_different \
     /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php \
-    $phpmyadmin_blowfish \
-    $PHPMYADMIN_DB_USER_HOST \
-    $phpmyadmin_db_user \
-    $phpmyadmin_db_user_password;then
+    "$reference";then
     is_different=1
     __ Diperlukan modifikasi file '`'config.inc.php'`'.
 else
@@ -1078,16 +1061,10 @@ if [ -n "$is_different" ];then
     backupFile copy /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php
     php -r "$php" save \
         /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php \
-        $phpmyadmin_blowfish \
-        $PHPMYADMIN_DB_USER_HOST \
-        $phpmyadmin_db_user \
-        $phpmyadmin_db_user_password
+        "$reference"
     if php -r "$php" is_different \
         /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php \
-        $phpmyadmin_blowfish \
-        $PHPMYADMIN_DB_USER_HOST \
-        $phpmyadmin_db_user \
-        $phpmyadmin_db_user_password;then
+        "$reference";then
         __; red Modifikasi file '`'config.inc.php'`' gagal.; exit
     else
         __; green Modifikasi file '`'config.inc.php'`' berhasil.
@@ -1390,62 +1367,19 @@ fi
 
 yellow Mengecek informasi file konfigurasi RoundCube.
 php=$(cat <<'EOF'
-$args = $_SERVER['argv'];
-// var_dump($args);
-$mode = $args[1];
-$file = $args[2];
-$arg_des_key = $args[3];
-$arg_db_dsnw = $args[4];
-$arg_misc_serial = $args[5];
-$arg_misc = unserialize($args[5]);
-$append = array();
+$mode = $_SERVER['argv'][1];
+$file = $_SERVER['argv'][2];
+$array = unserialize($_SERVER['argv'][3]);
 include($file);
-$is_different = false;
-// var_dump($config);
-// var_dump('+++');
-$des_key = isset($config['des_key']) ? $config['des_key'] : NULL;
-$db_dsnw = isset($config['db_dsnw']) ? $config['db_dsnw'] : NULL;
-$misc = [
-    'smtp_host' => isset($config['smtp_host']) ? $config['smtp_host'] : NULL,
-    'smtp_user' => isset($config['smtp_user']) ? $config['smtp_user'] : NULL,
-    'smtp_pass' => isset($config['smtp_pass']) ? $config['smtp_pass'] : NULL,
-    'identities_level' => isset($config['identities_level']) ? $config['identities_level'] : NULL,
-    'username_domain' => isset($config['username_domain']) ? $config['username_domain'] : NULL,
-    'default_list_mode' => isset($config['default_list_mode']) ? $config['default_list_mode'] : NULL,
-];
-// var_dump('$misc');
-// var_dump($misc);
-// var_dump('$is_different');
-// var_dump($is_different);
-if ($arg_des_key != $des_key) {
-    $append['des_key'] = $arg_des_key;
-    $is_different = true;
-}
-// var_dump('$is_different');
-// var_dump($is_different);
-if ($arg_db_dsnw != $db_dsnw) {
-    $append['db_dsnw'] = $arg_db_dsnw;
-    $is_different = true;
-}
-// var_dump('$is_different');
-// var_dump($is_different);
-if ($arg_misc != $misc) {
-    $append = array_replace_recursive($append, $arg_misc);
-    $is_different = true;
-}
-// var_dump('$is_different');
-// var_dump($is_different);
-// var_dump('$arg_misc');
-// var_dump($arg_misc);
-// var_dump('$mode');
-// var_dump($mode);
+$config = isset($config) ? $config : [];
+$is_different = !empty(array_diff_assoc($array, $config));
 switch ($mode) {
     case 'is_different':
         $is_different ? exit(0) : exit(1);
         break;
     case 'save':
         if ($is_different) {
-            $config = array_replace_recursive($config, $append);
+            $config = array_replace_recursive($config, $array);
             $content = '$config = '.var_export($config, true).';'.PHP_EOL;
             $content = <<< EOF
 <?php
@@ -1458,20 +1392,21 @@ EOF;
 EOF
 )
 
-serialize=$(php -r "echo serialize([
+reference="$(php -r "echo serialize([
+    'des_key' => '$roundcube_blowfish',
+    'db_dsnw' => 'mysql://${roundcube_db_user}:${roundcube_db_user_password}@${ROUNDCUBE_DB_USER_HOST}/${ROUNDCUBE_DB_NAME}',
     'smtp_host' => 'localhost:25',
     'smtp_user' => '',
     'smtp_pass' => '',
     'identities_level' => '3',
     'username_domain' => '%t',
     'default_list_mode' => 'threads',
-]);")
+]);")"
+
 is_different=
 if php -r "$php" is_different \
     /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php \
-    $roundcube_blowfish \
-    "mysql://${roundcube_db_user}:${roundcube_db_user_password}@${ROUNDCUBE_DB_USER_HOST}/${ROUNDCUBE_DB_NAME}" \
-    "$serialize";then
+    "$reference";then
     is_different=1
     __ Diperlukan modifikasi file '`'config.inc.php'`'.
 else
@@ -1485,14 +1420,10 @@ if [ -n "$is_different" ];then
     backupFile copy /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php
     php -r "$php" save \
         /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php \
-        $roundcube_blowfish \
-        "mysql://${roundcube_db_user}:${roundcube_db_user_password}@${ROUNDCUBE_DB_USER_HOST}/${ROUNDCUBE_DB_NAME}" \
-        "$serialize"
+        "$reference"
     if php -r "$php" is_different \
         /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php \
-        $roundcube_blowfish \
-        "mysql://${roundcube_db_user}:${roundcube_db_user_password}@${ROUNDCUBE_DB_USER_HOST}/${ROUNDCUBE_DB_NAME}" \
-        "$serialize";then
+        "$reference";then
         __; red Modifikasi file '`'config.inc.php'`' gagal.; exit
     else
         __; green Modifikasi file '`'config.inc.php'`' berhasil.
@@ -1658,14 +1589,13 @@ ____
 
 php=$(cat <<'EOF'
 $args = $_SERVER['argv'];
-$mode = $args[1];
-$file = $args[2];
-$array = unserialize($args[3]);
+$mode = $_SERVER['argv'][1];
+$file = $_SERVER['argv'][2];
+$array = unserialize($_SERVER['argv'][3]);
 $autoinstall = parse_ini_file($file);
 if (!isset($autoinstall)) {
     exit(255);
 }
-$result = array_diff_assoc($array, $autoinstall);
 $is_different = !empty(array_diff_assoc($array, $autoinstall));
 switch ($mode) {
     case 'is_different':
@@ -1711,10 +1641,10 @@ if [ -n "$notfound" ];then
     yellow Menginstall ISPConfig
     if [ ! -f /tmp/ispconfig3_install/install/install.php ];then
         __ Mendownload ISPConfig
+        cd /tmp
         if [ ! -f /tmp/ISPConfig-3-stable.tar.gz ];then
             wget http://www.ispconfig.org/downloads/ISPConfig-3-stable.tar.gz
         fi
-        cd /tmp
         __ Mengextract ISPConfig
         tar xfz ISPConfig-3-stable.tar.gz
     fi
@@ -1726,6 +1656,7 @@ if [ -n "$notfound" ];then
     __ Verifikasi file '`'autoinstall.ini'`'.
     mysql_root_passwd="$(<$MYSQL_ROOT_PASSWD)"
     reference="$(php -r "echo serialize([
+        'install_mode' => 'expert',
         'hostname' => '$fqdn',
         'mysql_root_password' => '$mysql_root_passwd',
         'http_server' => 'nginx',
@@ -1749,8 +1680,9 @@ if [ -n "$notfound" ];then
         __ Memodifikasi file '`'autoinstall.ini'`'.
         __ Backup file /tmp/ispconfig3_install/install/autoinstall.ini
         backupFile copy /tmp/ispconfig3_install/install/autoinstall.ini
-        VarDump mysql_root_passwd
-        sed -e "s,^hostname=.*$,hostname=${fqdn}," \
+        VarDump mysql_root_passwd 
+        sed -e "s,^install_mode=.*$,install_mode=expert," \
+            -e "s,^hostname=.*$,hostname=${fqdn}," \
             -e "s,^mysql_root_password=.*$,mysql_root_password=${mysql_root_passwd}," \
             -e "s,^http_server=.*$,http_server=nginx," \
             -e "s,^ispconfig_use_ssl=.*$,ispconfig_use_ssl=n," \
@@ -1798,7 +1730,6 @@ EOF
     __ Mengubah kepemelikan directory '`'ISPConfig'`'.
     magenta chown -R $user_nginx:$user_nginx /usr/local/ispconfig
     chown -R $user_nginx:$user_nginx /usr/local/ispconfig
-
 fi
 
 yellow Mengecek credentials ISPConfig.
