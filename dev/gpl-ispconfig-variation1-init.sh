@@ -1652,11 +1652,15 @@ if [ -n "$notfound" ];then
         __ Membuat file '`'autoinstall.ini'`'.
         cp /tmp/ispconfig3_install/docs/autoinstall_samples/autoinstall.ini.sample \
            /tmp/ispconfig3_install/install/autoinstall.ini
+        sed -i -E \
+            -e ':a;N;$!ba;s|\[expert\]|[expert]\nconfigure_webserver=n|g' \
+            /tmp/ispconfig3_install/install/autoinstall.ini
     fi
     __ Verifikasi file '`'autoinstall.ini'`'.
     mysql_root_passwd="$(<$MYSQL_ROOT_PASSWD)"
     reference="$(php -r "echo serialize([
         'install_mode' => 'expert',
+        'configure_webserver' => 'n',
         'hostname' => '$fqdn',
         'mysql_root_password' => '$mysql_root_passwd',
         'http_server' => 'nginx',
@@ -1680,8 +1684,8 @@ if [ -n "$notfound" ];then
         __ Memodifikasi file '`'autoinstall.ini'`'.
         __ Backup file /tmp/ispconfig3_install/install/autoinstall.ini
         backupFile copy /tmp/ispconfig3_install/install/autoinstall.ini
-        VarDump mysql_root_passwd 
         sed -e "s,^install_mode=.*$,install_mode=expert," \
+            -e "s,^configure_webserver=.*$,configure_webserver=n," \
             -e "s,^hostname=.*$,hostname=${fqdn}," \
             -e "s,^mysql_root_password=.*$,mysql_root_password=${mysql_root_passwd}," \
             -e "s,^http_server=.*$,http_server=nginx," \
