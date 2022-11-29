@@ -15,28 +15,6 @@ fqdn_roundcube="${subdomain_roundcube}.${domain}"
 fqdn_ispconfig="${subdomain_ispconfig}.${domain}"
 mail_provider="$fqdn"
 
-if [[ ! $(hostname -f) == $fqdn ]];then
-    ____
-
-    yellow Attention.
-    __ Your current hostname is different with your input.
-    __; magenta hostname -f ' # '$(hostname -f)
-    __; magenta \$fqdn'        # '$fqdn
-    ____
-
-    yellow Suggestion.
-    __ Execute command below then reboot server.
-    if [[ ! $(hostname) == $hostname ]];then
-        __; magenta echo $hostname' > /etc/hostname'
-    fi
-    _fqdn=$(hostname -f | sed 's/\./\\./g')
-    _hostname=$(hostname)
-    __; magenta sed -i -E \\
-    __; __; magenta \"s/^\\s*'(.*)'$_fqdn\\s+$_hostname/$ip_address $fqdn $hostname/\" \\
-    __; __; magenta /etc/hosts
-    ____
-fi
-
 isDomainExists() {
     local domain=$1 code
     local dumpfile=$2
