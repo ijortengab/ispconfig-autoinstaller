@@ -113,6 +113,29 @@ if [ -n "$notfound" ];then
     ____
 fi
 
+yellow Mengecek '$PATH'
+magenta PATH="$PATH"
+notfound=
+if grep -q '/snap/bin' <<< "$PATH";then
+  __ '$PATH' sudah lengkap.
+else
+  __ '$PATH' belum lengkap.
+  notfound=1
+fi
+
+if [[ -n "$notfound" ]];then
+    yellow Memperbaiki '$PATH'
+    PATH=/snap/bin:$PATH
+    if grep -q '/snap/bin' <<< "$PATH";then
+      __; green '$PATH' sudah lengkap.
+      __; magenta PATH="$PATH"
+
+    else
+      __; red '$PATH' belum lengkap.; x
+    fi
+fi
+____
+
 # Mencari root
 yellow Mengecek nginx configuration apakah terdapat web root dari PHPMyAdmin
 notfound=

@@ -16,6 +16,7 @@ fi
 ____
 
 yellow Mengecek '$PATH'
+magenta PATH="$PATH"
 notfound=
 if grep -q '/usr/sbin' <<< "$PATH";then
   __ '$PATH' sudah lengkap.
@@ -29,6 +30,7 @@ if [[ -n "$notfound" ]];then
     PATH=/usr/local/sbin:/usr/sbin:/sbin:$PATH
     if grep -q '/usr/sbin' <<< "$PATH";then
       __; green '$PATH' sudah lengkap.
+      __; magenta PATH="$PATH"
     else
       __; red '$PATH' belum lengkap.; x
     fi
