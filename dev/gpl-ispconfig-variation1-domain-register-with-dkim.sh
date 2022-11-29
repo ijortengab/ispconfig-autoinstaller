@@ -68,7 +68,6 @@ __; magenta rm "$template_temp_path"
 rm "$template_temp_path"
 ____
 
-# @todo: jika false,maka nggak ada, maka generate pair code.
 json=
 if [ -n "$notfound" ];then
     yellow Generate DKIM Public and Private Key

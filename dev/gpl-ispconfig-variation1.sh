@@ -208,11 +208,12 @@ parent_pid=$$
 files_required=$(cat <<EOF
 ${directory_this_file}/gpl-ispconfig-variation1-lib.sh
 ${directory_this_file}/gpl-ispconfig-variation1-init.sh
-${directory_this_file}/gpl-ispconfig-variation1-ispconfig-remote-user.sh
+${directory_this_file}/gpl-ispconfig-variation1-soap-remote-user.sh
 ${directory_this_file}/gpl-ispconfig-variation1-roundcube-plugin-ispconfig-integration.sh
 ${directory_this_file}/gpl-ispconfig-variation1-domain-register-with-dkim.sh
 ${directory_this_file}/gpl-ispconfig-variation1-mailbox.sh
 ${directory_this_file}/gpl-ispconfig-variation1-digitalocean.sh
+${directory_this_file}/gpl-ispconfig-variation1-letsencrypt.sh
 EOF
 )
 while IFS= read -r line; do
@@ -225,7 +226,7 @@ source "${directory_this_file}/gpl-ispconfig-variation1-lib.sh"
 
 . "${directory_this_file}/gpl-ispconfig-variation1-init.sh"
 
-. "${directory_this_file}/gpl-ispconfig-variation1-ispconfig-remote-user.sh"
+. "${directory_this_file}/gpl-ispconfig-variation1-soap-remote-user.sh"
 
 . "${directory_this_file}/gpl-ispconfig-variation1-roundcube-plugin-ispconfig-integration.sh"
 

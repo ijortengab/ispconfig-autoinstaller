@@ -4,6 +4,9 @@ if [[ ! $parent_pid == $$ ]];then
     echo This script cannot execute directly. >&2; exit 1
 fi
 
+blue Setup Server
+____
+
 yellow Mengecek akses root.
 if [[ "$EUID" -ne 0 ]]; then
 	red This script needs to be run with superuser privileges.; exit
@@ -27,8 +30,7 @@ if [[ -n "$notfound" ]];then
     if grep -q '/usr/sbin' <<< "$PATH";then
       __; green '$PATH' sudah lengkap.
     else
-      __; green '$PATH' belum lengkap.
-      notfound=1
+      __; red '$PATH' belum lengkap.; x
     fi
 fi
 ____
@@ -104,8 +106,10 @@ done
 if [[ $update_now == 1 ]];then
     magenta apt -y update
     magenta apt -y upgrade
+    # https://fabianlee.org/2017/01/16/ubuntu-silent-package-installation-and-debconf/
+    export DEBIAN_FRONTEND=noninteractive
     apt -y update
-    apt -y upgrade
+    apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y upgrade
 else
     __ Repository updated.
 fi
@@ -299,7 +303,7 @@ EOF
     ____
 fi
 
-installphp() {
+installPhp() {
     local PHP_VERSION=$1
     local PRETTY_NAME NAME VERSION_ID VERSION VERSION_CODENAME
     local ID ID_LIKE HOME_URL SUPPORT_URL BUG_REPORT_URL PRIVACY_POLICY_URL
@@ -359,7 +363,7 @@ ____
 
 if [ -n "$notfound" ];then
     yellow Menginstall PHP 7.4
-    installphp 7.4
+    installPhp 7.4
     aptinstalled=$(apt --installed list 2>/dev/null)
     if grep -q "^${string_quoted}/" <<< "$aptinstalled";then
         __; green PHP 7.4 installed.
@@ -456,7 +460,7 @@ fi
 
 # @todo, debian 11 menggunakan getmail6 sementara getmail4 tidak ada
 # apt-cache policy getmail
-# todo, beritahu user kalo script ini hanya berlaku
+# @todo, beritahu user kalo script ini hanya berlaku
 # jika ISP membuka port 25 outgoing
 application=
 application+=' postfix-mysql postfix-doc'
