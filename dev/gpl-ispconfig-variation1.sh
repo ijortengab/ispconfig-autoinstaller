@@ -199,6 +199,29 @@ magenta 'POSTFIX_CONFIG_FILE="'$POSTFIX_CONFIG_FILE'"'
 magenta 'MYSQL_ROOT_PASSWD="'$MYSQL_ROOT_PASSWD'"'
 magenta 'MYSQL_ROOT_PASSWD_INI="'$MYSQL_ROOT_PASSWD_INI'"'
 magenta 'ISPCONFIG_INSTALL_DIR="'$ISPCONFIG_INSTALL_DIR'"'
+
+. /etc/os-release
+
+case $ID in
+    debian)
+        case "$VERSION_ID" in
+            11)
+                echo -n
+            ;;
+        esac
+        ;;
+    ubuntu)
+        case "$VERSION_ID" in
+            22.04)
+                echo -n
+            ;;
+            *) red OS "$ID" version "$VERSION_ID" not supported; exit;
+        esac
+        ;;
+    *) red OS "$ID" not supported; exit;
+esac
+magenta 'ID="'$ID'"'
+magenta 'VERSION_ID="'$VERSION_ID'"'
 ____
 
 this_file=$(realpath "$0")
@@ -206,15 +229,19 @@ directory_this_file=$(dirname "$this_file")
 parent_pid=$$
 
 files_required=$(cat <<EOF
-${directory_this_file}/gpl-ispconfig-variation1-lib.sh
-${directory_this_file}/gpl-ispconfig-variation1-init.sh
-${directory_this_file}/gpl-ispconfig-variation1-report.sh
-${directory_this_file}/gpl-ispconfig-variation1-soap-remote-user.sh
-${directory_this_file}/gpl-ispconfig-variation1-roundcube-plugin-ispconfig-integration.sh
-${directory_this_file}/gpl-ispconfig-variation1-domain-register-with-dkim.sh
-${directory_this_file}/gpl-ispconfig-variation1-mailbox.sh
-${directory_this_file}/gpl-ispconfig-variation1-digitalocean.sh
-${directory_this_file}/gpl-ispconfig-variation1-letsencrypt.sh
+${directory_this_file}/gpl-ispconfig-variation1-1-lib.sh
+${directory_this_file}/gpl-ispconfig-variation1-2-init.sh
+${directory_this_file}/gpl-ispconfig-variation1-3-init-phpmyadmin.sh
+${directory_this_file}/gpl-ispconfig-variation1-4-init-roundcube.sh
+${directory_this_file}/gpl-ispconfig-variation1-5-init-ispconfig.sh
+${directory_this_file}/gpl-ispconfig-variation1-6-soap-remote-user.sh
+${directory_this_file}/gpl-ispconfig-variation1-7-roundcube-plugin-ispconfig-integration.sh
+${directory_this_file}/gpl-ispconfig-variation1-8-domain-nginx-config.sh
+${directory_this_file}/gpl-ispconfig-variation1-9-domain-register-with-dkim.sh
+${directory_this_file}/gpl-ispconfig-variation1-10-mailbox.sh
+${directory_this_file}/gpl-ispconfig-variation1-11-digitalocean.sh
+${directory_this_file}/gpl-ispconfig-variation1-12-letsencrypt.sh
+${directory_this_file}/gpl-ispconfig-variation1-13-report.sh
 EOF
 )
 while IFS= read -r line; do
@@ -223,18 +250,27 @@ while IFS= read -r line; do
     }
 done <<< "$files_required"
 
-source "${directory_this_file}/gpl-ispconfig-variation1-lib.sh"
+source "${directory_this_file}/gpl-ispconfig-variation1-1-lib.sh"
 
-. "${directory_this_file}/gpl-ispconfig-variation1-init.sh"
+# . "${directory_this_file}/gpl-ispconfig-variation1-2-init.sh"
 
-. "${directory_this_file}/gpl-ispconfig-variation1-soap-remote-user.sh"
+# . "${directory_this_file}/gpl-ispconfig-variation1-3-init-phpmyadmin.sh"
 
-. "${directory_this_file}/gpl-ispconfig-variation1-roundcube-plugin-ispconfig-integration.sh"
+# . "${directory_this_file}/gpl-ispconfig-variation1-4-init-roundcube.sh"
+
+# . "${directory_this_file}/gpl-ispconfig-variation1-5-init-ispconfig.sh"
+
+# . "${directory_this_file}/gpl-ispconfig-variation1-6-soap-remote-user.sh"
+
+# . "${directory_this_file}/gpl-ispconfig-variation1-7-roundcube-plugin-ispconfig-integration.sh"
+
 
 if [ -n "$domain" ];then
-    . "${directory_this_file}/gpl-ispconfig-variation1-domain-register-with-dkim.sh"
-    . "${directory_this_file}/gpl-ispconfig-variation1-mailbox.sh"
+    . "${directory_this_file}/gpl-ispconfig-variation1-8-domain-nginx-config.sh"
+    # . "${directory_this_file}/gpl-ispconfig-variation1-9-domain-register-with-dkim.sh"
+    # . "${directory_this_file}/gpl-ispconfig-variation1-10-mailbox.sh"
 fi
+exit
 
 if [[ -n "$domain" && -n "$digitalocean_token" ]];then
     if [[ -z "$ip_address" && -n "$autopopulate_ip_address" ]];then
@@ -242,7 +278,7 @@ if [[ -n "$domain" && -n "$digitalocean_token" ]];then
         [ -n "$ip_address" ] || { red "The Value of ip_address failed to autopopulate."; }
     fi
     if [ -n "$ip_address" ];then
-        . "${directory_this_file}/gpl-ispconfig-variation1-digitalocean.sh"
+        . "${directory_this_file}/gpl-ispconfig-variation1-11-digitalocean.sh"
     fi
 fi
 
@@ -254,11 +290,11 @@ if [[ -n "$domain" && -n "$letsencrypt" ]];then
         red Lets encrypt require Digital Ocean API Token.;
     fi
     if [[ "$letsencrypt" == 'digitalocean' && -n "$digitalocean_token" ]];then
-        . "${directory_this_file}/gpl-ispconfig-variation1-letsencrypt.sh"
+        . "${directory_this_file}/gpl-ispconfig-variation1-12-letsencrypt.sh"
     fi
 fi
 
-. "${directory_this_file}/gpl-ispconfig-variation1-report.sh"
+. "${directory_this_file}/gpl-ispconfig-variation1-13-report.sh"
 
 yellow -- FINISH ------------------------------------------------------------
 ____

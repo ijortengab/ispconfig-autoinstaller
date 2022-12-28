@@ -571,6 +571,9 @@ ____
 
 user="$mailbox_admin"
 host="$domain"
+echo stop ya
+exit
+
 yellow Mengecek mailbox "$user"@"$host"
 if isEmailIspconfigExist "$user" "$host";then
     __ Email "$user"@"$host" already exists.
