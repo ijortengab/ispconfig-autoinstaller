@@ -252,25 +252,23 @@ done <<< "$files_required"
 
 source "${directory_this_file}/gpl-ispconfig-variation1-1-lib.sh"
 
-# . "${directory_this_file}/gpl-ispconfig-variation1-2-init.sh"
+. "${directory_this_file}/gpl-ispconfig-variation1-2-init.sh"
 
-# . "${directory_this_file}/gpl-ispconfig-variation1-3-init-phpmyadmin.sh"
+. "${directory_this_file}/gpl-ispconfig-variation1-3-init-phpmyadmin.sh"
 
-# . "${directory_this_file}/gpl-ispconfig-variation1-4-init-roundcube.sh"
+. "${directory_this_file}/gpl-ispconfig-variation1-4-init-roundcube.sh"
 
-# . "${directory_this_file}/gpl-ispconfig-variation1-5-init-ispconfig.sh"
+. "${directory_this_file}/gpl-ispconfig-variation1-5-init-ispconfig.sh"
 
-# . "${directory_this_file}/gpl-ispconfig-variation1-6-soap-remote-user.sh"
+. "${directory_this_file}/gpl-ispconfig-variation1-6-soap-remote-user.sh"
 
-# . "${directory_this_file}/gpl-ispconfig-variation1-7-roundcube-plugin-ispconfig-integration.sh"
-
+. "${directory_this_file}/gpl-ispconfig-variation1-7-roundcube-plugin-ispconfig-integration.sh"
 
 if [ -n "$domain" ];then
     . "${directory_this_file}/gpl-ispconfig-variation1-8-domain-nginx-config.sh"
-    # . "${directory_this_file}/gpl-ispconfig-variation1-9-domain-register-with-dkim.sh"
-    # . "${directory_this_file}/gpl-ispconfig-variation1-10-mailbox.sh"
+    . "${directory_this_file}/gpl-ispconfig-variation1-9-domain-register-with-dkim.sh"
+    . "${directory_this_file}/gpl-ispconfig-variation1-10-mailbox.sh"
 fi
-exit
 
 if [[ -n "$domain" && -n "$digitalocean_token" ]];then
     if [[ -z "$ip_address" && -n "$autopopulate_ip_address" ]];then
