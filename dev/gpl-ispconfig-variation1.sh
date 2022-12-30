@@ -161,7 +161,6 @@ magenta 'letsencrypt="'${letsencrypt}'"'
 ____
 
 NOW=$(date +%Y%m%d-%H%M%S)
-PHP_VERSION=7.4
 PHPMYADMIN_DB_NAME=phpmyadmin
 ROUNDCUBE_DB_NAME=roundcubemail
 PHPMYADMIN_DB_USER_HOST=localhost
@@ -181,7 +180,6 @@ MYSQL_ROOT_PASSWD_INI=/root/.mysql-root-passwd.ini
 ISPCONFIG_INSTALL_DIR=/usr/local/ispconfig
 
 yellow Define variable.
-magenta 'PHP_VERSION="'$PHP_VERSION'"'
 magenta 'PHPMYADMIN_DB_NAME="'$PHPMYADMIN_DB_NAME'"'
 magenta 'ROUNDCUBE_DB_NAME="'$ROUNDCUBE_DB_NAME'"'
 magenta 'PHPMYADMIN_DB_USER_HOST="'$PHPMYADMIN_DB_USER_HOST'"'
@@ -206,14 +204,14 @@ case $ID in
     debian)
         case "$VERSION_ID" in
             11)
-                echo -n
+                PHP_VERSION=7.4
             ;;
         esac
         ;;
     ubuntu)
         case "$VERSION_ID" in
             22.04)
-                echo -n
+                PHP_VERSION=8.1
             ;;
             *) red OS "$ID" version "$VERSION_ID" not supported; exit;
         esac
@@ -222,6 +220,7 @@ case $ID in
 esac
 magenta 'ID="'$ID'"'
 magenta 'VERSION_ID="'$VERSION_ID'"'
+magenta 'PHP_VERSION="'$PHP_VERSION'"'
 ____
 
 this_file=$(realpath "$0")

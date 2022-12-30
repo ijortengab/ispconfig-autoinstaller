@@ -290,6 +290,7 @@ EOF
     ln -sf ../sites-available/$nginx_config_file
     if nginx -t 2> /dev/null;then
         nginx -s reload
+        sleep 1
     else
         red Terjadi kesalahan konfigurasi nginx. Gagal reload nginx.; exit
     fi
@@ -326,12 +327,6 @@ if [ -n "$notfound" ];then
 fi
 
 yellow Mengecek HTTP Response Code.
-if nginx -t 2> /dev/null;then
-    magenta nginx -s reload
-    nginx -s reload
-else
-    red Terjadi kesalahan konfigurasi nginx. Gagal reload nginx.; exit
-fi
 magenta curl http://127.0.0.1 -H '"'Host: ${subdomain_localhost}'"'
 code=$(curl -L \
     -o /dev/null -s -w "%{http_code}\n" \

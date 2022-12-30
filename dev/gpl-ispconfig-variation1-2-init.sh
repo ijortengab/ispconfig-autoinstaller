@@ -922,7 +922,6 @@ EOF
     ln -sf ../sites-available/default
     if nginx -t 2> /dev/null;then
         nginx -s reload
-        # Perlu verifikasi, jadi kita gunakan sleep agar mengerem.
         sleep 1
     else
         red Terjadi kesalahan konfigurasi nginx. Gagal reload nginx.; exit
