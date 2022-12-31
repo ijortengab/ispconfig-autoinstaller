@@ -78,11 +78,19 @@ if [ -n "$notfound" ];then
     if [ ! -f /tmp/ispconfig3_install/install/install.php ];then
         __ Mendownload ISPConfig
         cd /tmp
-        if [ ! -f /tmp/ISPConfig-3-stable.tar.gz ];then
-            wget http://www.ispconfig.org/downloads/ISPConfig-3-stable.tar.gz
+        # @todo: have issue with ispconfig version 3.2.9
+        # which is ajax_get_json.php can't work well.
+        # if [ ! -f /tmp/ISPConfig-3-stable.tar.gz ];then
+            # wget http://www.ispconfig.org/downloads/ISPConfig-3-stable.tar.gz
+        # fi
+        # __ Mengextract ISPConfig
+        # tar xfz ISPConfig-3-stable.tar.gz
+
+        if [ ! -f /tmp/ISPConfig-3.2.8p1.tar.gz ];then
+            wget https://www.ispconfig.org/downloads/ISPConfig-3.2.8p1.tar.gz
         fi
         __ Mengextract ISPConfig
-        tar xfz ISPConfig-3-stable.tar.gz
+        tar xfz ISPConfig-3.2.8p1.tar.gz
     fi
     if [ ! -f /tmp/ispconfig3_install/install/autoinstall.ini ];then
         __ Membuat file '`'autoinstall.ini'`'.

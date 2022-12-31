@@ -75,8 +75,6 @@ if [[ -n "$is_dash" ]];then
     ____
 fi
 
-exit
-
 yellow Mengecek timezone.
 current_timezone=$(timedatectl status | grep 'Time zone:' | grep -o -P "Time zone:\s\K(\S+)")
 adjust=
