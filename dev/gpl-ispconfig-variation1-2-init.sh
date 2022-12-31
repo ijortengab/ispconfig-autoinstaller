@@ -39,7 +39,7 @@ ____
 
 yellow Mengecek shell default
 is_dash=
-if [[ $(realpath /bin/sh) == '/usr/bin/dash' ]];then
+if [[ $(realpath /bin/sh) =~ dash$ ]];then
     __ '`'sh'`' command is linked to dash.
     is_dash=1
 else
@@ -52,13 +52,30 @@ if [[ -n "$is_dash" ]];then
     __ '`sh` command link to dash. Disable now.'
     echo "dash dash/sh boolean false" | debconf-set-selections
     DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
-    if [[ $(realpath /bin/sh) == '/usr/bin/dash' ]];then
-        __; red '`'sh'`' command link to dash.; exit
+    if [[ $(realpath /bin/sh) =~ dash$ ]];then
+        __; red '`'sh'`' command link to dash.;
+    else
+        __; green '`'sh'`' command link to $(realpath /bin/sh).
+        is_dash=
+    fi
+    ____
+fi
+
+if [[ -n "$is_dash" ]];then
+    yellow Disable dash again.
+    __ '`sh` command link to dash. Override now.'
+    path=$(command -v sh)
+    cd $(dirname $path)
+    ln -sf bash sh
+    if [[ $(realpath /bin/sh) =~ dash$ ]];then
+        __; red '`'sh'`' command link to dash.; x
     else
         __; green '`'sh'`' command link to $(realpath /bin/sh).
     fi
     ____
 fi
+
+exit
 
 yellow Mengecek timezone.
 current_timezone=$(timedatectl status | grep 'Time zone:' | grep -o -P "Time zone:\s\K(\S+)")
@@ -110,6 +127,16 @@ deb http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe mul
 deb http://archive.ubuntu.com/ubuntu/ jammy-security main restricted universe multiverse
 deb http://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse
 deb http://archive.canonical.com/ubuntu/ jammy partner
+EOF
+)
+            ;;
+            22.10)
+                repository_required=$(cat <<EOF
+deb http://archive.ubuntu.com/ubuntu/ kinetic main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ kinetic-updates main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ kinetic-security main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ kinetic-backports main restricted universe multiverse
+deb http://archive.canonical.com/ubuntu/ kinetic partner
 EOF
 )
             ;;
@@ -194,7 +221,7 @@ case $ID in
         ;;
     ubuntu)
         case "$VERSION_ID" in
-            22.04)
+            22.04|22.10)
                 application=
                 application+=' lsb-release apt-transport-https ca-certificates'
                 application+=' sudo patch curl wget net-tools apache2-utils openssl rkhunter'
@@ -413,7 +440,7 @@ installPhp() {
             ;;
         ubuntu)
             case "$VERSION_ID" in
-                22.04)
+                22.04|22.10)
                     case "$PHP_VERSION" in
                         7.4)
                             addRepositoryPpaOndrejPhp
@@ -435,26 +462,26 @@ installPhp() {
     esac
 }
 
-yellow Mengecek apakah PHP version 7.4 installed.
+yellow Mengecek apakah PHP version "$PHP_VERSION" installed.
 notfound=
-string=php7.4
+string="php${PHP_VERSION}"
 string_quoted=$(pregQuote "$string")
 if grep -q "^${string_quoted}/" <<< "$aptinstalled";then
-    __ PHP 7.4 installed.
+    __ PHP "$PHP_VERSION" installed.
 else
-    __ PHP 7.4 not found.
+    __ PHP "$PHP_VERSION" not found.
     notfound=1
 fi
 ____
 
 if [ -n "$notfound" ];then
-    yellow Menginstall PHP 7.4
-    installPhp 7.4
+    yellow Menginstall PHP "$PHP_VERSION"
+    installPhp "$PHP_VERSION"
     aptinstalled=$(apt --installed list 2>/dev/null)
     if grep -q "^${string_quoted}/" <<< "$aptinstalled";then
-        __; green PHP 7.4 installed.
+        __; green PHP "$PHP_VERSION" installed.
     else
-        __; red PHP 7.4 not found.; exit
+        __; red PHP "$PHP_VERSION" not found.; exit
     fi
     ____
 fi
@@ -515,8 +542,8 @@ if [ -n "$restart" ];then
     ____
 fi
 
-downloadApplication php7.4-{common,gd,mysql,imap,cli,fpm,curl,intl,pspell,sqlite3,tidy,xmlrpc,xsl,zip,mbstring,soap,opcache}
-validateApplication php7.4-{common,gd,mysql,imap,cli,fpm,curl,intl,pspell,sqlite3,tidy,xmlrpc,xsl,zip,mbstring,soap,opcache}
+downloadApplication php"$PHP_VERSION"-{common,gd,mysql,imap,cli,fpm,curl,intl,pspell,sqlite3,tidy,xmlrpc,xsl,zip,mbstring,soap,opcache}
+validateApplication php"$PHP_VERSION"-{common,gd,mysql,imap,cli,fpm,curl,intl,pspell,sqlite3,tidy,xmlrpc,xsl,zip,mbstring,soap,opcache}
 ____
 
 yellow Mengecek apakah postfix installed.
