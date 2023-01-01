@@ -509,3 +509,96 @@ EOF
     fileMustExists /etc/profile.d/ispconfig-completion.sh
     ____
 fi
+
+# Trouble for Amavis Port 10026.
+# https://www.howtoforge.com/community/threads/bullseye-for-ispconfig.87450/page-2#post-427169
+# ```
+# chown -R root:amavis /etc/amavis/
+# chmod 644 /etc/amavis/50-user~
+# chmod 644 /etc/amavis/conf.d/50-user
+# chmod 750 /etc/amavis/conf.d
+# service amavis restart
+# ```
+yellow Memastikan amavis port 10026 berjalan.
+tweak=
+restart=
+if [ $(stat /etc/amavis -c %G) == amavis ];then
+    __ Directory '`'/etc/amavis'`' bagian dari Group '`'amavis'`'.
+else
+    __ Directory '`'/etc/amavis'`' bukan bagian dari Group '`'amavis'`'.
+    tweak=1
+fi
+if [ -n "$tweak" ];then
+    chown -R root:amavis /etc/amavis/
+    restart=1
+    if [ $(stat --cached=never /etc/amavis -c %G) == amavis ];then
+        __; green Directory '`'/etc/amavis'`' bagian dari Group '`'amavis'`'.
+    else
+        __; red Directory '`'/etc/amavis'`' bukan bagian dari Group '`'amavis'`'.; x
+    fi
+fi
+if [ -f /etc/amavis/50-user~ ];then
+    tweak=
+    if [[ $(stat /etc/amavis/50-user~ -c %a) == 644 ]];then
+        __ File  '`'/etc/amavis/50-user~'`' memiliki permission '`'644'`'.
+    else
+        __ File  '`'/etc/amavis/50-user~'`' tidak memiliki permission '`'644'`'.
+        tweak=1
+    fi
+    if [ -n "$tweak" ];then
+        chmod 644 /etc/amavis/50-user~
+        restart=1
+        if [[ -f /etc/amavis/50-user~ && $(stat --cached=never /etc/amavis/50-user~ -c %a) == 644 ]];then
+            __; green File  '`'/etc/amavis/50-user~'`' memiliki permission '`'644'`'.
+        else
+            __; red File  '`'/etc/amavis/50-user~'`' tidak memiliki permission '`'644'`'.; x
+        fi
+    fi
+fi
+if [ -f /etc/amavis/conf.d/50-user ];then
+    tweak=
+    if [[ $(stat /etc/amavis/conf.d/50-user -c %a) == 644 ]];then
+        __ File  '`'/etc/amavis/conf.d/50-user'`' memiliki permission '`'644'`'.
+    else
+        __ File  '`'/etc/amavis/conf.d/50-user'`' tidak memiliki permission '`'644'`'.
+        tweak=1
+    fi
+    if [ -n "$tweak" ];then
+        chmod 644 /etc/amavis/conf.d/50-user
+        restart=1
+        if [[ -f /etc/amavis/conf.d/50-user && $(stat --cached=never /etc/amavis/conf.d/50-user -c %a) == 644 ]];then
+            __; green File  '`'/etc/amavis/conf.d/50-user'`' memiliki permission '`'644'`'.
+        else
+            __; red File  '`'/etc/amavis/conf.d/50-user'`' tidak memiliki permission '`'644'`'.; x
+        fi
+    fi
+fi
+if [ -d /etc/amavis/conf.d ];then
+    tweak=
+    if [[ $(stat /etc/amavis/conf.d -c %a) == 750 ]];then
+        __ Directory  '`'/etc/amavis/conf.d'`' memiliki permission '`'750'`'.
+    else
+        __ Directory  '`'/etc/amavis/conf.d'`' tidak memiliki permission '`'750'`'.
+        tweak=1
+    fi
+    if [ -n "$tweak" ];then
+        chmod 750 /etc/amavis/conf.d
+        restart=1
+        if [[ -f /etc/amavis/conf.d && $(stat --cached=never /etc/amavis/conf.d -c %a) == 750 ]];then
+            __; green Directory  '`'/etc/amavis/conf.d'`' memiliki permission '`'750'`'.
+        else
+            __; red Directory  '`'/etc/amavis/conf.d'`' tidak memiliki permission '`'750'`'.; x
+        fi
+    fi
+fi
+if [ -n "$restart" ];then
+    service amavis restart
+    sleep 1
+    stdout=$(netstat -tpn --listening | grep 10026 | grep 'amavisd-new')
+    if [ $(wc -l <<< "$stdout") -gt 0 ];then
+        __; green Port 10026 ditemukan.
+    else
+        __; red Port 10026 tidak ditemukan.; x
+    fi
+fi
+____
