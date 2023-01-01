@@ -85,12 +85,11 @@ if [ -n "$notfound" ];then
         # fi
         # __ Mengextract ISPConfig
         # tar xfz ISPConfig-3-stable.tar.gz
-
-        if [ ! -f /tmp/ISPConfig-3.2.8p1.tar.gz ];then
-            wget https://www.ispconfig.org/downloads/ISPConfig-3.2.8p1.tar.gz
+        if [ ! -f /tmp/ISPConfig-3.2.7.tar.gz ];then
+            wget https://www.ispconfig.org/downloads/ISPConfig-3.2.7.tar.gz
         fi
         __ Mengextract ISPConfig
-        tar xfz ISPConfig-3.2.8p1.tar.gz
+        tar xfz ISPConfig-3.2.7.tar.gz
     fi
     if [ ! -f /tmp/ispconfig3_install/install/autoinstall.ini ];then
         __ Membuat file '`'autoinstall.ini'`'.

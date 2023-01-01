@@ -105,6 +105,9 @@ if [ -n "$json" ];then
     dkim_private=$(php -r "echo (json_decode(fgets(STDIN)))->dkim_private;" <<< "$json")
     dkim_public=$(php -r "echo (json_decode(fgets(STDIN)))->dkim_public;" <<< "$json")
     dns_record=$(php -r "echo (json_decode(fgets(STDIN)))->dns_record;" <<< "$json")
+    if [ -z "$dns_record" ];then
+        __; red DNS record gagal dibuat.; x
+    fi
     yellow Mendaftarkan domain '`'$domain'`' di Module Mail ISPConfig.
     __ Create PHP Script from template '`'mail_domain_add'`'.
     template=mail_domain_add

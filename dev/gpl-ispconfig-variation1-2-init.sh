@@ -161,11 +161,11 @@ done <<< "$repository_required"
 }
 if [[ $update_now == 1 ]];then
     magenta apt -y update
-    magenta apt -y upgrade
+    # magenta apt -y upgrade
     # https://fabianlee.org/2017/01/16/ubuntu-silent-package-installation-and-debconf/
-    export DEBIAN_FRONTEND=noninteractive
+    # export DEBIAN_FRONTEND=noninteractive
     apt -y update
-    apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y upgrade
+    # apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y upgrade
 else
     __ Repository updated.
 fi

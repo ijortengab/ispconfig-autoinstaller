@@ -211,7 +211,8 @@ case $ID in
     ubuntu)
         case "$VERSION_ID" in
             22.04|22.10)
-                PHP_VERSION=8.1
+                # PHP_VERSION=8.1
+                PHP_VERSION=7.4
             ;;
             *) red OS "$ID" version "$VERSION_ID" not supported; exit;
         esac

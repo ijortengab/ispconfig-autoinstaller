@@ -15,7 +15,7 @@ directory_this_file=$(dirname "$this_file")
     # --letsencrypt=digitalocean
 
 "${directory_this_file}/gpl-ispconfig-variation1.sh" \
-    systemix.id \
+    "$1" \
     --autopopulate-ip-address \
     --digitalocean-token=c29d24b8c05aa65759f243639f8d868ba4635b3d524a2eb4f5412bae6b6be906 \
     --letsencrypt=digitalocean

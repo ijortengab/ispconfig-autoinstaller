@@ -110,10 +110,12 @@ fi
 ____
 
 if [ -n "$reload" ];then
+    yellow Reload nginx configuration.
     if nginx -t 2> /dev/null;then
         magenta nginx -s reload
         nginx -s reload
     else
         red Terjadi kesalahan konfigurasi nginx. Gagal reload nginx.; exit
     fi
+    ____
 fi
