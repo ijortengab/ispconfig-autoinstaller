@@ -1,6 +1,6 @@
 # Simple Bash Script for Auto Installation ISP Config 3
 
-## Variant 1 - debian10.digitalocean.sh
+## Variant 1 - variation-1/gpl-ispconfig-variation1.sh
 
 Assume your domain is example.com
 
@@ -9,13 +9,13 @@ This script will doing this for you:
 - Create Website ISPConfig at https://cp.example.com
 - Create Website PHPMyAdmin at https://db.example.com
 - Create Website Roundcube at https://mail.example.com
-- FQCDN set as server.example.com
+- FQDN set as server1.example.com
 - Create DNS record: A example.com
-- Create DNS record: A server.example.com
+- Create DNS record: A server1.example.com
 - Create DNS record: CNAME cp.example.com
 - Create DNS record: CNAME db.example.com
 - Create DNS record: CNAME mail.example.com
-- Create DNS record: MX example.com to server.example.com
+- Create DNS record: MX example.com to server1.example.com
 - Create DNS record: TXT DKIM for example.com
 - Create DNS record: TXT DMARC for example.com
 - Create DNS record: TXT SPF for example.com
@@ -28,47 +28,61 @@ This script will doing this for you:
 
 Thats all.
 
-Required action:
+Suggest action:
 
 - Buy domain name from your favourite registrar, then point Name Server to
   ns1.digitalocean.com, ns2.digitalocean.com, and ns3.digitalocean.com.
-- Buy server (VPS) in DigitalOcean and select OS: Debian 10.
-  ATTENTION: give name your droplet as FQCDN, example: server.example.com.
+- Buy server (VPS) in DigitalOcean and select OS: Debian 11.
+  ATTENTION: give name your droplet as FQDN, example: server1.example.com.
 - Generate token API in DigitalOcean Control Panel.
 
 Download and execute this script inside server.
 
 ```
-wget https://raw.githubusercontent.com/ijortengab/ispconfig-autoinstaller/master/debian10.digitalocean.sh
-bash debian10.digitalocean.sh
+git clone https://github.com/ijortengab/ispconfig-autoinstaller
+cd ispconfig-autoinstaller/variation-1
+chmod a+x *
+./gpl-ispconfig-variation1.sh \
+    example.com \
+    --autopopulate-ip-address \
+    --digitalocean-token=<token> \
+    --letsencrypt=digitalocean
 ```
 
 You'll see these result:
 
 ```
-# Credentials
-PHPMyAdmin: https://db.example.com
-   - username: ispconfig
-     password: -
-   - username: pma
-     password: -
-   - username: roundcube
-     password: -
-Roundcube: https://mail.example.com
-   - username: admin
-     password: -
-ISP Config: https://cp.example.com
-   - username: admin
-     password: -
+Report
+
+PHPMyAdmin: https://db.bta.my.id
+ - username: pma
+   password: ...
+ - username: roundcube
+   password: ...
+ - username: ispconfig
+   password: ...
+
+Roundcube: https://mail.bta.my.id
+ - username: admin
+   password: ...
+
+ISPConfig: https://cp.bta.my.id
+ - username: admin
+   password: ...
 ```
 
-## Add on domain
+## Addon domain
 
 Assume your next domain is `other-example.com` and you want to add on existing domain (example.com).
+
+Just execute this script agan inside server.
 
 Download and execute this script inside server.
 
 ```
-wget https://raw.githubusercontent.com/ijortengab/ispconfig-autoinstaller/master/addon-mail.digitalocean.sh
-bash addon-mail.digitalocean.sh
+./gpl-ispconfig-variation1.sh \
+    other-example.com \
+    --autopopulate-ip-address \
+    --digitalocean-token=<token> \
+    --letsencrypt=digitalocean
 ```
