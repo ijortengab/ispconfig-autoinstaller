@@ -5,7 +5,10 @@ directory_this_file=$(dirname "$this_file")
 
 parent_dir=$(realpath "$directory_this_file"/../)
 variaton_1_dir="${parent_dir}/variation-1"
-mkdir -p "$variaton_1_dir"
+mktemp=$(mktemp)
+rm "$mktemp"
+variaton_1_dir_temp=${mktemp}.d
+mkdir -p "$variaton_1_dir_temp"
 
 cd "$directory_this_file"
 cp gpl-ispconfig-variation1.sh -t "$variaton_1_dir"
@@ -30,6 +33,13 @@ while IFS= read -r line; do
         # Trim Trailing Space
         sed -i -e 's/[ ]*$//'  "$line"
         git diff "$line"
-        cp "${line}" -t "$variaton_1_dir"
+        cp "${line}" -t "$variaton_1_dir_temp"
     }
 done <<< "$files_required"
+
+git switch master
+mkdir -p "$variaton_1_dir"
+cp "$variaton_1_dir_temp"/* -t "$variaton_1_dir"
+rm -rf "$variaton_1_dir_temp"
+git switch dev
+
