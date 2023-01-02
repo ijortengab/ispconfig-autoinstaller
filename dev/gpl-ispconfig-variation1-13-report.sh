@@ -68,9 +68,10 @@ ____
 if [ -n "$ip_address" ];then
     if [[ ! $(dig -x $ip_address +short) == ${fqdn}. ]];then
         red Attention
-        e Your PTR Record is different with your FQDN.
-        __; magenta dig -x $ip_address +short' # ' $(dig -x $ip_address +short)
+        e Your PTR Record is different with your variable of FQDN.
         __; magenta fqdn="$fqdn"
+        __; magenta dig -x $ip_address +short' # ' $(dig -x $ip_address +short)
+        e "But it doesn't matter if ${domain} is addon domain."
         ____
         yellow Suggestion.
         e If you user of DigitalOcean, change your droplet name with FQDN.
@@ -81,9 +82,10 @@ fi
 
 if [[ ! $(hostname -f) == $fqdn ]];then
     red Attention.
-    __ Your current hostname is different with your FQDN.
-    __; magenta hostname -f' # '$(hostname -f)
+    e Your current FQDN is different with your variable of FQDN.
     __; magenta fqdn="$fqdn"
+    __; magenta hostname -f' # '$(hostname -f)
+    e "But it doesn't matter if ${domain} is addon domain."
     ____
 
     yellow Suggestion.
