@@ -13,7 +13,6 @@ fi
 fqdn_phpmyadmin="${subdomain_phpmyadmin}.${domain}"
 fqdn_roundcube="${subdomain_roundcube}.${domain}"
 fqdn_ispconfig="${subdomain_ispconfig}.${domain}"
-mail_provider="$fqdn"
 
 isDomainExists() {
     local domain=$1 code

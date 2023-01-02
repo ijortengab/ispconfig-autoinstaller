@@ -14,8 +14,15 @@ directory_this_file=$(dirname "$this_file")
     # --digitalocean-token=c29d24b8c05aa65759f243639f8d868ba4635b3d524a2eb4f5412bae6b6be906 \
     # --letsencrypt=digitalocean
 
+# "${directory_this_file}/gpl-ispconfig-variation1.sh" \
+    # systemix.id \
+    # --autopopulate-ip-address \
+    # --digitalocean-token=c29d24b8c05aa65759f243639f8d868ba4635b3d524a2eb4f5412bae6b6be906 \
+    # --letsencrypt=digitalocean \
+    # --mail-provider=server
+
 "${directory_this_file}/gpl-ispconfig-variation1.sh" \
-    "$1" \
+    bta.my.id \
     --autopopulate-ip-address \
     --digitalocean-token=c29d24b8c05aa65759f243639f8d868ba4635b3d524a2eb4f5412bae6b6be906 \
     --letsencrypt=digitalocean

@@ -15,6 +15,8 @@ while [[ $# -gt 0 ]]; do
         --hostname) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then hostname="$2"; shift; fi; shift ;;
         --letsencrypt=*) letsencrypt="${1#*=}"; shift ;;
         --letsencrypt) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then letsencrypt="$2"; shift; else letsencrypt=1; fi; shift ;;
+        --mail-provider=*) mail_provider="${1#*=}"; shift ;;
+        --mail-provider) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then mail_provider="$2"; shift; fi; shift ;;
         --mailbox-admin=*) mailbox_admin="${1#*=}"; shift ;;
         --mailbox-admin) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then mailbox_admin="$2"; shift; fi; shift ;;
         --mailbox-host=*) mailbox_host="${1#*=}"; shift ;;
@@ -84,6 +86,8 @@ Avilable Options:
                                 Use letsencrypt to setup TLS/SSL for HTTPS.
                                 Available value of <dns-provider>:
                                 - `digitalocean`
+    --mail-provider             Set domain of mail provider. If ommited, FQDN
+                                will use or value of /etc/mailname (if any).
 EOF
 exit 1
 fi
@@ -102,7 +106,7 @@ ____() { echo; }
 domain="$1"
 ip_address="$2"
 [ -n "$domain" ] && {
-    if ! grep -P '(?=^.{5,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.?)+(?:[a-zA-Z]{2,})$)' <<< "$domain";then
+    if ! grep -q -P '(?=^.{5,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.?)+(?:[a-zA-Z]{2,})$)' <<< "$domain";then
         red "Argument <domain> has not valid characters."; x
     fi
 }
@@ -126,6 +130,15 @@ if [ -n "$domain" ];then
     fqdn="${hostname}.${domain}"
 else
     fqdn="${hostname}.localhost"
+fi
+if [[ -z "$mail_provider" && -f /etc/mailname ]];then
+    _string=$(</etc/mailname)
+    if [ -n "$(</etc/mailname)" ];then
+        mail_provider="$_string"
+    fi
+fi
+if [ -z "$mail_provider" ];then
+    mail_provider="$fqdn"
 fi
 
 blue '######################################################################'
@@ -158,6 +171,7 @@ magenta 'subdomain_phpmyadmin="'${subdomain_phpmyadmin}'"'
 magenta 'subdomain_roundcube="'${subdomain_roundcube}'"'
 magenta 'dkim_selector="'${dkim_selector}'"'
 magenta 'letsencrypt="'${letsencrypt}'"'
+magenta 'mail_provider="'${mail_provider}'"'
 ____
 
 NOW=$(date +%Y%m%d-%H%M%S)
@@ -327,6 +341,7 @@ VALUE=(
 --subdomain-phpmyadmin
 --subdomain-roundcube
 --dkim-selector
+--mail-provider
 )
 FLAG_VALUE=(
 --letsencrypt

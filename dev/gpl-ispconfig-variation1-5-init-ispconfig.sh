@@ -516,8 +516,8 @@ fi
 # chown -R root:amavis /etc/amavis/
 # chmod 644 /etc/amavis/50-user~
 # chmod 644 /etc/amavis/conf.d/50-user
-# chmod 750 /etc/amavis/conf.d
 # service amavis restart
+# chmod 750 /etc/amavis/conf.d
 # ```
 yellow Memastikan amavis port 10026 berjalan.
 tweak=
@@ -594,7 +594,7 @@ fi
 if [ -n "$restart" ];then
     service amavis restart
     sleep 1
-    stdout=$(netstat -tpn --listening | grep 10026 | grep 'amavisd-new')
+    stdout=$(netstat -tpn --listening | grep 10026 | grep amavisd)
     if [ $(wc -l <<< "$stdout") -gt 0 ];then
         __; green Port 10026 ditemukan.
     else
