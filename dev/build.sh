@@ -11,7 +11,7 @@ variaton_1_dir_temp=${mktemp}.d
 mkdir -p "$variaton_1_dir_temp"
 
 cd "$directory_this_file"
-cp gpl-ispconfig-variation1.sh -t "$variaton_1_dir"
+cp gpl-ispconfig-variation1.sh -t "$variaton_1_dir_temp"
 files_required=$(cat <<EOF
 ${directory_this_file}/gpl-ispconfig-variation1-1-lib.sh
 ${directory_this_file}/gpl-ispconfig-variation1-2-init.sh
