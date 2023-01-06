@@ -32,7 +32,7 @@ Suggest action:
 
 - Buy domain name from your favourite registrar, then point Name Server to
   ns1.digitalocean.com, ns2.digitalocean.com, and ns3.digitalocean.com.
-- Buy server (VPS) in DigitalOcean and select OS: Debian 11.
+- Buy server (VPS) in DigitalOcean and select OS: `Debian 11`/`Ubuntu 22.04`.
   ATTENTION: give name your droplet as FQDN, example: server1.example.com.
 - Generate token API in DigitalOcean Control Panel.
 
@@ -49,12 +49,12 @@ chmod a+x *
     --letsencrypt=digitalocean
 ```
 
-You'll see these result:
+At the end of the process, You'll see these result:
 
 ```
 Report
 
-PHPMyAdmin: https://db.bta.my.id
+PHPMyAdmin: https://db.example.com
  - username: pma
    password: ...
  - username: roundcube
@@ -62,18 +62,18 @@ PHPMyAdmin: https://db.bta.my.id
  - username: ispconfig
    password: ...
 
-Roundcube: https://mail.bta.my.id
+Roundcube: https://mail.example.com
  - username: admin
    password: ...
 
-ISPConfig: https://cp.bta.my.id
+ISPConfig: https://cp.example.com
  - username: admin
    password: ...
 ```
 
 ## Addon domain
 
-Assume your next domain is `other-example.com` and you want to add on existing domain (example.com).
+Assume your next domain is `example.net` and you want to add on existing domain (example.com).
 
 Just execute this script agan inside server.
 
@@ -81,7 +81,7 @@ Download and execute this script inside server.
 
 ```
 ./gpl-ispconfig-variation1.sh \
-    other-example.com \
+    example.net \
     --autopopulate-ip-address \
     --digitalocean-token=<token> \
     --letsencrypt=digitalocean
