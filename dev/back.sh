@@ -6,6 +6,6 @@ if [[ "$0" =~ back\.sh$ ]];then
 fi
 cd $PWD/../
 git switch master
-if [ $? -eq 1 ];then
+if [[ ! $? -eq 0 ]];then
     cd -
 fi

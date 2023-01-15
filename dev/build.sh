@@ -9,9 +9,9 @@ dev_d="$PWD"
 root_d=$(realpath "$dev_d"/../)
 variaton_1_d="${root_d}/variation-1"
 mktemp=$(mktemp)
-
 rm "$mktemp"
 temp_d=${mktemp}.d
+echo "Direktori Temporary dibuat: $temp_d"
 mkdir -p "$temp_d"
 
 cd "$dev_d"
@@ -34,15 +34,17 @@ EOF
 )
 while IFS= read -r line; do
     [ -f "${line}" ] && {
-        # Trim Trailing Space
-        sed -i -e 's/[ ]*$//'  "$line"
-        git diff "$line"
         cp "${line}" -t "$temp_d"
     }
 done <<< "$files_required"
 
 cd "$root_d"
 git switch master
-mkdir -p "$variaton_1_d"
-cp -f "$temp_d"/* -t "$variaton_1_d"
+if [[ $? -eq 0 ]];then
+    mkdir -p "$variaton_1_d"
+    cp -f "$temp_d"/* -t "$variaton_1_d"
+else
+    cd -
+fi
+echo "Direktori Temporary dihapus: $temp_d"
 rm -rf "$temp_d"
