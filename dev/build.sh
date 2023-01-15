@@ -4,10 +4,12 @@ if [[ "$0" =~ build\.sh$ ]];then
     echo 'Cara penggunaan yang benar adalah `. build.sh`'
     exit
 fi
+
 dev_d="$PWD"
 root_d=$(realpath "$dev_d"/../)
 variaton_1_d="${root_d}/variation-1"
 mktemp=$(mktemp)
+
 rm "$mktemp"
 temp_d=${mktemp}.d
 mkdir -p "$temp_d"
@@ -42,5 +44,5 @@ done <<< "$files_required"
 cd "$root_d"
 git switch master
 mkdir -p "$variaton_1_d"
-cp "$temp_d"/* -t "$variaton_1_d"
+cp -f "$temp_d"/* -t "$variaton_1_d"
 rm -rf "$temp_d"
