@@ -172,6 +172,7 @@ fi
 ____
 
 aptinstalled=$(apt --installed list 2>/dev/null)
+
 downloadApplication() {
     yellow Melakukan instalasi aplikasi "$@".
     local aptnotfound=
@@ -189,6 +190,7 @@ downloadApplication() {
         __ Aplikasi sudah terinstall seluruhnya.
     fi
 }
+
 validateApplication() {
     local aptnotfound=
     for i in "$@"; do
