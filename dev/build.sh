@@ -1,31 +1,33 @@
 #!/bin/bash
 
-this_file=$(realpath "$0")
-directory_this_file=$(dirname "$this_file")
-
-parent_dir=$(realpath "$directory_this_file"/../)
-variaton_1_dir="${parent_dir}/variation-1"
+if [[ "$0" =~ build\.sh$ ]];then
+    echo 'Cara penggunaan yang benar adalah `. build.sh`'
+    exit
+fi
+dev_d="$PWD"
+root_d=$(realpath "$dev_d"/../)
+variaton_1_d="${root_d}/variation-1"
 mktemp=$(mktemp)
 rm "$mktemp"
-variaton_1_dir_temp=${mktemp}.d
-mkdir -p "$variaton_1_dir_temp"
+temp_d=${mktemp}.d
+mkdir -p "$temp_d"
 
-cd "$directory_this_file"
-cp gpl-ispconfig-variation1.sh -t "$variaton_1_dir_temp"
+cd "$dev_d"
+cp gpl-ispconfig-variation1.sh -t "$temp_d"
 files_required=$(cat <<EOF
-${directory_this_file}/gpl-ispconfig-variation1-1-lib.sh
-${directory_this_file}/gpl-ispconfig-variation1-2-init.sh
-${directory_this_file}/gpl-ispconfig-variation1-3-init-phpmyadmin.sh
-${directory_this_file}/gpl-ispconfig-variation1-4-init-roundcube.sh
-${directory_this_file}/gpl-ispconfig-variation1-5-init-ispconfig.sh
-${directory_this_file}/gpl-ispconfig-variation1-6-soap-remote-user.sh
-${directory_this_file}/gpl-ispconfig-variation1-7-roundcube-plugin-ispconfig-integration.sh
-${directory_this_file}/gpl-ispconfig-variation1-8-domain-nginx-config.sh
-${directory_this_file}/gpl-ispconfig-variation1-9-domain-register-with-dkim.sh
-${directory_this_file}/gpl-ispconfig-variation1-10-mailbox.sh
-${directory_this_file}/gpl-ispconfig-variation1-11-digitalocean.sh
-${directory_this_file}/gpl-ispconfig-variation1-12-letsencrypt.sh
-${directory_this_file}/gpl-ispconfig-variation1-13-report.sh
+${dev_d}/gpl-ispconfig-variation1-1-lib.sh
+${dev_d}/gpl-ispconfig-variation1-2-init.sh
+${dev_d}/gpl-ispconfig-variation1-3-init-phpmyadmin.sh
+${dev_d}/gpl-ispconfig-variation1-4-init-roundcube.sh
+${dev_d}/gpl-ispconfig-variation1-5-init-ispconfig.sh
+${dev_d}/gpl-ispconfig-variation1-6-soap-remote-user.sh
+${dev_d}/gpl-ispconfig-variation1-7-roundcube-plugin-ispconfig-integration.sh
+${dev_d}/gpl-ispconfig-variation1-8-domain-nginx-config.sh
+${dev_d}/gpl-ispconfig-variation1-9-domain-register-with-dkim.sh
+${dev_d}/gpl-ispconfig-variation1-10-mailbox.sh
+${dev_d}/gpl-ispconfig-variation1-11-digitalocean.sh
+${dev_d}/gpl-ispconfig-variation1-12-letsencrypt.sh
+${dev_d}/gpl-ispconfig-variation1-13-report.sh
 EOF
 )
 while IFS= read -r line; do
@@ -33,11 +35,12 @@ while IFS= read -r line; do
         # Trim Trailing Space
         sed -i -e 's/[ ]*$//'  "$line"
         git diff "$line"
-        cp "${line}" -t "$variaton_1_dir_temp"
+        cp "${line}" -t "$temp_d"
     }
 done <<< "$files_required"
 
+cd "$root_d"
 git switch master
-mkdir -p "$variaton_1_dir"
-cp "$variaton_1_dir_temp"/* -t "$variaton_1_dir"
-rm -rf "$variaton_1_dir_temp"
+mkdir -p "$variaton_1_d"
+cp "$temp_d"/* -t "$variaton_1_d"
+rm -rf "$temp_d"
