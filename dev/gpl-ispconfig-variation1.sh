@@ -133,7 +133,7 @@ domain="$1"
 ip_address="$2"
 [ -n "$domain" ] && {
     if ! grep -q -P '(?=^.{5,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.?)+(?:[a-zA-Z]{2,})$)' <<< "$domain";then
-        red "Argument <domain> has not valid characters."; x
+        red "Argument <domain> contains invalid characters."; x
     fi
 }
 

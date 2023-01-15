@@ -136,22 +136,27 @@ if [[ -n "$notfound" ]];then
 fi
 ____
 
-yellow Save DigitalOcean Token as File
-mktemp=$(mktemp -t digitalocean.XXXXXX.ini)
-chmod 0700 "$mktemp"
-cat << EOF > "$mktemp"
+yellow Certbot Request for '`'$fqdn_ispconfig'`'
+if [ -d /etc/letsencrypt/live/"$fqdn_ispconfig" ];then
+    __ Certificate berada pada direktori '`'/etc/letsencrypt/live/$fqdn_ispconfig/'`'
+else
+    __ Save DigitalOcean Token as File
+    mktemp=$(mktemp -t digitalocean.XXXXXX.ini)
+    chmod 0700 "$mktemp"
+    cat << EOF > "$mktemp"
 dns_digitalocean_token = $digitalocean_token
 EOF
-____
-
-yellow Certbot Request
-[ -d /etc/letsencrypt/live/"$fqdn_ispconfig" ] || {
-certbot -i nginx \
-   -n --agree-tos --email "${mailbox_host}@${domain}" \
-   --dns-digitalocean \
-   --dns-digitalocean-credentials "$mktemp" \
-   -d "$fqdn_ispconfig" \
-   -d "$fqdn_phpmyadmin" \
-   -d "$fqdn_roundcube"
-}
+    __; fileMustExists "$mktemp"
+    __; magenta certbot -i nginx -d "$fqdn_ispconfig" -d "$fqdn_phpmyadmin" -d "$fqdn_roundcube"
+    certbot -i nginx \
+       -n --agree-tos --email "${mailbox_host}@${domain}" \
+       --dns-digitalocean \
+       --dns-digitalocean-credentials "$mktemp" \
+       -d "$fqdn_ispconfig" \
+       -d "$fqdn_phpmyadmin" \
+       -d "$fqdn_roundcube"
+    __ Cleaning File Temporary
+    __; magenta rm "$mktemp"
+    rm "$mktemp"
+fi
 ____
