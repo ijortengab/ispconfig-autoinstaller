@@ -41,5 +41,3 @@ git switch master
 mkdir -p "$variaton_1_dir"
 cp "$variaton_1_dir_temp"/* -t "$variaton_1_dir"
 rm -rf "$variaton_1_dir_temp"
-git switch dev
-
