@@ -1,7 +1,5 @@
 # Simple Bash Script for Auto Installation ISP Config 3
 
-## Variant 1 - variation-1/gpl-ispconfig-variation1.sh
-
 Assume your domain is example.com
 
 This script will doing this for you:
@@ -9,17 +7,18 @@ This script will doing this for you:
 - Create Website ISPConfig at https://cp.example.com
 - Create Website PHPMyAdmin at https://db.example.com
 - Create Website Roundcube at https://mail.example.com
-- FQDN set as server1.example.com
+- FQDN set as $hostname.example.com
 - Create DNS record: A example.com
-- Create DNS record: A server1.example.com
+- Create DNS record: A $hostname.example.com
 - Create DNS record: CNAME cp.example.com
 - Create DNS record: CNAME db.example.com
 - Create DNS record: CNAME mail.example.com
-- Create DNS record: MX example.com to server1.example.com
+- Create DNS record: MX example.com to $hostname.example.com
 - Create DNS record: TXT DKIM for example.com
 - Create DNS record: TXT DMARC for example.com
 - Create DNS record: TXT SPF for example.com
 - Create mailbox admin@example.com
+- Create mailbox support@example.com
 - Create mail alias webmaster@example.com destination to admin@example.com
 - Create mail alias hostmaster@example.com destination to admin@example.com
 - Create mail alias postmaster@example.com destination to admin@example.com
@@ -33,56 +32,23 @@ Suggest action:
 - Buy domain name from your favourite registrar, then point Name Server to
   ns1.digitalocean.com, ns2.digitalocean.com, and ns3.digitalocean.com.
 - Buy server (VPS) in DigitalOcean and select OS: `Debian 11`/`Ubuntu 22.04`.
-  ATTENTION: give name your droplet as FQDN, example: server1.example.com.
+  ATTENTION: give name your droplet as FQDN, example: $hostname.example.com.
 - Generate token API in DigitalOcean Control Panel.
 
 Download and execute this script inside server.
 
-```
-git clone https://github.com/ijortengab/ispconfig-autoinstaller
-cd ispconfig-autoinstaller/variation-1
-chmod a+x *
-./gpl-ispconfig-variation1.sh \
-    example.com \
-    --autopopulate-ip-address \
-    --digitalocean-token=<token> \
-    --letsencrypt=digitalocean
-```
-
-At the end of the process, You'll see these result:
+## Prerequisite
 
 ```
-Report
-
-PHPMyAdmin: https://db.example.com
- - username: pma
-   password: ...
- - username: roundcube
-   password: ...
- - username: ispconfig
-   password: ...
-
-Roundcube: https://mail.example.com
- - username: admin
-   password: ...
-
-ISPConfig: https://cp.example.com
- - username: admin
-   password: ...
+sudo apt install wget
+wget https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/installer.sh
+chmod a+x installer.sh
+./installer.sh
 ```
 
-## Addon domain
-
-Assume your next domain is `example.net` and you want to add on existing domain (example.com).
-
-Just execute this script agan inside server.
-
-Download and execute this script inside server.
+## Variation 1 (Debian 11)
 
 ```
-./gpl-ispconfig-variation1.sh \
-    example.net \
-    --autopopulate-ip-address \
-    --digitalocean-token=<token> \
-    --letsencrypt=digitalocean
+export PATH=$HOME/bin:$PATH
+gpl-ispconfig-setup-variation1.sh
 ```
