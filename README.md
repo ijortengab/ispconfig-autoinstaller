@@ -37,18 +37,36 @@ Suggest action:
 
 Download and execute this script inside server.
 
-## Prerequisite
+## Quick Mode Install
+
+You will be prompt to some required value.
 
 ```
-sudo apt install wget
-wget https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/installer.sh
-chmod a+x installer.sh
-./installer.sh
+sudo wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh && bash ispconfig-autoinstaller.sh
 ```
 
-## Variation 1 (Debian 11)
+## Advanced Install
+
+Alternative 1. Change binary directory.
 
 ```
-export PATH=$HOME/bin:$PATH
-gpl-ispconfig-setup-variation1.sh
+cd /tmp
+wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh
+BINARY_DIRECTORY=/usr/local/bin bash ispconfig-autoinstaller.sh
+```
+
+Alternative 2. Pass some argument to setup.
+
+```
+cd /tmp
+wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh
+bash ispconfig-autoinstaller.sh -- --timezone=Asia/Jakarta
+```
+
+Alternative 3. Fast version.
+
+```
+cd /tmp
+wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh
+bash ispconfig-autoinstaller.sh --fast
 ```
