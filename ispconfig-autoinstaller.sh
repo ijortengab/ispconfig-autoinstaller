@@ -162,12 +162,13 @@ if [ -z "$binary_directory_exists_sure" ];then
     fi
 fi
 
-yellow Variation:; _.
-magenta ' 1. '; _, Applies to Debian 11; _.
-__ Require DigitalOcean Token API.
-__ ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0,
-__ Nginx 1.18.0, MariaDB 10.5.19, PHP 7.4
-__ Postfix 3.5.18, Dovecot 2.3.13
+yellow Variation; _, ' '; magenta '1'; _, '.'; _.
+cat << 'EOF'
+Debian 11, ISPConfig 3.2.7
+PHPMyAdmin 5.2.0, Roundcube 1.6.0
+Nginx 1.18.0, MariaDB 10.5.19, PHP 7.4
+Postfix 3.5.18, Dovecot 2.3.13
+EOF
 ____
 
 read -p "Select variation: " variation
