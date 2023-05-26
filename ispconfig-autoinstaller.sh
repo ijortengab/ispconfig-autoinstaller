@@ -28,7 +28,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t IspconfigAutoinstaller_printVersion) == function ]] || IspconfigAutoinstaller_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t IspconfigAutoinstaller_printHelp) == function ]] || IspconfigAutoinstaller_printHelp() {
     cat << EOF
@@ -162,13 +162,9 @@ if [ -z "$binary_directory_exists_sure" ];then
     fi
 fi
 
-yellow Variation; _, ' '; magenta '1'; _, '.'; _.
-cat << 'EOF'
-Debian 11, ISPConfig 3.2.7
-PHPMyAdmin 5.2.0, Roundcube 1.6.0
-Nginx 1.18.0, MariaDB 10.5.19, PHP 7.4
-Postfix 3.5.18, Dovecot 2.3.13
-EOF
+chapter Available:
+_ 'Variation '; yellow 1; _, . Debian 11, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, ; _.
+e PHP 7.4, DigitalOcean DNS.
 ____
 
 read -p "Select variation: " variation
