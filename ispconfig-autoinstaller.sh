@@ -103,6 +103,11 @@ EOF
 [[ $(type -t IspconfigAutoinstaller_getGplDependencyManager) == function ]] || IspconfigAutoinstaller_getGplDependencyManager() {
     each=gpl-dependency-manager.sh
     chapter Requires command: "$each".
+    if [[ -f "$BINARY_DIRECTORY/$each" && ! -s "$BINARY_DIRECTORY/$each" ]];then
+        __ Empty file detected.
+        __; magenta rm "$BINARY_DIRECTORY/$each"; _.
+        rm "$BINARY_DIRECTORY/$each"
+    fi
     if [ ! -f "$BINARY_DIRECTORY/$each" ];then
         __ Memulai download.
         __; magenta wget https://github.com/ijortengab/gpl/raw/master/"$each" -O "$BINARY_DIRECTORY/$each"; _.
