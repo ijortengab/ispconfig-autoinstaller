@@ -42,7 +42,7 @@ Download and execute this script inside server.
 You will be prompt to some required value.
 
 ```
-cd /tmp && wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh -O ispconfig-autoinstaller.sh && sudo bash ispconfig-autoinstaller.sh
+cd /tmp && wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh -O ispconfig-autoinstaller.sh && sudo -E bash ispconfig-autoinstaller.sh
 ```
 
 ## Advanced Install
@@ -53,7 +53,7 @@ Alternative 1. Change binary directory.
 cd /tmp
 wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh -O ispconfig-autoinstaller.sh
 chmod a+x ispconfig-autoinstaller.sh
-sudo BINARY_DIRECTORY=/usr/local/bin ./ispconfig-autoinstaller.sh
+sudo BINARY_DIRECTORY=/usr/local/bin -E bash ./ispconfig-autoinstaller.sh
 ```
 
 Alternative 2. Pass some argument to setup.
@@ -62,7 +62,7 @@ Alternative 2. Pass some argument to setup.
 cd /tmp
 wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh -O ispconfig-autoinstaller.sh
 chmod a+x ispconfig-autoinstaller.sh
-sudo BINARY_DIRECTORY=/usr/local/bin ./ispconfig-autoinstaller.sh -- --timezone=Asia/Jakarta
+sudo BINARY_DIRECTORY=/usr/local/bin -E bash ./ispconfig-autoinstaller.sh -- --timezone=Asia/Jakarta
 ```
 
 Alternative 3. Fast version.
@@ -71,5 +71,5 @@ Alternative 3. Fast version.
 cd /tmp
 wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh -O ispconfig-autoinstaller.sh
 chmod a+x ispconfig-autoinstaller.sh
-sudo BINARY_DIRECTORY=/usr/local/bin ./ispconfig-autoinstaller.sh --fast
+sudo BINARY_DIRECTORY=/usr/local/bin -E bash ./ispconfig-autoinstaller.sh --fast
 ```
