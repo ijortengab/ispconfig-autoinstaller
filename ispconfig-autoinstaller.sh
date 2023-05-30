@@ -30,7 +30,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t IspconfigAutoinstaller_printVersion) == function ]] || IspconfigAutoinstaller_printVersion() {
-    echo '0.1.3'
+    echo '0.1.4'
 }
 [[ $(type -t IspconfigAutoinstaller_printHelp) == function ]] || IspconfigAutoinstaller_printHelp() {
     cat << EOF
@@ -60,15 +60,24 @@ Global Options:
         Show this help.
    --root-sure
         Bypass root checking.
+
 Environment Variables:
    BINARY_DIRECTORY
         Default to $HOME/bin
+
+Dependency:
+   wget
 EOF
 }
 
 # Help and Version.
 [ -n "$help" ] && { IspconfigAutoinstaller_printHelp; exit 1; }
 [ -n "$version" ] && { IspconfigAutoinstaller_printVersion; exit 1; }
+
+# Dependency.
+while IFS= read -r line; do
+    command -v "${line}" >/dev/null || { echo -e "\e[91m""Unable to proceed, ${line} command not found." "\e[39m"; exit 1; }
+done <<< `IspconfigAutoinstaller_printHelp | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g'`
 
 # Common Functions.
 [[ $(type -t red) == function ]] || red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -100,8 +109,45 @@ EOF
         __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
     fi
 }
-[[ $(type -t IspconfigAutoinstaller_getGplDependencyManager) == function ]] || IspconfigAutoinstaller_getGplDependencyManager() {
-    each=gpl-dependency-manager.sh
+[[ $(type -t ArraySearch) == function ]] || ArraySearch() {
+    # Find element in Array. Searches the array for a given value and returns the
+    # first corresponding key if successful.
+    #
+    # Globals:
+    #   Modified: _return
+    #
+    # Arguments:
+    #   1 = The searched value.
+    #   2 = Parameter of the array.
+    #
+    # Returns:
+    #   0 if value found in the array.
+    #   1 otherwise.
+    #
+    # Example:
+    #   ```
+    #   my=("cherry" "manggo" "blackberry" "manggo" "blackberry")
+    #   ArraySearch "manggo" my[@]
+    #   if ArraySearch "blackberry" my[@];then
+    #       echo 'FOUND'
+    #   else
+    #       echo 'NOT FOUND'
+    #   fi
+    #   # Get result in variable `$_return`.
+    #   # _return=2
+    #   ```
+    local index match="$1"
+    local source=("${!2}")
+    for index in "${!source[@]}"; do
+       if [[ "${source[$index]}" == "${match}" ]]; then
+           _return=$index; return 0
+       fi
+    done
+    return 1
+}
+[[ $(type -t IspconfigAutoinstaller_GplDownloader) == function ]] || IspconfigAutoinstaller_GplDownloader() {
+    each="$1"
+    inside_directory="$2"
     chapter Requires command: "$each".
     if [[ -f "$BINARY_DIRECTORY/$each" && ! -s "$BINARY_DIRECTORY/$each" ]];then
         __ Empty file detected.
@@ -110,8 +156,13 @@ EOF
     fi
     if [ ! -f "$BINARY_DIRECTORY/$each" ];then
         __ Memulai download.
-        __; magenta wget https://github.com/ijortengab/gpl/raw/master/"$each" -O "$BINARY_DIRECTORY/$each"; _.
-        wget -q https://github.com/ijortengab/gpl/raw/master/"$each" -O "$BINARY_DIRECTORY/$each"
+        if [ -z "$inside_directory" ];then
+            __; magenta wget https://github.com/ijortengab/gpl/raw/master/"$each" -O "$BINARY_DIRECTORY/$each"; _.
+            wget -q https://github.com/ijortengab/gpl/raw/master/"$each" -O "$BINARY_DIRECTORY/$each"
+        else
+            __; magenta wget https://github.com/ijortengab/gpl/raw/master/$(cut -d- -f2 <<< "$each")/"$each" -O "$BINARY_DIRECTORY/$each"; _.
+            wget -q https://github.com/ijortengab/gpl/raw/master/$(cut -d- -f2 <<< "$each")/"$each" -O "$BINARY_DIRECTORY/$each"
+        fi
         if [ ! -s "$BINARY_DIRECTORY/$each" ];then
             __; magenta rm "$BINARY_DIRECTORY/$each"; _.
             rm "$BINARY_DIRECTORY/$each"
@@ -124,8 +175,58 @@ EOF
         chmod a+x "$BINARY_DIRECTORY/$each"
     fi
     fileMustExists "$BINARY_DIRECTORY/$each"
+    ____
 }
-
+[[ $(type -t IspconfigAutoinstaller_GplPromptOptions) == function ]] || IspconfigAutoinstaller_GplPromptOptions() {
+    command="$1"
+    argument_pass=()
+    options=`$command --help | sed -n '/^Options[:\.]$/,$p' | sed -n '2,/^$/p'`
+    if [ -n "$options" ];then
+        chapter Prepare argument for command '`'$command'`'.
+        until [[ -z "$options" ]];do
+            parameter=`sed -n 1p <<< "$options" | xargs`
+            is_required=
+            is_flag=
+            if [[ "${parameter:(-1):1}" == '*' ]];then
+                is_required=1
+                parameter="${parameter::-1}"
+                parameter=`xargs <<< "$parameter"`
+            fi
+            if [[ "${parameter:(-1):1}" == '^' ]];then
+                is_flag=1
+                parameter="${parameter::-1}"
+                parameter=`xargs <<< "$parameter"`
+            fi
+            label=`sed -n 2p <<< "$options" | xargs`
+            options=`sed -n '3,$p' <<< "$options"`
+            if [ -n "$is_required" ];then
+                _ 'Argument '; magenta ${parameter};_, ' is '; yellow required; _, ". ${label}"; _.
+                value=
+                until [[ -n "$value" ]];do
+                    read -p "Set the value: " value
+                done
+                argument_pass+=("${parameter}=${value}")
+            elif [ -n "$is_flag" ];then
+                _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
+                read -p "Add this argument [yN]? " value
+                until [[ "$value" =~ ^[yYnN]*$ ]]; do
+                    echo "$value: invalid selection."
+                    read -p "Add this argument [yN]? " value
+                done
+                if [[ "$value" =~ ^[yY]$ ]]; then
+                    argument_pass+=("${parameter}")
+                fi
+            else
+                _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
+                read -p "Set the value: " value
+                if [ -n "$value" ];then
+                    argument_pass+=("${parameter}=${value}")
+                fi
+            fi
+        done
+        ____
+    fi
+}
 if [ -z "$fast" ];then
     seconds=2
     start="$(($(date +%s) + $seconds))"
@@ -150,6 +251,11 @@ delay=.5; [ -n "$fast" ] && unset delay
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=$HOME/bin}
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
 code 'variation="'$variation'"'
+if [ -f /etc/os-release ];then
+    . /etc/os-release
+fi
+code 'ID="'$ID'"'
+code 'VERSION_ID="'$VERSION_ID'"'
 code '-- '"$@"
 ____
 
@@ -187,32 +293,77 @@ if [ -z "$binary_directory_exists_sure" ];then
     fi
 fi
 
+PATH="${BINARY_DIRECTORY}:${PATH}"
+IspconfigAutoinstaller_GplDownloader gpl-dependency-manager.sh
+____
+
 chapter Available:
-_ 'Variation '; yellow 1; _, . Debian 11, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, ; _.
-e PHP 7.4, DigitalOcean DNS.
+eligible=()
+_ 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11 ]] && color=green || color=red; $color 1; _, . Debian 11, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, PHP 7.4, DigitalOcean DNS. ; _.; eligible+=("1debian11")
 ____
 
 if [ -n "$variation" ];then
     e Select variation: $variation
 else
-    read -p "Select variation: " variation
+    until [[ -n "$variation" ]];do
+        read -p "Select variation: " variation
+        if ! ArraySearch "${variation}${ID}${VERSION_ID}" eligible[@];then
+            error Not eligible.
+            variation=
+        fi
+    done
 fi
 ____
 
-IspconfigAutoinstaller_getGplDependencyManager
-PATH="${BINARY_DIRECTORY}:${PATH}"
-____
+IspconfigAutoinstaller_GplDownloader gpl-ispconfig-setup-variation${variation}.sh true
+
+if [ $# -eq 0 ];then
+    IspconfigAutoinstaller_GplPromptOptions gpl-ispconfig-setup-variation${variation}.sh
+    if [[ "${#argument_pass[@]}" -gt 0 ]];then
+        set -- "${argument_pass[@]}"
+        unset argument_pass
+    fi
+fi
 
 chapter Execute:
 code gpl-dependency-manager.sh gpl-ispconfig-setup-variation${variation}.sh
 code gpl-ispconfig-setup-variation${variation}.sh "$@"
 ____
 
+if [ -z "$fast" ];then
+    seconds=2
+    start="$(($(date +%s) + $seconds))"
+    yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
+    while [ "$start" -ge `date +%s` ]; do
+        time="$(( $start - `date +%s` ))"
+        yellow .
+        sleep .8
+    done
+    _.
+    ____
+fi
+
+chapter Timer Start.
+e Begin: $(date +%Y%m%d-%H%M%S)
+IspconfigAutoinstaller_BEGIN=$SECONDS
+____
+
+_ -----------------------------------------------------------------------;_.;_.;
 [ -n "$fast" ] && isfast='--fast' || isfast=''
 command -v "gpl-dependency-manager.sh" >/dev/null || { red "Unable to proceed, gpl-dependency-manager.sh command not found." "\e[39m"; x; }
-gpl-dependency-manager.sh gpl-ispconfig-setup-variation${variation}.sh $isfast --root-sure --binary-directory-exists-sure
+INDENT="    " gpl-dependency-manager.sh gpl-ispconfig-setup-variation${variation}.sh $isfast --root-sure --binary-directory-exists-sure
 command -v "gpl-ispconfig-setup-variation${variation}.sh" >/dev/null || { red "Unable to proceed, gpl-ispconfig-setup-variation${variation}.sh command not found."; x; }
-gpl-ispconfig-setup-variation${variation}.sh $isfast --root-sure "$@"
+INDENT="    " gpl-ispconfig-setup-variation${variation}.sh $isfast --root-sure "$@"
+_ -----------------------------------------------------------------------;_.;_.;
+
+chapter Timer Finish.
+e End: $(date +%Y%m%d-%H%M%S)
+IspconfigAutoinstaller_END=$SECONDS
+duration=$(( IspconfigAutoinstaller_END - IspconfigAutoinstaller_BEGIN ))
+hours=$((duration / 3600)); minutes=$(( (duration % 3600) / 60 )); seconds=$(( (duration % 3600) % 60 ));
+runtime=`printf "%02d:%02d:%02d" $hours $minutes $seconds`
+_ Duration: $runtime; if [ $duration -gt 60 ];then _, " (${duration} seconds)"; fi; _, '.'; _.
+____
 
 # parse-options.sh \
 # --compact \
