@@ -39,37 +39,67 @@ Download and execute this script inside server.
 
 ## Quick Mode Install
 
-You will be prompt to some required value.
+Login as root.
 
 ```
-cd /tmp && wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh -O ispconfig-autoinstaller.sh && sudo -E bash ispconfig-autoinstaller.sh
+sudo su
+```
+
+Download.
+
+```
+mkdir -p ~/bin
+cd ~/bin
+wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh -O ispconfig-autoinstaller.sh
+chmod a+x ispconfig-autoinstaller.sh
+cd -
+```
+
+Make sure that directory `~/bin` has been include as `$PATH` in `~/.bashrc`.
+
+```
+cat << 'EOF' >> ~/.bashrc
+
+export PATH=~/bin:$PATH
+EOF
+export PATH=~/bin:$PATH
+```
+
+then feels free to execute command. You will be prompt to some required value.
+
+```
+ispconfig-autoinstaller.sh
 ```
 
 ## Advanced Install
 
-Alternative 1. Change binary directory.
+Example 1. Change binary directory to `/usr/local/bin`.
+
+Download.
 
 ```
-cd /tmp
+cd /usr/local/bin
 wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh -O ispconfig-autoinstaller.sh
 chmod a+x ispconfig-autoinstaller.sh
-sudo BINARY_DIRECTORY=/usr/local/bin -E bash ./ispconfig-autoinstaller.sh
+cd -
 ```
 
-Alternative 2. Pass some argument to setup.
+If you change binary directory from default `$HOME/bin`, to others (i.e `/usr/local/bin`) then we must prepend environment variable (`$BINARY_DIRECTORY`) before execute the command.
+
+Execute:
 
 ```
-cd /tmp
-wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh -O ispconfig-autoinstaller.sh
-chmod a+x ispconfig-autoinstaller.sh
-sudo BINARY_DIRECTORY=/usr/local/bin -E bash ./ispconfig-autoinstaller.sh -- --timezone=Asia/Jakarta
+BINARY_DIRECTORY=/usr/local/bin ispconfig-autoinstaller.sh
 ```
 
-Alternative 3. Fast version.
+Example 2. Pass some argument to command `gpl-ispconfig-setup-variation{n}.sh` using double dash as separator `--`.
 
 ```
-cd /tmp
-wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh -O ispconfig-autoinstaller.sh
-chmod a+x ispconfig-autoinstaller.sh
-sudo BINARY_DIRECTORY=/usr/local/bin -E bash ./ispconfig-autoinstaller.sh --fast
+ispconfig-autoinstaller.sh -- --timezone=Asia/Jakarta
+```
+
+Example 3. Fast version.
+
+```
+ispconfig-autoinstaller.sh --fast
 ```
