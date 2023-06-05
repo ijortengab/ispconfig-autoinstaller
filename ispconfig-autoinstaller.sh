@@ -30,7 +30,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t IspconfigAutoinstaller_printVersion) == function ]] || IspconfigAutoinstaller_printVersion() {
-    echo '0.1.6'
+    echo '0.1.7'
 }
 [[ $(type -t IspconfigAutoinstaller_printHelp) == function ]] || IspconfigAutoinstaller_printHelp() {
     cat << EOF
@@ -145,136 +145,30 @@ done <<< `IspconfigAutoinstaller_printHelp | sed -n '/^Dependency:/,$p' | sed -n
     done
     return 1
 }
-[[ $(type -t IspconfigAutoinstaller_GplDownloader) == function ]] || IspconfigAutoinstaller_GplDownloader() {
-    each="$1"
-    inside_directory="$2"
-    chapter Requires command: "$each".
-    if [[ -f "$BINARY_DIRECTORY/$each" && ! -s "$BINARY_DIRECTORY/$each" ]];then
+[[ $(type -t IspconfigAutoinstaller_RcmDownloader) == function ]] || IspconfigAutoinstaller_RcmDownloader() {
+    chapter RCM Downloader.
+    if [[ -f "$BINARY_DIRECTORY/rcm" && ! -s "$BINARY_DIRECTORY/rcm" ]];then
         __ Empty file detected.
-        __; magenta rm "$BINARY_DIRECTORY/$each"; _.
-        rm "$BINARY_DIRECTORY/$each"
+        __; magenta rm "$BINARY_DIRECTORY/rcm"; _.
+        rm "$BINARY_DIRECTORY/rcm"
     fi
-    if [ ! -f "$BINARY_DIRECTORY/$each" ];then
+    if [ ! -f "$BINARY_DIRECTORY/rcm" ];then
         __ Memulai download.
-        if [ -z "$inside_directory" ];then
-            __; magenta wget https://github.com/ijortengab/gpl/raw/master/"$each" -O "$BINARY_DIRECTORY/$each"; _.
-            wget -q https://github.com/ijortengab/gpl/raw/master/"$each" -O "$BINARY_DIRECTORY/$each"
-        else
-            __; magenta wget https://github.com/ijortengab/gpl/raw/master/$(cut -d- -f2 <<< "$each")/"$each" -O "$BINARY_DIRECTORY/$each"; _.
-            wget -q https://github.com/ijortengab/gpl/raw/master/$(cut -d- -f2 <<< "$each")/"$each" -O "$BINARY_DIRECTORY/$each"
-        fi
-        if [ ! -s "$BINARY_DIRECTORY/$each" ];then
-            __; magenta rm "$BINARY_DIRECTORY/$each"; _.
-            rm "$BINARY_DIRECTORY/$each"
+        __; magenta wget git.io/rcm; _.
+        wget -q git.io/rcm -O "$BINARY_DIRECTORY/rcm"
+        if [ ! -s "$BINARY_DIRECTORY/rcm" ];then
+            __; magenta rm "$BINARY_DIRECTORY/rcm"; _.
+            rm "$BINARY_DIRECTORY/rcm"
             __; red HTTP Response: 404 Not Found; x
         fi
-        __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
-        chmod a+x "$BINARY_DIRECTORY/$each"
-    elif [[ ! -x "$BINARY_DIRECTORY/$each" ]];then
-        __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
-        chmod a+x "$BINARY_DIRECTORY/$each"
+        __; magenta chmod a+x "$BINARY_DIRECTORY/rcm"; _.
+        chmod a+x "$BINARY_DIRECTORY/rcm"
+    elif [[ ! -x "$BINARY_DIRECTORY/rcm" ]];then
+        __; magenta chmod a+x "$BINARY_DIRECTORY/rcm"; _.
+        chmod a+x "$BINARY_DIRECTORY/rcm"
     fi
-    fileMustExists "$BINARY_DIRECTORY/$each"
+    fileMustExists "$BINARY_DIRECTORY/rcm"
     ____
-}
-[[ $(type -t IspconfigAutoinstaller_GplPromptOptions) == function ]] || IspconfigAutoinstaller_GplPromptOptions() {
-    command="$1"
-    argument_pass=()
-    options=`$command --help | sed -n '/^Options[:\.]$/,$p' | sed -n '2,/^$/p'`
-    if [ -n "$options" ];then
-        chapter Prepare argument for command '`'$command'`'.
-        until [[ -z "$options" ]];do
-            parameter=`sed -n 1p <<< "$options" | xargs`
-            is_required=
-            is_flag=
-            value_addon=
-            is_flagvalue=
-            if [[ "${parameter:(-1):1}" == '*' ]];then
-                is_required=1
-                parameter="${parameter::-1}"
-                parameter=`xargs <<< "$parameter"`
-            elif [[ "${parameter:(-1):1}" == '^' ]];then
-                is_flag=1
-                parameter="${parameter::-1}"
-                parameter=`xargs <<< "$parameter"`
-            fi
-            label=`sed -n 2p <<< "$options" | xargs`
-            if grep -q -i -E '(^|\.\s)Multivalue\.' <<< "$label";then
-                value_addon=multivalue
-            fi
-            if grep -q -i -E '(^|\.\s)Can have value\.' <<< "$label";then
-                value_addon=canhavevalue
-            fi
-            options=`sed -n '3,$p' <<< "$options"`
-            if [ -n "$is_required" ];then
-                _ 'Argument '; magenta ${parameter};_, ' is '; yellow required; _, ". ${label}"; _.
-                value=
-                until [[ -n "$value" ]];do
-                    read -p "Type the value: " value
-                done
-                argument_pass+=("${parameter}=${value}")
-            elif [ -n "$is_flag" ];then
-                _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
-                read -p "Add this argument [yN]? " value
-                until [[ "$value" =~ ^[yYnN]*$ ]]; do
-                    echo "$value: invalid selection."
-                    read -p "Add this argument [yN]? " value
-                done
-                if [[ "$value" =~ ^[yY]$ ]]; then
-                    if [[ "$value_addon" == 'canhavevalue' ]];then
-                        read -p "Do you want fill with value [yN]? " value
-                        until [[ "$value" =~ ^[yYnN]*$ ]]; do
-                            echo "$value: invalid selection."
-                            read -p "Do you want fill with value [yN]? " value
-                        done
-                        if [[ "$value" =~ ^[yY]$ ]]; then
-                            read -p "Type the value: " value
-                            argument_pass+=("${parameter}=${value}")
-                        else
-                            argument_pass+=("${parameter}")
-                        fi
-                    else
-                        argument_pass+=("${parameter}")
-                    fi
-                fi
-            else
-                _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
-                read -p "Type the value: " value
-                if [ -n "$value" ];then
-                    argument_pass+=("${parameter}=${value}")
-                fi
-            fi
-            if [[ "$value_addon" == 'multivalue' ]];then
-                again=1
-                until [ -z "$again" ]; do
-                    if [ -n "$is_flag" ];then
-                        read -p "Add this argument again [yN]? " value
-                    else
-                        read -p "Add other value [yN]? " value
-                    fi
-                    until [[ "$value" =~ ^[yYnN]*$ ]]; do
-                        echo "$value: invalid selection."
-                        if [ -n "$is_flag" ];then
-                            read -p "Add this argument again [yN]? " value
-                        else
-                            read -p "Add other value [yN]? " value
-                        fi
-                    done
-                    if [[ "$value" =~ ^[yY]$ ]]; then
-                        if [ -n "$is_flag" ];then
-                            argument_pass+=("${parameter}")
-                        else
-                            read -p "Type the value: " value
-                            [ -n "$value" ] && argument_pass+=("${parameter}=${value}")
-                        fi
-                    else
-                        again=
-                    fi
-                done
-            fi
-        done
-        ____
-    fi
 }
 
 # Prompt.
@@ -348,8 +242,8 @@ if [ -z "$binary_directory_exists_sure" ];then
 fi
 
 PATH="${BINARY_DIRECTORY}:${PATH}"
-IspconfigAutoinstaller_GplDownloader gpl-dependency-manager.sh
-____
+
+IspconfigAutoinstaller_RcmDownloader
 
 chapter Available:
 eligible=()
@@ -370,35 +264,10 @@ else
 fi
 ____
 
-IspconfigAutoinstaller_GplDownloader gpl-ispconfig-setup-variation${variation}.sh true
-
-if [ $# -eq 0 ];then
-    IspconfigAutoinstaller_GplPromptOptions gpl-ispconfig-setup-variation${variation}.sh
-    if [[ "${#argument_pass[@]}" -gt 0 ]];then
-        set -- "${argument_pass[@]}"
-        unset argument_pass
-    fi
-fi
-
 chapter Execute:
 [ -n "$fast" ] && isfast='--fast ' || isfast=''
-code gpl-dependency-manager.sh ${isfast}gpl-ispconfig-setup-variation${variation}.sh
-code gpl-ispconfig-setup-variation${variation}.sh ${isfast}"$@"
+code rcm ${isfast}rcm-ispconfig-setup-variation${variation}.sh -- "$@"
 ____
-
-# Prompt.
-if [ -z "$fast" ];then
-    yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
-    countdown=5
-    while [ "$countdown" -ge 0 ]; do
-        printf "\r\033[K" >&2
-        printf %"$countdown"s | tr " " "." >&2
-        printf "\r"
-        countdown=$((countdown - 1))
-        sleep .8
-    done
-    ____
-fi
 
 chapter Timer Start.
 e Begin: $(date +%Y%m%d-%H%M%S)
@@ -406,10 +275,9 @@ IspconfigAutoinstaller_BEGIN=$SECONDS
 ____
 
 _ -----------------------------------------------------------------------;_.;_.;
-command -v "gpl-dependency-manager.sh" >/dev/null || { red "Unable to proceed, gpl-dependency-manager.sh command not found." "\e[39m"; x; }
-INDENT="    " gpl-dependency-manager.sh gpl-ispconfig-setup-variation${variation}.sh $isfast --root-sure --binary-directory-exists-sure
-command -v "gpl-ispconfig-setup-variation${variation}.sh" >/dev/null || { red "Unable to proceed, gpl-ispconfig-setup-variation${variation}.sh command not found."; x; }
-INDENT="    " gpl-ispconfig-setup-variation${variation}.sh $isfast --root-sure "$@"
+
+command -v "rcm" >/dev/null || { red "Unable to proceed, rcm command not found." "\e[39m"; x; }
+INDENT="    " rcm ${isfast}rcm-ispconfig-setup-variation${variation}.sh --root-sure --binary-directory-exists-sure -- "$@"
 _ -----------------------------------------------------------------------;_.;_.;
 
 chapter Timer Finish.
