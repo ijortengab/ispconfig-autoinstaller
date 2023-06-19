@@ -30,7 +30,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t IspconfigAutoinstaller_printVersion) == function ]] || IspconfigAutoinstaller_printVersion() {
-    echo '0.1.7'
+    echo '0.1.8'
 }
 [[ $(type -t IspconfigAutoinstaller_printHelp) == function ]] || IspconfigAutoinstaller_printHelp() {
     cat << EOF
@@ -265,29 +265,16 @@ fi
 ____
 
 chapter Execute:
-[ -n "$fast" ] && isfast='--fast ' || isfast=''
-code rcm ${isfast}rcm-ispconfig-setup-variation${variation}.sh -- "$@"
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
+code rcm${isfast} rcm-ispconfig-setup-variation${variation}.sh -- "$@"
 ____
+_ _______________________________________________________________________;_.;_.;
 
-chapter Timer Start.
-e Begin: $(date +%Y%m%d-%H%M%S)
-IspconfigAutoinstaller_BEGIN=$SECONDS
-____
-
-_ -----------------------------------------------------------------------;_.;_.;
-
-command -v "rcm" >/dev/null || { red "Unable to proceed, rcm command not found." "\e[39m"; x; }
-INDENT="    " rcm ${isfast}rcm-ispconfig-setup-variation${variation}.sh --root-sure --binary-directory-exists-sure -- "$@"
-_ -----------------------------------------------------------------------;_.;_.;
-
-chapter Timer Finish.
-e End: $(date +%Y%m%d-%H%M%S)
-IspconfigAutoinstaller_END=$SECONDS
-duration=$(( IspconfigAutoinstaller_END - IspconfigAutoinstaller_BEGIN ))
-hours=$((duration / 3600)); minutes=$(( (duration % 3600) / 60 )); seconds=$(( (duration % 3600) % 60 ));
-runtime=`printf "%02d:%02d:%02d" $hours $minutes $seconds`
-_ Duration: $runtime; if [ $duration -gt 60 ];then _, " (${duration} seconds)"; fi; _, '.'; _.
-____
+INDENT+="    "
+command -v "rcm" >/dev/null || { error "Unable to proceed, rcm command not found."; x; }
+INDENT="$INDENT" rcm${isfast} rcm-ispconfig-setup-variation${variation}.sh --root-sure --binary-directory-exists-sure -- "$@"
+INDENT=${INDENT::-4}
+_ _______________________________________________________________________;_.;_.;
 
 # parse-options.sh \
 # --compact \
