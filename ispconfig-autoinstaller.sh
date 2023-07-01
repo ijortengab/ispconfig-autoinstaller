@@ -243,7 +243,16 @@ fi
 
 PATH="${BINARY_DIRECTORY}:${PATH}"
 
-IspconfigAutoinstaller_RcmDownloader
+chapter Requires command.
+_ Requires command: rcm
+if command -v rcm > /dev/null;then
+    _, ' [FOUND].'; _.
+    ____
+else
+    _, ' [NOTFOUND].'; _.
+    ____
+    IspconfigAutoinstaller_RcmDownloader
+fi
 
 chapter Available:
 eligible=()
