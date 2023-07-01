@@ -52,17 +52,20 @@ mkdir -p ~/bin
 cd ~/bin
 wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh -O ispconfig-autoinstaller.sh
 chmod a+x ispconfig-autoinstaller.sh
-cd -
+cd - >/dev/null
 ```
 
 Make sure that directory `~/bin` has been include as `$PATH` in `~/.bashrc`.
 
 ```
-cat << 'EOF' >> ~/.bashrc
-
-export PATH=~/bin:$PATH
+command -v ispconfig-autoinstaller.sh >/dev/null || {
+    PATH="$HOME/bin:$PATH"
+    cat << 'EOF' >> ~/.profile
+if [ -d "$HOME/bin" ] ; then
+    PATH="$HOME/bin:$PATH"
+fi
 EOF
-export PATH=~/bin:$PATH
+}
 ```
 
 then feels free to execute command. You will be prompt to some required value.
