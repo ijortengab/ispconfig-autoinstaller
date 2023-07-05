@@ -37,6 +37,21 @@ Suggest action:
 
 Download and execute this script inside server.
 
+## Prerequisite
+
+```
+sudo apt update
+sudo apt install wget -y
+```
+
+To avoid interruption because of kernel update, it is recommend to restart
+machine after upgrade if you start from empty virtual machine instance.
+
+```
+apt upgrade
+init 6
+```
+
 ## Quick Mode Install
 
 Login as root.
@@ -55,7 +70,7 @@ chmod a+x ispconfig-autoinstaller.sh
 cd - >/dev/null
 ```
 
-Make sure that directory `~/bin` has been include as `$PATH` in `~/.bashrc`.
+Make sure that directory `~/bin` has been include as `$PATH` in `~/.profile`.
 
 ```
 command -v ispconfig-autoinstaller.sh >/dev/null || {
@@ -71,7 +86,7 @@ EOF
 then feels free to execute command. You will be prompt to some required value.
 
 ```
-ispconfig-autoinstaller.sh
+ispconfig-autoinstaller.sh --fast
 ```
 
 ## Advanced Install
