@@ -253,8 +253,9 @@ fi
 
 chapter Available:
 eligible=()
-_ 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11 ]] && color=green || color=red; $color 1; _, . Debian 11, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, PHP 7.4, DigitalOcean DNS. ; _.; eligible+=("1debian11")
-_ 'Variation '; [[ "$ID" == ubuntu && "$VERSION_ID" == 22.04 ]] && color=green || color=red; $color 2; _, . Ubuntu 22.04, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, PHP 7.4, DigitalOcean DNS. ; _.; eligible+=("2ubuntu22.04")
+_ 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11 ]] && color=green || color=red; $color 1; _, . Debian 11, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, PHP 7.4, DigitalOcean DNS. ; _.; eligible+=("1;debian;11")
+_ 'Variation '; [[ "$ID" == ubuntu && "$VERSION_ID" == 22.04 ]] && color=green || color=red; $color 2; _, . Ubuntu 22.04, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, PHP 7.4, DigitalOcean DNS. ; _.; eligible+=("2;ubuntu;22.04")
+_ 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 12 ]] && color=green || color=red; $color 3; _, . Debian 12, ISPConfig 3.2.10, PHPMyAdmin 5.2.1, Roundcube 1.6.2, PHP 8.1, DigitalOcean DNS. ; _.; eligible+=("3;debian;12")
 ____
 
 if [ -n "$variation" ];then
@@ -262,7 +263,7 @@ if [ -n "$variation" ];then
 else
     until [[ -n "$variation" ]];do
         read -p "Select variation: " variation
-        if ! ArraySearch "${variation}${ID}${VERSION_ID}" eligible[@];then
+        if ! ArraySearch "${variation};${ID};${VERSION_ID}" eligible[@];then
             error Not eligible.
             variation=
         fi
