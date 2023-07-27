@@ -1,19 +1,19 @@
 # Simple Bash Script for Auto Installation ISP Config 3
 
-Assume your domain is example.com
+Assume your domain is `example.com` and hostname is `server1`
 
 This script will doing this for you:
 
 - Create Website ISPConfig at https://cp.example.com
 - Create Website PHPMyAdmin at https://db.example.com
 - Create Website Roundcube at https://mail.example.com
-- FQDN set as $hostname.example.com
+- FQDN set as server1.example.com
 - Create DNS record: A example.com
-- Create DNS record: A $hostname.example.com
+- Create DNS record: A server1.example.com
 - Create DNS record: CNAME cp.example.com
 - Create DNS record: CNAME db.example.com
 - Create DNS record: CNAME mail.example.com
-- Create DNS record: MX example.com to $hostname.example.com
+- Create DNS record: MX example.com to server1.example.com
 - Create DNS record: TXT DKIM for example.com
 - Create DNS record: TXT DMARC for example.com
 - Create DNS record: TXT SPF for example.com
@@ -27,28 +27,31 @@ This script will doing this for you:
 
 Thats all.
 
-Suggest action:
+Required action:
 
 - Buy domain name from your favourite registrar, then point Name Server to
   ns1.digitalocean.com, ns2.digitalocean.com, and ns3.digitalocean.com.
-- Buy server (VPS) in DigitalOcean and select OS: `Debian 11`/`Ubuntu 22.04`.
-  ATTENTION: give name your droplet as FQDN, example: $hostname.example.com.
+- Buy server (VPS) in DigitalOcean and select OS: `Debian 12`/`Ubuntu 22.04`.
+  ATTENTION: give name your droplet as FQDN, example: server1.example.com for
+  correct PTR record.
 - Generate token API in DigitalOcean Control Panel.
 
 Download and execute this script inside server.
 
 ## Prerequisite
 
+Login as root.
+
 ```
-sudo apt update
-sudo apt install wget -y
+apt update
+apt install wget -y
 ```
 
 To avoid interruption because of kernel update, it is recommend to restart
 machine after upgrade if you start from empty virtual machine instance.
 
 ```
-apt upgrade
+apt upgrade -y
 init 6
 ```
 
