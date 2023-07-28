@@ -113,7 +113,7 @@ Execute:
 BINARY_DIRECTORY=/usr/local/bin ispconfig-autoinstaller.sh
 ```
 
-Example 2. Pass some argument to command `gpl-ispconfig-setup-variation{n}.sh` using double dash as separator `--`.
+Example 2. Pass some argument to command `rcm-ispconfig-setup-variation{n}.sh` using double dash as separator `--`.
 
 ```
 ispconfig-autoinstaller.sh -- --timezone=Asia/Jakarta

@@ -45,7 +45,7 @@ Options:
    --binary-directory-exists-sure
         Bypass binary directory checking.
    --
-        Every arguments after double dash will pass to gpl-ispconfig-setup-variation${n}.sh command.
+        Every arguments after double dash will pass to rcm-ispconfig-setup-variation${n}.sh command.
         Example: ispconfig-autoinstaller.sh -- --timezone=Asia/Jakarta
 
 Global Options:
