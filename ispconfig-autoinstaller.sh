@@ -27,7 +27,7 @@ unset _new_arguments
 
 # Functions.
 printVersion() {
-    echo '0.2.1'
+    echo '0.2.2'
 }
 printHelp() {
     cat << EOF
@@ -60,7 +60,7 @@ Global Options:
 
 Environment Variables:
    BINARY_DIRECTORY
-        Default to $HOME/bin
+        Default to $__DIR__
 
 Dependency:
    wget
@@ -96,6 +96,19 @@ __() { echo -n "$INDENT" >&2; echo -n '    ' >&2; [ -n "$1" ] && echo "$@" >&2 |
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
+resolve_relative_path() {
+    if [ -d "$1" ];then
+        cd "$1" || return 1
+        pwd
+    elif [ -e "$1" ];then
+        if [ ! "${1%/*}" = "$1" ]; then
+            cd "${1%/*}" || return 1
+        fi
+        echo "$(pwd)/${1##*/}"
+    else
+        return 1
+    fi
+}
 fileMustExists() {
     # global used:
     # global modified:
@@ -164,21 +177,30 @@ RcmDownloader() {
         __; magenta chmod a+x "$BINARY_DIRECTORY/rcm"; _.
         chmod a+x "$BINARY_DIRECTORY/rcm"
     fi
+    ## Bring back to the real filename.
+    mv "$BINARY_DIRECTORY/rcm" "$BINARY_DIRECTORY/rcm.sh"
+    cd "$BINARY_DIRECTORY"
+    ln -sf rcm.sh rcm
+    cd - >/dev/null
     fileMustExists "$BINARY_DIRECTORY/rcm"
     ____
 }
-
-# Prompt.
-if [ -z "$fast" ];then
-    yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
-    countdown=1
+sleepExtended() {
+    local countdown=$1
+    countdown=$((countdown - 1))
     while [ "$countdown" -ge 0 ]; do
         printf "\r\033[K" >&2
         printf %"$countdown"s | tr " " "." >&2
         printf "\r"
         countdown=$((countdown - 1))
-        sleep .8
+        sleep .9
     done
+}
+
+# Prompt.
+if [ -z "$fast" ];then
+    yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
+    sleepExtended 2
     ____
 fi
 
@@ -191,7 +213,9 @@ ____
 # Requirement, validate, and populate value.
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
-BINARY_DIRECTORY=${BINARY_DIRECTORY:=$HOME/bin}
+__FILE__=$(resolve_relative_path "$0")
+__DIR__=$(dirname "$__FILE__")
+BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
 code 'variation="'$variation'"'
 if [ -f /etc/os-release ];then
