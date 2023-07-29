@@ -94,33 +94,65 @@ ispconfig-autoinstaller.sh --fast
 
 ## Advanced Install
 
-Example 1. Change binary directory to `/usr/local/bin`.
+**Example 1.**
 
-Download.
+Save script to `/usr/local/bin`.
+
+Download and execute.
 
 ```
 cd /usr/local/bin
 wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh -O ispconfig-autoinstaller.sh
 chmod a+x ispconfig-autoinstaller.sh
 cd -
-```
-
-If you change binary directory from default `$HOME/bin`, to others (i.e `/usr/local/bin`) then we must prepend environment variable (`$BINARY_DIRECTORY`) before execute the command.
-
-Execute:
-
-```
-BINARY_DIRECTORY=/usr/local/bin ispconfig-autoinstaller.sh
-```
-
-Example 2. Pass some argument to command `rcm-ispconfig-setup-variation{n}.sh` using double dash as separator `--`.
-
-```
-ispconfig-autoinstaller.sh -- --timezone=Asia/Jakarta
-```
-
-Example 3. Fast version.
-
-```
 ispconfig-autoinstaller.sh --fast
 ```
+
+All dependency script will be download to same location of `ispconfig-autoinstaller.sh`.
+If you wish to store dependency to other location, use the environment variable
+`BINARY_DIRECTORY` before execute the command.
+
+Example: Store all script to `$HOME/bin`, then execute.
+
+```
+mkdir -p $HOME/bin
+BINARY_DIRECTORY=$HOME/bin ispconfig-autoinstaller.sh --fast
+```
+
+**Example 2.**
+
+Avoid prompt with non interractive mode with passing all required
+argument of command `rcm-ispconfig-setup-variation{n}.sh` using double dash as
+separator `--`.
+
+```
+ispconfig-autoinstaller.sh --fast \
+    --variation 1
+    -- \
+    --timezone=Asia/Jakarta \
+    --domain=systemix.id \
+    --hostname=server1 \
+    --ip-address=auto \
+    --digitalocean-token=$TOKEN \
+    --non-interactive
+```
+
+## Available Variation
+
+**Variation 1**
+
+ > Variation 1.
+ > Debian 11, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, PHP 7.4,
+ > DigitalOcean DNS.
+
+**Variation 2**
+
+ > Variation 2.
+ > Ubuntu 22.04, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, PHP 7.4,
+ > DigitalOcean DNS.
+
+**Variation 3**
+
+ > Variation 3.
+ > Debian 12, ISPConfig 3.2.10, PHPMyAdmin 5.2.1, Roundcube 1.6.2, PHP 8.1,
+ > DigitalOcean DNS.
