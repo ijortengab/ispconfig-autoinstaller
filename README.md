@@ -65,7 +65,6 @@ init 6
 Login as root. Download then put in PATH (`/usr/local/bin`).
 
 ```
-sudo su
 wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh -O ispconfig-autoinstaller.sh
 chmod a+x ispconfig-autoinstaller.sh
 mv ispconfig-autoinstaller.sh -t /usr/local/bin
@@ -112,18 +111,25 @@ ispconfig-autoinstaller.sh --fast \
 
 **Variation 1**
 
- > Variation 1.
  > Debian 11, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, PHP 7.4,
  > DigitalOcean DNS.
 
 **Variation 2**
 
- > Variation 2.
  > Ubuntu 22.04, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, PHP 7.4,
  > DigitalOcean DNS.
 
 **Variation 3**
 
- > Variation 3.
  > Debian 12, ISPConfig 3.2.10, PHPMyAdmin 5.2.1, Roundcube 1.6.2, PHP 8.1,
  > DigitalOcean DNS.
+
+**Variation 4**
+
+ > Debian 11, ISPConfig 3.2.11p2, PHPMyAdmin 5.2.1, Roundcube 1.6.6, PHP 8.1,
+ > Manual DNS.
+
+**Variation 5**
+
+ > Debian 12, ISPConfig 3.2.11p2, PHPMyAdmin 5.2.1, Roundcube 1.6.6, PHP 8.3,
+ > Manual DNS.
