@@ -52,7 +52,7 @@ printHelp() {
     _ 'Variation '; yellow Manage Email Alias; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-ispconfig-control-manage-email-alias [options]
 
 Options:
@@ -86,9 +86,13 @@ Environment Variables:
         Default to localhost
 
 Dependency:
+   rcm-ispconfig-control-manage-domain:`printVersion`
    ispconfig.sh
    php
    mysql
+
+Download:
+   [rcm-ispconfig-control-manage-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-domain.sh)
 EOF
 }
 
@@ -606,7 +610,7 @@ if [ -z "$ispconfig_domain_exists_sure" ];then
     _ ___________________________________________________________________;_.;_.;
 
     INDENT+="    " \
-    rcm-ispconfig-control-manage-domain: $isfast --root-sure \
+    rcm-ispconfig-control-manage-domain $isfast --root-sure \
         isset \
         --domain="$domain" \
         ; [ $? -eq 0 ] && ispconfig_domain_exists_sure=1
