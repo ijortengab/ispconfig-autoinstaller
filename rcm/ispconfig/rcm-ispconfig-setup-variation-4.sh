@@ -52,7 +52,7 @@ printHelp() {
     _ 'Variation '; yellow 4; _, . Debian 11, ISPConfig 3.2.11p2, PHPMyAdmin 5.2.1, Roundcube 1.6.6, PHP 8.1, Manual DNS.; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-ispconfig-setup-variation-4 [options]
 
 Options:
@@ -115,6 +115,18 @@ Dependency:
    rcm-ispconfig-control-manage-email-mailbox:`printVersion`
    rcm-ispconfig-control-manage-email-alias:`printVersion`
    rcm-ispconfig-setup-dump-variables:`printVersion`
+
+Download:
+   [rcm-ispconfig-autoinstaller-nginx](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-autoinstaller-nginx.sh)
+   [rcm-ispconfig-setup-internal-command](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-internal-command.sh)
+   [rcm-roundcube-setup-ispconfig-integration](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/roundcube/rcm-roundcube-setup-ispconfig-integration.sh)
+   [rcm-amavis-setup-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/amavis/rcm-amavis-setup-ispconfig.sh)
+   [rcm-ispconfig-setup-wrapper-nginx-setup-php](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-setup-php.sh)
+   [rcm-ispconfig-setup-wrapper-certbot-setup-nginx](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh)
+   [rcm-ispconfig-control-manage-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-domain.sh)
+   [rcm-ispconfig-control-manage-email-mailbox](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-email-mailbox.sh)
+   [rcm-ispconfig-control-manage-email-alias](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-email-alias.sh)
+   [rcm-ispconfig-setup-dump-variables](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-dump-variables.sh)
 EOF
 }
 

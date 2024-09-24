@@ -59,7 +59,7 @@ printHelp() {
     _ 'Variation '; yellow Nginx; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-ispconfig-autoinstaller-nginx [options]
 
 Options:
