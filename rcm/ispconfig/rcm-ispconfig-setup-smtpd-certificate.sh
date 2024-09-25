@@ -6,16 +6,12 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --digitalocean) dns_authenticator=digitalocean; shift ;;
-        --dns-authenticator=*) dns_authenticator="${1#*=}"; shift ;;
-        --dns-authenticator) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then dns_authenticator="$2"; shift; fi; shift ;;
+        --certbot-authenticator=*) certbot_authenticator="${1#*=}"; shift ;;
+        --certbot-authenticator) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then certbot_authenticator="$2"; shift; fi; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --root-sure) root_sure=1; shift ;;
-        --standalone) dns_authenticator=standalone; shift ;;
-        --subdomain=*) subdomain="${1#*=}"; shift ;;
-        --subdomain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then subdomain="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -55,12 +51,10 @@ printHelp() {
 Usage: rcm-ispconfig-setup-smtpd-certificate [options]
 
 Options:
-   --subdomain
-        Set the subdomain if any.
-   --domain
+   --domain *
         Set the domain.
-   --dns-authenticator
-        Available value: digitalocean, standalone.
+   --certbot-authenticator *
+        Available value: digitalocean, nginx.
 
 Global Options:
    --fast
@@ -75,13 +69,10 @@ Global Options:
 Environment Variables:
    MAILBOX_HOST
         Default to hostmaster
-   TOKEN
-        Default to $HOME/.$dns_authenticator-token.txt
-   TOKEN_INI
-        Default to $HOME/.$dns_authenticator-token.ini
 
 Dependency:
-   rcm-certbot-obtain-certificates
+   rcm-certbot-obtain-authenticator-nginx
+   rcm-certbot-obtain-authenticator-digitalocean
 EOF
 }
 
@@ -95,30 +86,6 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
-isFileExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
-}
 backupFile() {
     local mode="$1"
     local oldpath="$2" i newpath
@@ -199,32 +166,6 @@ link_symbolic() {
     fi
     ____
 }
-vercomp() {
-    # https://www.google.com/search?q=bash+compare+version
-    # https://stackoverflow.com/a/4025065
-    if [[ $1 == $2 ]]; then
-        return 0
-    fi
-    local IFS=.
-    local i ver1=($1) ver2=($2)
-    # fill empty fields in ver1 with zeros
-    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
-        ver1[i]=0
-    done
-    for ((i=0; i<${#ver1[@]}; i++)); do
-        if [[ -z ${ver2[i]} ]];then
-            # fill empty fields in ver2 with zeros
-            ver2[i]=0
-        fi
-        if ((10#${ver1[i]} > 10#${ver2[i]})); then
-            return 1
-        fi
-        if ((10#${ver1[i]} < 10#${ver2[i]})); then
-            return 2
-        fi
-    done
-    return 0
-}
 
 # Title.
 title rcm-ispconfig-setup-smtpd-certificate
@@ -236,43 +177,26 @@ chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
 MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
-code 'subdomain="'$subdomain'"'
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
 code 'domain="'$domain'"'
-if [ -n "$subdomain" ];then
-    fqdn_project="${subdomain}.${domain}"
-else
-    fqdn_project="${domain}"
+if [ -z "$certbot_authenticator" ];then
+    error "Argument --certbot-authenticator required."; x
 fi
-code 'fqdn_project="'$fqdn_project'"'
-if [ -z "$dns_authenticator" ];then
-    error "Argument --dns-authenticator required."; x
-fi
-case "$dns_authenticator" in
+case "$certbot_authenticator" in
     digitalocean) ;;
-    standalone) ;;
-    *) dns_authenticator=
+    nginx) ;;
+    *) certbot_authenticator=
 esac
-if [ -z "$dns_authenticator" ];then
-    error "Argument --dns-authenticator is not valid.";
-    _ Available value:' '; yellow digitalocean; _, ', '; yellow standalone; _, .; _.
+if [ -z "$certbot_authenticator" ];then
+    error "Argument --certbot-authenticator is not valid.";
+    _ Available value:' '; yellow digitalocean; _, ', '; yellow nginx; _, .; _.
     x
 fi
-code 'dns_authenticator="'$dns_authenticator'"'
-if [[ "$dns_authenticator" == 'digitalocean' ]]; then
-    TOKEN=${TOKEN:=$HOME/.$dns_authenticator-token.txt}
-    code 'TOKEN="'$TOKEN'"'
-    TOKEN_INI=${TOKEN_INI:=$HOME/.$dns_authenticator-token.ini}
-    code 'TOKEN_INI="'$TOKEN_INI'"'
-fi
-vercomp `stat --version | head -1 | grep -o -E '\S+$'` 8.31
-if [[ $? -lt 2 ]];then
-    stat_cached=' --cached=never'
-else
-    stat_cached=''
-fi
+code 'certbot_authenticator="'$certbot_authenticator'"'
+certificate_name="$domain"
+code 'certificate_name="'$certificate_name'"'
 ____
 
 if [ -z "$root_sure" ];then
@@ -285,79 +209,20 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-chapter Mengecek DNS Authenticator
-__ Menggunakan DNS Authenticator '`'$dns_authenticator'`'
-____
-
-if [[ "$dns_authenticator" == 'digitalocean' ]]; then
-    chapter Mengecek Token
-    fileMustExists "$TOKEN"
-    digitalocean_token=$(<$TOKEN)
-    __; magenta 'digitalocean_token="'$digitalocean_token'"'; _.
-    isFileExists "$TOKEN_INI"
-    if [ -n "$notfound" ];then
-        __ Membuat file "$TOKEN_INI"
-        cat << EOF > "$TOKEN_INI"
-dns_digitalocean_token = $digitalocean_token
-EOF
-    fi
-    fileMustExists "$TOKEN_INI"
-    if [[ $(stat "$TOKEN_INI" -c %a) == 600 ]];then
-        __ File  '`'"$TOKEN_INI"'`' memiliki permission '`'600'`'.
-    else
-        __ File  '`'"$TOKEN_INI"'`' tidak memiliki permission '`'600'`'.
-        tweak=1
-    fi
-    if [ -n "$tweak" ];then
-        chmod 600 "$TOKEN_INI"
-        if [[ $(stat ${stat_cached} "$TOKEN_INI" -c %a) == 600 ]];then
-            __; green File  '`'"$TOKEN_INI"'`' memiliki permission '`'600'`'.; _.
-        else
-            __; red File  '`'"$TOKEN_INI"'`' tidak memiliki permission '`'600'`'.; x
-        fi
-    fi
-    ____
+if [[ "$certbot_authenticator" == 'digitalocean' ]]; then
+    INDENT+="    " \
+    rcm-certbot-obtain-authenticator-digitalocean $isfast --root-sure \
+        --certbot-dns-digitalocean-sure \
+        --domain="$domain" \
+        ; [ ! $? -eq 0 ] && x
+    # @todo, cek harusnya parent sudah validate certbot-dns-digitalocean
+    # sehingga bisa kita kasih option --certbot-dns-digitalocean-sure
+elif [[ "$certbot_authenticator" == 'nginx' ]]; then
+    INDENT+="    " \
+    rcm-certbot-obtain-authenticator-nginx $isfast --root-sure \
+        --domain="$domain" \
+        ; [ ! $? -eq 0 ] && x
 fi
-
-chapter Prepare arguments.
-domain="$fqdn_project"
-code 'domain="'$fqdn_project'"'
-____
-
-chapter Mengecek '$PATH'
-code PATH="$PATH"
-notfound=
-if grep -q '/snap/bin' <<< "$PATH";then
-  __ '$PATH' sudah lengkap.
-else
-  __ '$PATH' belum lengkap.
-  notfound=1
-fi
-____
-
-if [[ -n "$notfound" ]];then
-    chapter Memperbaiki '$PATH'
-    PATH=/snap/bin:$PATH
-    if grep -q '/snap/bin' <<< "$PATH";then
-      __; green '$PATH' sudah lengkap.; _.
-      __; magenta PATH="$PATH"; _.
-
-    else
-      __; red '$PATH' belum lengkap.; x
-    fi
-    ____
-fi
-
-INDENT+="    " \
-PATH=$PATH \
-rcm-certbot-obtain-certificates $isfast --root-sure \
-    --dns-authenticator="$dns_authenticator" \
-    --domain="$domain" \
-    ; [ ! $? -eq 0 ] && x
-
-certificate_name="$domain"
-code 'certificate_name="'$certificate_name'"'
-____
 
 restart=
 link_symbolic "/etc/letsencrypt/live/${certificate_name}/fullchain.pem" \
@@ -382,7 +247,7 @@ exit 0
 # --no-hash-bang \
 # --no-original-arguments \
 # --no-error-invalid-options \
-# --no-error-require-arguments << EOF
+# --no-error-require-arguments << EOF | clip
 # FLAG=(
 # --fast
 # --version
@@ -391,15 +256,13 @@ exit 0
 # )
 # VALUE=(
 # --domain
-# --subdomain
-# --dns-authenticator
+# --certbot-authenticator
 # )
 # MULTIVALUE=(
 # )
 # FLAG_VALUE=(
 # )
 # CSV=(
-    # long:--digitalocean,parameter:dns_authenticator,type:flag,flag_option:true=digitalocean
-    # long:--standalone,parameter:dns_authenticator,type:flag,flag_option:true=standalone
 # )
 # EOF
+# clear

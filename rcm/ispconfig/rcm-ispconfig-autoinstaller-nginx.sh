@@ -6,9 +6,8 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --digitalocean) dns_authenticator=digitalocean; shift ;;
-        --dns-authenticator=*) dns_authenticator="${1#*=}"; shift ;;
-        --dns-authenticator) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then dns_authenticator="$2"; shift; fi; shift ;;
+        --certbot-authenticator=*) certbot_authenticator="${1#*=}"; shift ;;
+        --certbot-authenticator) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then certbot_authenticator="$2"; shift; fi; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
@@ -23,7 +22,6 @@ while [[ $# -gt 0 ]]; do
         --root-sure) root_sure=1; shift ;;
         --roundcube-version=*) roundcube_version="${1#*=}"; shift ;;
         --roundcube-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then roundcube_version="$2"; shift; fi; shift ;;
-        --standalone) dns_authenticator=standalone; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -63,9 +61,9 @@ printHelp() {
 Usage: rcm-ispconfig-autoinstaller-nginx [options]
 
 Options:
-   --hostname
+   --hostname *
         Hostname of the server.
-   --domain
+   --domain *
         Domain name of the server.
    --php-version
         Set the version of PHP FPM.
@@ -75,8 +73,8 @@ Options:
         Set the version of RoundCube.
    --phpmyadmin-version *
         Set the version of PHPMyAdmin.
-   --dns-authenticator
-        Available value: digitalocean, standalone.
+   --certbot-authenticator *
+        Available value: digitalocean, nginx.
 
 Global Options:
    --fast
@@ -403,17 +401,17 @@ fi
 code 'hostname="'$hostname'"'
 fqdn_project="${hostname}.${domain}"
 code fqdn_project="$fqdn_project"
-case "$dns_authenticator" in
+case "$certbot_authenticator" in
     digitalocean) ;;
-    standalone) ;;
-    *) dns_authenticator=
+    nginx) ;;
+    *) certbot_authenticator=
 esac
-if [ -z "$dns_authenticator" ];then
-    error "Argument --dns-authenticator required.";
-    _ Available value:' '; yellow digitalocean; _, ', '; yellow standalone; _, .; _.
+if [ -z "$certbot_authenticator" ];then
+    error "Argument --certbot-authenticator required.";
+    _ Available value:' '; yellow digitalocean; _, ', '; yellow nginx; _, .; _.
     x
 fi
-code 'dns_authenticator="'$dns_authenticator'"'
+code 'certbot_authenticator="'$certbot_authenticator'"'
 ____
 
 if [ -z "$root_sure" ];then
@@ -437,7 +435,7 @@ rcm-php-setup-ispconfig $isfast --root-sure \
 rcm-postfix-setup-ispconfig $isfast --root-sure \
     && INDENT+="    " \
 rcm-ispconfig-setup-smtpd-certificate $isfast --root-sure \
-    --dns-authenticator="$dns_authenticator" \
+    --certbot-authenticator="$certbot_authenticator" \
     --domain="$domain" \
     && INDENT+="    " \
 rcm-phpmyadmin-autoinstaller-nginx $isfast --root-sure \
@@ -804,7 +802,7 @@ exit 0
 # --no-hash-bang \
 # --no-original-arguments \
 # --no-error-invalid-options \
-# --no-error-require-arguments << EOF
+# --no-error-require-arguments << EOF | clip
 # FLAG=(
 # --fast
 # --version
@@ -816,14 +814,13 @@ exit 0
 # --domain
 # --ispconfig-version
 # --php-version
-# --dns-authenticator
 # --phpmyadmin-version
 # --roundcube-version
+# --certbot-authenticator
 # )
 # FLAG_VALUE=(
 # )
 # CSV=(
-    # long:--digitalocean,parameter:dns_authenticator,type:flag,flag_option:true=digitalocean
-    # long:--standalone,parameter:dns_authenticator,type:flag,flag_option:true=standalone
 # )
 # EOF
+# clear

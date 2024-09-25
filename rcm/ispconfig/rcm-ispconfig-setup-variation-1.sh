@@ -476,7 +476,7 @@ ____
 
 INDENT+="    " \
 rcm-ispconfig-autoinstaller-nginx $isfast --root-sure \
-    --digitalocean \
+    --certbot-authenticator=digitalocean \
     --hostname="$hostname" \
     --domain="$domain" \
     --ispconfig-version="$ispconfig_version" \

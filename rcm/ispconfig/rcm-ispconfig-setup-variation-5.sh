@@ -359,7 +359,7 @@ ____
 
 INDENT+="    " \
 rcm-ispconfig-autoinstaller-nginx $isfast --root-sure \
-    --standalone \
+    --certbot-authenticator=nginx \
     --hostname="$hostname" \
     --domain="$domain" \
     --ispconfig-version="$ispconfig_version" \
