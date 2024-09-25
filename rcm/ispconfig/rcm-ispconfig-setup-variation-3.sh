@@ -115,7 +115,7 @@ Dependency:
    rcm-ispconfig-setup-internal-command:`printVersion`
    rcm-roundcube-setup-ispconfig-integration:`printVersion`
    rcm-ispconfig-setup-wrapper-nginx-setup-php:`printVersion`
-   rcm-ispconfig-setup-wrapper-certbot-setup-nginx:`printVersion`
+   rcm-certbot-deploy-installer-nginx-authenticator-digitalocean
    rcm-ispconfig-control-manage-domain:`printVersion`
    rcm-ispconfig-control-manage-email-mailbox:`printVersion`
    rcm-ispconfig-control-manage-email-alias:`printVersion`
@@ -127,7 +127,6 @@ Download:
    [rcm-ispconfig-setup-internal-command](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-internal-command.sh)
    [rcm-roundcube-setup-ispconfig-integration](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/roundcube/rcm-roundcube-setup-ispconfig-integration.sh)
    [rcm-ispconfig-setup-wrapper-nginx-setup-php](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-setup-php.sh)
-   [rcm-ispconfig-setup-wrapper-certbot-setup-nginx](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh)
    [rcm-ispconfig-control-manage-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-domain.sh)
    [rcm-ispconfig-control-manage-email-mailbox](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-email-mailbox.sh)
    [rcm-ispconfig-control-manage-email-alias](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-email-alias.sh)
@@ -533,22 +532,12 @@ rcm-ispconfig-setup-wrapper-nginx-setup-php $isfast --root-sure \
     --domain="localhost" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-certbot-setup-nginx $isfast --root-sure \
-    --digitalocean \
-    --domain="$domain" \
-    --subdomain="$SUBDOMAIN_ISPCONFIG" \
-    && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-certbot-setup-nginx $isfast --root-sure \
-    --digitalocean \
-    --domain="$domain" \
-    --subdomain="$SUBDOMAIN_PHPMYADMIN" \
-    && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-certbot-setup-nginx $isfast --root-sure \
-    --digitalocean \
-    --domain="$domain" \
-    --subdomain="$SUBDOMAIN_ROUNDCUBE" \
+rcm-certbot-deploy-installer-nginx-authenticator-digitalocean $isfast --root-sure \
+    --certbot-dns-digitalocean-sure \
+    --domain="${SUBDOMAIN_ISPCONFIG}.${domain}" \
+    --domain="${SUBDOMAIN_PHPMYADMIN}.${domain}" \
+    --domain="${SUBDOMAIN_ROUNDCUBE}.${domain}" \
     ; [ ! $? -eq 0 ] && x
-
 
 chapter Take a break.
 e Lets play with Mailbox.
