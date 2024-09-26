@@ -1,10 +1,11 @@
-# Simple Bash Script for Auto Installation ISP Config 3
+# ISP Config Auto Installer
+
+The extension of `rcm`.
 
 Assume your domain is `ijortengab.id` and hostname is `server1`
 
 This script will doing this for you:
 
-- FQDN set as server1.ijortengab.id
 - Create Website ISPConfig at https://cp.ijortengab.id
 - Create Website PHPMyAdmin at https://db.ijortengab.id
 - Create Website Roundcube at https://mail.ijortengab.id
@@ -45,91 +46,56 @@ Download and execute this script inside server.
 
 ## Prerequisite
 
-Login as root.
+Login as root, then make sure `wget` command is exist.
 
 ```
 apt update
-apt install wget -y
+apt install -y wget
 ```
 
-To avoid interruption because of kernel update, it is recommend to restart
-machine after upgrade if you start from empty virtual machine instance.
+If you start from empty virtual machine instance, it is recommend to upgrade
+then restart machine to avoid interruption because of kernel update.
 
 ```
 apt upgrade -y
 init 6
 ```
 
-## Quick Mode Install
+## Install
 
-Login as root. Download then put in PATH (`/usr/local/bin`).
-
-```
-wget -q https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/ispconfig-autoinstaller.sh -O ispconfig-autoinstaller.sh
-chmod a+x ispconfig-autoinstaller.sh
-mv ispconfig-autoinstaller.sh -t /usr/local/bin
-```
-
-then feels free to execute command. You will be prompt to some required value.
+Download `rcm` from Github.
 
 ```
-ispconfig-autoinstaller.sh --fast
+wget git.io/rcm
+chmod a+x rcm
 ```
 
-## Dependency Storage Location
-
-All dependency script will be download to same location of `ispconfig-autoinstaller.sh`.
-If you wish to store dependency to other location, use the environment variable
-`BINARY_DIRECTORY` before execute the command.
-
-Example: Store all script to `$HOME/bin`, then execute.
+You can put `rcm` file anywhere in $PATH:
 
 ```
-mkdir -p $HOME/bin
-BINARY_DIRECTORY=$HOME/bin ispconfig-autoinstaller.sh --fast
+mv rcm -t /usr/local/bin
 ```
 
-## Non Interactive Mode
+## Install ISPConfig Extension
 
-Avoid prompt with non interractive mode with passing all required
-argument of command `rcm-ispconfig-setup-variation{n}.sh` using double dash as
-separator `--`.
+Install `ispconfig` extension.
 
 ```
-ispconfig-autoinstaller.sh --fast \
-    --variation 1
-    -- \
-    --timezone=Asia/Jakarta \
-    --domain=ijortengab.id \
-    --hostname=server1 \
-    --ip-address=auto \
-    --digitalocean-token=$TOKEN \
-    --non-interactive
+rcm install ispconfig
 ```
 
-## Available Variation
+Enter value for `--url` option:
 
-**Variation 1**
+```
+https://github.com/ijortengab/ispconfig-autoinstaller
+```
 
- > Debian 11, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, PHP 7.4,
- > DigitalOcean DNS.
+Skip value for `--path` option. We use the default value.
 
-**Variation 2**
+## How to Use
 
- > Ubuntu 22.04, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, PHP 7.4,
- > DigitalOcean DNS.
+Feels free to execute `ispconfig` command. You will be prompt to some required value.
 
-**Variation 3**
-
- > Debian 12, ISPConfig 3.2.10, PHPMyAdmin 5.2.1, Roundcube 1.6.2, PHP 8.1,
- > DigitalOcean DNS.
-
-**Variation 4**
-
- > Debian 11, ISPConfig 3.2.11p2, PHPMyAdmin 5.2.1, Roundcube 1.6.6, PHP 8.1,
- > Manual DNS.
-
-**Variation 5**
-
- > Debian 12, ISPConfig 3.2.11p2, PHPMyAdmin 5.2.1, Roundcube 1.6.6, PHP 8.3,
- > Manual DNS.
+```
+rcm ispconfig
+```
