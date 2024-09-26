@@ -1,4 +1,4 @@
-# ISP Config Auto Installer
+# ISPConfig Auto Installer
 
 The extension of `rcm`.
 
@@ -98,4 +98,12 @@ Feels free to execute `ispconfig` command. You will be prompt to some required v
 
 ```
 rcm ispconfig
+```
+
+## Tips
+
+Always fast.
+
+```
+alias rcm='rcm --fast'
 ```
