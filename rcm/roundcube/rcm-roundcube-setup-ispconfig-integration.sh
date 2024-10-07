@@ -36,7 +36,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.9.2'
+    echo '0.9.3'
 }
 printHelp() {
     title RCM Roundcube Setup
