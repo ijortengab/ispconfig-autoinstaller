@@ -22,7 +22,7 @@ cd "$__DIR__"
     echo 'Operand <version> is required. Example: 1.0.0.'; exit 1
 }
 version=$1
-old_version=$(./rcm.sh --version)
+old_version=$(./rcm/rcm-ispconfig.sh --version)
 case "$version" in
     major|minor|patch)
         major=$(sed -E 's,^([0-9]+)\.([0-9]+)\.([0-9]+)$,\1,' <<< "$old_version")
