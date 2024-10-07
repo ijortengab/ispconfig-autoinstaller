@@ -510,7 +510,7 @@ cat << 'EOF' > "${root}/.well-known/__getuser.php"
 echo $_SERVER['USER'];
 EOF
 __ Eksekusi file script.
-__; magenta curl http://127.0.0.1/.well-known/__getuser.php -H "Host: ${ISPCONFIG_FQDN_LOCALHOST}"; _.
+__; magenta curl http://127.0.0.1/.well-known/__getuser.php -H '"'"Host: ${ISPCONFIG_FQDN_LOCALHOST}"'"'; _.
 user_nginx=$(curl -Ss http://127.0.0.1/.well-known/__getuser.php -H "Host: ${ISPCONFIG_FQDN_LOCALHOST}")
 __; magenta user_nginx="$user_nginx"; _.
 if [ -z "$user_nginx" ];then

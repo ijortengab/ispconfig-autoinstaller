@@ -306,9 +306,9 @@ e Command to implement '`'ispconfig.sh'`' command autocompletion immediately:
 __; magenta source /etc/profile.d/ispconfig-completion.sh; _.
 e Command to check PTR Record:
 if [ -n "$ip_address" ];then
-    __; magenta dig -x "$ip_address" +short
+    __; magenta dig -x "$ip_address" +short; _.
 else
-    __; magenta dig -x "\$ip_address" +short
+    __; magenta dig -x "\$ip_address" +short; _.
 fi
 ____
 

@@ -89,7 +89,7 @@ This script will doing this for you:
 
 Thats all.
 
-## VPS DigitalOcean
+### VPS DigitalOcean
 
 If you use VPS from DigitalOcean and use DigitalOcean DNS, there some additional
 action:
