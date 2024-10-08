@@ -288,6 +288,34 @@ EOF
         )
     echo "$part1"$'\n'"$additional"$'\n'"$part2" > "$file"
 }
+modifyFileDebian12() {
+    local file=/tmp/ispconfig3_install/install/dist/conf/debian120.conf.php
+    fileMustExists "$file"
+    if [[ ! "$php_version" == 8.2 ]];then
+        sed -i \
+            -e 's,"8\.2","'$php_version'",g' \
+            -e 's,/8\.2/,/'$php_version'/,g' \
+            -e 's,php8\.2,php'$php_version',g' \
+            "$file"
+    fi
+    # Edit informasi cron dan ufw yang terlewat.
+    string="//* cron"
+    number_1=$(grep -n -F "$string" "$file" | head -1 | cut -d: -f1)
+    number_1plus=$((number_1 - 1))
+    number_1plus2=$((number_1 + 1))
+    part1=$(sed -n '1,'$number_1plus'p' "$file")
+    part2=$(sed -n $number_1plus2',$p' "$file")
+    additional=$(cat << 'EOF'
+
+//* ufw
+$conf['ufw']['installed'] = false;
+
+//* cron
+$conf['cron']['installed'] = false;
+EOF
+        )
+    echo "$part1"$'\n'"$additional"$'\n'"$part2" > "$file"
+}
 createFileDebian12() {
     local source=/tmp/ispconfig3_install/install/dist/conf/debian110.conf.php
     local file=/tmp/ispconfig3_install/install/dist/conf/debian120.conf.php
@@ -609,13 +637,22 @@ if [ -n "$do_install" ];then
                     ;;
                 12)
                     case "$ispconfig_version" in
-                        3.2.9) eligible=1 ;;
-                        3.2.10) eligible=1 ;;
-                        3.2.11p2) eligible=1 ;;
+                        3.2.9)
+                            eligible=1
+                            createFileDebian12
+                            editInstallLibDebian12
+                            ;;
+                        3.2.10)
+                            eligible=1
+                            createFileDebian12
+                            editInstallLibDebian12
+                            ;;
+                        3.2.11p2)
+                            eligible=1
+                            modifyFileDebian12
+                            ;;
                         *) error ISPConfig Version "$ispconfig_version" not supported; x;
                     esac
-                    createFileDebian12
-                    editInstallLibDebian12
                     ;;
                 *)
                     error OS "$ID" Version "$VERSION_ID" not supported; x;
@@ -687,7 +724,7 @@ if [ -n "$do_install" ];then
             -e "s,^ispconfig_use_ssl=.*$,ispconfig_use_ssl=n," \
             -e "s,^ispconfig_admin_password=.*$,ispconfig_admin_password=${ispconfig_web_user_password}," \
             -e "s,^mysql_ispconfig_password=.*$,mysql_ispconfig_password=${ispconfig_db_user_password}," \
-            -i /tmp/ispconfig3_install/install//autoinstall.ini
+            -i /tmp/ispconfig3_install/install/autoinstall.ini
         if php -r "$php" is_different \
             /tmp/ispconfig3_install/install/autoinstall.ini \
             "$reference";then
