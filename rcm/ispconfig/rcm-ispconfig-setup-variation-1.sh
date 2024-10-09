@@ -19,6 +19,10 @@ while [[ $# -gt 0 ]]; do
         --root-sure) root_sure=1; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
         --timezone) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then timezone="$2"; shift; fi; shift ;;
+        --with-update-system) update_system=1; shift ;;
+        --without-update-system) update_system=0; shift ;;
+        --with-upgrade-system) upgrade_system=1; shift ;;
+        --without-upgrade-system) upgrade_system=0; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -70,6 +74,10 @@ Options:
         Skip confirmation of --ip-address=auto.
    --timezone
         Set the timezone of this machine.
+   --without-update-system ^
+        Skip execute update system. Default to --with-update-system.
+   --without-upgrade-system ^
+        Skip execute upgrade system. Default to --with-upgrade-system.
 
 Global Options:
    --fast
@@ -215,6 +223,8 @@ ____
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
+[[ "$update_system" == "0" ]] && is_without_update_system=' --without-update-system' || is_without_update_system=''
+[[ "$upgrade_system" == "0" ]] && is_without_upgrade_system=' --without-upgrade-system' || is_without_upgrade_system=''
 SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
 code 'SUBDOMAIN_ISPCONFIG="'$SUBDOMAIN_ISPCONFIG'"'
 SUBDOMAIN_PHPMYADMIN=${SUBDOMAIN_PHPMYADMIN:=db}
@@ -310,6 +320,8 @@ ____
 INDENT+="    " \
 rcm-debian-11-setup-basic $isfast --root-sure \
     --timezone="$timezone" \
+    $is_without_update_system \
+    $is_without_upgrade_system \
     ; [ ! $? -eq 0 ] && x
 
 chapter Mengecek FQDN '(Fully-Qualified Domain Name)'
@@ -646,6 +658,10 @@ exit 0
 # FLAG_VALUE=(
 # )
 # CSV=(
+    # 'long:--with-update-system,parameter:update_system'
+    # 'long:--without-update-system,parameter:update_system,flag_option:reverse'
+    # 'long:--with-upgrade-system,parameter:upgrade_system'
+    # 'long:--without-upgrade-system,parameter:upgrade_system,flag_option:reverse'
 # )
 # EOF
 # clear
