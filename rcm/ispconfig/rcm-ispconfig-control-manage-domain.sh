@@ -80,7 +80,6 @@ Environment Variables:
         Default to webmaster
 
 Dependency:
-   ispconfig.sh
    php
 EOF
 }

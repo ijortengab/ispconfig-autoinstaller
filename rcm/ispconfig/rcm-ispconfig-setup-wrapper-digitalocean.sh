@@ -98,7 +98,6 @@ Environment Variables:
         Default to default
 
 Dependency:
-   ispconfig.sh
    rcm-ispconfig-control-manage-domain:`printVersion`
    rcm-digitalocean-api-manage-domain
    php

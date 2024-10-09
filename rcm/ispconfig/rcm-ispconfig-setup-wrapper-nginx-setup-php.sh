@@ -76,7 +76,6 @@ Global Options:
 
 Dependency:
    rcm-nginx-setup-php
-   ispconfig.sh
    curl
 EOF
 }

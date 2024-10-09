@@ -79,7 +79,6 @@ Environment Variables:
 
 Dependency:
    rcm-ispconfig-control-manage-domain:`printVersion`
-   ispconfig.sh
    php
    mysql
 

@@ -71,7 +71,6 @@ Dependency:
    pwgen
    php
    unzip
-   ispconfig.sh
 EOF
 }
 
