@@ -209,8 +209,33 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
+chapter Mengecek '$PATH'.
+code PATH="$PATH"
+notfound=
+if grep -q '/snap/bin' <<< "$PATH";then
+  __ '$PATH' sudah lengkap.
+else
+  __ '$PATH' belum lengkap.
+  notfound=1
+fi
+____
+
+if [[ -n "$notfound" ]];then
+    chapter Memperbaiki '$PATH'
+    PATH=/snap/bin:$PATH
+    if grep -q '/snap/bin' <<< "$PATH";then
+      __; green '$PATH' sudah lengkap.; _.
+      __; magenta PATH="$PATH"; _.
+
+    else
+      __; red '$PATH' belum lengkap.; x
+    fi
+    ____
+fi
+
 if [[ "$certbot_authenticator" == 'digitalocean' ]]; then
     INDENT+="    " \
+    PATH=$PATH \
     rcm-certbot-obtain-authenticator-digitalocean $isfast --root-sure \
         --certbot-dns-digitalocean-sure \
         --domain="$domain" \
@@ -219,6 +244,7 @@ if [[ "$certbot_authenticator" == 'digitalocean' ]]; then
     # sehingga bisa kita kasih option --certbot-dns-digitalocean-sure
 elif [[ "$certbot_authenticator" == 'nginx' ]]; then
     INDENT+="    " \
+    PATH=$PATH \
     rcm-certbot-obtain-authenticator-nginx $isfast --root-sure \
         --domain="$domain" \
         ; [ ! $? -eq 0 ] && x
