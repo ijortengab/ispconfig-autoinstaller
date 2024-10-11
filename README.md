@@ -72,9 +72,7 @@ Feels free to execute `ispconfig` command. You will be prompt to some required v
 rcm ispconfig
 ```
 
-Assume your domain is `example.com` and hostname is `node1`
-
-This script will doing this for you:
+Assume your domain is `example.com` and hostname is `node1`, this extension will doing this for you:
 
 - Create Website ISPConfig at https://cp.example.com
 - Create Website PHPMyAdmin at https://db.example.com
@@ -87,7 +85,14 @@ This script will doing this for you:
 - Additional identities of admin@example.com for three aliases above.
 - Roundcube and ISPConfig integration.
 
-Thats all.
+However, you have to add DNS records manually (except DigitalOcean):
+
+- A Record of `example.com` point to your VPS IP Address
+- A Record of `node1.example.com` point to your VPS IP Address
+- CNAME Record of `cp.example.com` alias to `example.com`
+- CNAME Record of `db.example.com` alias to `example.com`
+- CNAME Record of `mail.example.com` alias to `example.com`
+- MX Record of `example.com` handled by `node1.example.com`
 
 ### VPS DigitalOcean
 
@@ -112,5 +117,3 @@ Note:
   ATTENTION: give name your droplet as FQDN, example: node1.example.com for
   correct PTR record.
 - Generate token API in DigitalOcean Control Panel.
-
-Download and execute this command inside server.
