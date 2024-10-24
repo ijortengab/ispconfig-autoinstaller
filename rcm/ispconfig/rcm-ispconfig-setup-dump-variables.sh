@@ -87,6 +87,10 @@ Environment Variables:
         Default to hostmaster
    MAILBOX_POST
         Default to postmaster
+   MARIADB_PREFIX_MASTER
+        Default to /usr/local/share/mariadb
+   MARIADB_USERS_CONTAINER_MASTER
+        Default to users
 EOF
 }
 
@@ -142,79 +146,28 @@ isFileExists() {
         notfound=1
     fi
 }
-databaseCredentialPhpmyadmin() {
-    if [ -f /usr/local/share/phpmyadmin/credential/database ];then
-        local PHPMYADMIN_DB_USER PHPMYADMIN_DB_USER_PASSWORD PHPMYADMIN_BLOWFISH
-        . /usr/local/share/phpmyadmin/credential/database
-        phpmyadmin_db_user=$PHPMYADMIN_DB_USER
-        phpmyadmin_db_user_password=$PHPMYADMIN_DB_USER_PASSWORD
-        phpmyadmin_blowfish=$PHPMYADMIN_BLOWFISH
-    else
-        phpmyadmin_db_user=$PHPMYADMIN_DB_USER # global variable
-        phpmyadmin_db_user_password=$(pwgen -s 32 -1)
-        phpmyadmin_blowfish=$(pwgen -s 32 -1)
-        mkdir -p /usr/local/share/phpmyadmin/credential
-        cat << EOF > /usr/local/share/phpmyadmin/credential/database
-PHPMYADMIN_DB_USER=$phpmyadmin_db_user
-PHPMYADMIN_DB_USER_PASSWORD=$phpmyadmin_db_user_password
-PHPMYADMIN_BLOWFISH=$phpmyadmin_blowfish
-EOF
-        chmod 0500 /usr/local/share/phpmyadmin/credential
-        chmod 0400 /usr/local/share/phpmyadmin/credential/database
-    fi
-}
-databaseCredentialRoundcube() {
-    if [ -f /usr/local/share/roundcube/credential/database ];then
-        local ROUNDCUBE_DB_USER ROUNDCUBE_DB_USER_PASSWORD ROUNDCUBE_BLOWFISH
-        . /usr/local/share/roundcube/credential/database
-        roundcube_db_user=$ROUNDCUBE_DB_USER
-        roundcube_db_user_password=$ROUNDCUBE_DB_USER_PASSWORD
-        roundcube_blowfish=$ROUNDCUBE_BLOWFISH
-    else
-        roundcube_db_user=$ROUNDCUBE_DB_USER # global variable
-        roundcube_db_user_password=$(pwgen -s 32 -1)
-        roundcube_blowfish=$(pwgen -s 32 -1)
-        mkdir -p /usr/local/share/roundcube/credential
-        cat << EOF > /usr/local/share/roundcube/credential/database
-ROUNDCUBE_DB_USER=$roundcube_db_user
-ROUNDCUBE_DB_USER_PASSWORD=$roundcube_db_user_password
-ROUNDCUBE_BLOWFISH=$roundcube_blowfish
-EOF
-        chmod 0500 /usr/local/share/roundcube/credential
-        chmod 0400 /usr/local/share/roundcube/credential/database
+populateDatabaseUserPassword() {
+    local path="${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/$1"
+    local DB_USER DB_USER_PASSWORD
+    if [ -f "$path" ];then
+        . "$path"
+        db_user_password=$DB_USER_PASSWORD
     fi
 }
 databaseCredentialIspconfig() {
-    if [ -f /usr/local/share/ispconfig/credential/database ];then
-        local ISPCONFIG_DB_NAME ISPCONFIG_DB_USER ISPCONFIG_DB_USER_PASSWORD
-        . /usr/local/share/ispconfig/credential/database
-        ispconfig_db_name=$ISPCONFIG_DB_NAME
-        ispconfig_db_user=$ISPCONFIG_DB_USER
-        ispconfig_db_user_password=$ISPCONFIG_DB_USER_PASSWORD
-    else
-        ispconfig_db_user_password=$(pwgen -s 32 -1)
-        mkdir -p /usr/local/share/ispconfig/credential
-        cat << EOF > /usr/local/share/ispconfig/credential/database
-ISPCONFIG_DB_USER_PASSWORD=$ispconfig_db_user_password
-EOF
-        chmod 0500 /usr/local/share/ispconfig/credential
-        chmod 0400 /usr/local/share/ispconfig/credential/database
-    fi
+    local php_fpm_user prefix path
+    php_fpm_user=ispconfig
+    prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
+    path="${prefix}/interface/lib/config.inc.php"
+    db_user=$(php -r "include '$path';echo DB_USER;")
+    db_user_password=$(php -r "include '$path';echo DB_PASSWORD;")
 }
 websiteCredentialIspconfig() {
-    if [ -f /usr/local/share/ispconfig/credential/website ];then
-        local ISPCONFIG_WEB_USER_PASSWORD
-        . /usr/local/share/ispconfig/credential/website
-        ispconfig_web_user_password=$ISPCONFIG_WEB_USER_PASSWORD
-    else
-        ispconfig_web_user_password=$(pwgen 6 -1vA0B)
-        mkdir -p /usr/local/share/ispconfig/credential
-        cat << EOF > /usr/local/share/ispconfig/credential/website
-ISPCONFIG_WEB_USER_PASSWORD=$ispconfig_web_user_password
-EOF
-        chmod 0500 /usr/local/share/ispconfig/credential
-        chmod 0400 /usr/local/share/ispconfig/credential/website
-    fi
+    local ISPCONFIG_WEB_USER_PASSWORD
+    path=/usr/local/share/ispconfig/credential/website
+    [ -f "$path" ] || fileMustExists "$path"
+    . "$path"
+    ispconfig_web_user_password=$ISPCONFIG_WEB_USER_PASSWORD
 }
 
 # Title.
@@ -240,6 +193,10 @@ MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
 MAILBOX_POST=${MAILBOX_POST:=postmaster}
 code 'MAILBOX_POST="'$MAILBOX_POST'"'
+MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
+code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
+MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
+code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
@@ -261,15 +218,17 @@ if [ -z "$root_sure" ];then
 fi
 
 chapter PHPMyAdmin: "https://${SUBDOMAIN_PHPMYADMIN}.${domain}"
-databaseCredentialPhpmyadmin
-e ' - 'username: $phpmyadmin_db_user
-e '   'password: $phpmyadmin_db_user_password
-databaseCredentialRoundcube
-e ' - 'username: $roundcube_db_user
-e '   'password: $roundcube_db_user_password
+db_user=phpmyadmin
+populateDatabaseUserPassword "$db_user"
+e ' - 'username: $db_user
+e '   'password: $db_user_password
+db_user=roundcube
+populateDatabaseUserPassword "$db_user"
+e ' - 'username: $db_user
+e '   'password: $db_user_password
 databaseCredentialIspconfig
-e ' - 'username: $ispconfig_db_user
-e '   'password: $ispconfig_db_user_password
+e ' - 'username: $db_user
+e '   'password: $db_user_password
 ____
 
 chapter Roundcube: "https://${SUBDOMAIN_ROUNDCUBE}.${domain}"
@@ -301,9 +260,9 @@ ____
 
 chapter Manual Action
 e Command to make sure remote user working properly:
-__; magenta ispconfig.sh php login.php; _.
-e Command to implement '`'ispconfig.sh'`' command autocompletion immediately:
-__; magenta source /etc/profile.d/ispconfig-completion.sh; _.
+__; magenta ispconfig.php login; _.
+e Command to implement '`'ispconfig.php'`' command autocompletion immediately:
+__; magenta source /etc/profile.d/ispconfig-php-completion.sh; _.
 e Command to check PTR Record:
 if [ -n "$ip_address" ];then
     __; magenta dig -x "$ip_address" +short; _.
