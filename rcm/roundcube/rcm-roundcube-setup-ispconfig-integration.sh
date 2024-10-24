@@ -84,23 +84,6 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
-databaseCredentialIspconfig() {
-    if [ -f /usr/local/share/ispconfig/credential/database ];then
-        local ISPCONFIG_DB_NAME ISPCONFIG_DB_USER ISPCONFIG_DB_USER_PASSWORD
-        . /usr/local/share/ispconfig/credential/database
-        ispconfig_db_name=$ISPCONFIG_DB_NAME
-        ispconfig_db_user=$ISPCONFIG_DB_USER
-        ispconfig_db_user_password=$ISPCONFIG_DB_USER_PASSWORD
-    else
-        ispconfig_db_user_password=$(pwgen -s 32 -1)
-        mkdir -p /usr/local/share/ispconfig/credential
-        cat << EOF > /usr/local/share/ispconfig/credential/database
-ISPCONFIG_DB_USER_PASSWORD=$ispconfig_db_user_password
-EOF
-        chmod 0500 /usr/local/share/ispconfig/credential
-        chmod 0400 /usr/local/share/ispconfig/credential/database
-    fi
-}
 fileMustExists() {
     # global used:
     # global modified:
@@ -148,79 +131,6 @@ isFileExists() {
         notfound=1
     fi
 }
-getRemoteUserIdIspconfigByRemoteUsername() {
-    # Get the remote_userid from table remote_user in ispconfig database.
-    #
-    # Globals:
-    #   ispconfig_db_user, ispconfig_db_user_password,
-    #   ispconfig_db_user_host, ispconfig_db_name
-    #
-    # Arguments:
-    #   $1: Filter by remote_username.
-    #
-    # Output:
-    #   Write remote_userid to stdout.
-    local remote_username="$1"
-    local sql="SELECT remote_userid FROM remote_user WHERE remote_username = '$remote_username';"
-    local u="$ispconfig_db_user"
-    local p="$ispconfig_db_user_password"
-    local remote_userid=$(mysql \
-        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
-        -h "$ispconfig_db_user_host" "$ispconfig_db_name" -r -N -s -e "$sql"
-    )
-    echo "$remote_userid"
-}
-insertRemoteUsernameIspconfig() {
-    local remote_username="$1"
-    local _remote_password="$2"
-    local _remote_functions="$3"
-    CONTENT=$(cat <<- EOF
-require '${ispconfig_install_dir}/interface/lib/classes/auth.inc.php';
-echo (new auth)->crypt_password('$_remote_password');
-EOF
-    )
-    local remote_password=$(php -r "$CONTENT")
-    local remote_functions=$(tr '\n' ';' <<< "$_remote_functions")
-    local sql="INSERT INTO remote_user
-(sys_userid, sys_groupid, sys_perm_user, sys_perm_group, sys_perm_other, remote_username, remote_password, remote_access, remote_ips, remote_functions)
-VALUES
-(1, 1, 'riud', 'riud', '', '$remote_username', '$remote_password', 'y', '127.0.0.1', '$remote_functions');"
-    local u="$ispconfig_db_user"
-    local p="$ispconfig_db_user_password"
-    mysql --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
-        -h "$ispconfig_db_user_host" "$ispconfig_db_name" -e "$sql"
-    remote_userid=$(getRemoteUserIdIspconfigByRemoteUsername "$remote_username")
-    if [ -n "$remote_userid" ];then
-        return 0
-    fi
-    return 1
-}
-isRemoteUsernameIspconfigExist() {
-    # Insert the remote_username to table remote_user in ispconfig database.
-    #
-    # Globals:
-    #   Used: ispconfig_install_dir
-    #         ispconfig_db_user_host
-    #         ispconfig_db_user
-    #         ispconfig_db_name
-    #         ispconfig_db_user_password
-    #   Modified: remote_userid
-    #
-    # Arguments:
-    #   $1: remote_username
-    #   $2: remote_password
-    #   $3: remote_functions
-    #
-    # Return:
-    #   0 if exists.
-    #   1 if not exists.
-    local remote_username="$1"
-    remote_userid=$(getRemoteUserIdIspconfigByRemoteUsername "$remote_username")
-    if [ -n "$remote_userid" ];then
-        return 0
-    fi
-    return 1
-}
 remoteUserCredentialIspconfig() {
     # Check if the remote_username from table remote_user exists in ispconfig database.
     #
@@ -235,18 +145,112 @@ remoteUserCredentialIspconfig() {
     #   1 if not exists.
     local user="$1"
     if [ -f /usr/local/share/ispconfig/credential/remote/$user ];then
-        local ISPCONFIG_REMOTE_USER_PASSWORD
+        local ISPCONFIG_REMOTE_USER_PASSWORD ISPCONFIG_REMOTE_USER_NAME
         . /usr/local/share/ispconfig/credential/remote/$user
+        ispconfig_remote_user_name=$ISPCONFIG_REMOTE_USER_NAME
         ispconfig_remote_user_password=$ISPCONFIG_REMOTE_USER_PASSWORD
     else
         ispconfig_remote_user_password=$(pwgen -s 32 -1)
         mkdir -p /usr/local/share/ispconfig/credential/remote
         cat << EOF > /usr/local/share/ispconfig/credential/remote/$user
+ISPCONFIG_REMOTE_USER_NAME=$user
 ISPCONFIG_REMOTE_USER_PASSWORD=$ispconfig_remote_user_password
 EOF
         chmod 0500 /usr/local/share/ispconfig/credential
         chmod 0500 /usr/local/share/ispconfig/credential/remote
         chmod 0400 /usr/local/share/ispconfig/credential/remote/$user
+    fi
+}
+Rcm_ispconfig_list_functions() {
+    cat << 'RCM_ISPCONFIG_LIST_FUNCTIONS'
+server_get
+server_config_set
+get_function_list
+client_templates_get_all
+server_get_serverid_by_ip
+server_ip_get
+server_ip_add
+server_ip_update
+server_ip_delete
+system_config_set
+system_config_get
+config_value_get
+config_value_add
+config_value_update
+config_value_replace
+config_value_delete
+client_get_all
+client_get
+client_add
+client_update
+client_delete
+client_get_sites_by_user
+client_get_by_username
+client_get_by_customer_no
+client_change_password
+client_get_id
+client_delete_everything
+client_get_emailcontact
+mail_user_get
+mail_user_add
+mail_user_update
+mail_user_delete
+mail_alias_get
+mail_alias_add
+mail_alias_update
+mail_alias_delete
+mail_forward_get
+mail_forward_add
+mail_forward_update
+mail_forward_delete
+mail_spamfilter_user_get
+mail_spamfilter_user_add
+mail_spamfilter_user_update
+mail_spamfilter_user_delete
+mail_policy_get
+mail_policy_add
+mail_policy_update
+mail_policy_delete
+mail_fetchmail_get
+mail_fetchmail_add
+mail_fetchmail_update
+mail_fetchmail_delete
+mail_spamfilter_whitelist_get
+mail_spamfilter_whitelist_add
+mail_spamfilter_whitelist_update
+mail_spamfilter_whitelist_delete
+mail_spamfilter_blacklist_get
+mail_spamfilter_blacklist_add
+mail_spamfilter_blacklist_update
+mail_spamfilter_blacklist_delete
+mail_user_filter_get
+mail_user_filter_add
+mail_user_filter_update
+mail_user_filter_delete
+RCM_ISPCONFIG_LIST_FUNCTIONS
+}
+dirMustExists() {
+    # global used:
+    # global modified:
+    # function used: __, success, error, x
+    if [ -d "$1" ];then
+        __; green Direktori '`'$(basename "$1")'`' ditemukan.; _.
+    else
+        __; red Direktori '`'$(basename "$1")'`' tidak ditemukan.; x
+    fi
+}
+isDirExists() {
+    # global used:
+    # global modified: found, notfound
+    # function used: __
+    found=
+    notfound=
+    if [ -d "$1" ];then
+        __ Direktori '`'$(basename "$1")'`' ditemukan.
+        found=1
+    else
+        __ Direktori '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
     fi
 }
 
@@ -256,14 +260,40 @@ ____
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
+ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
+code 'ROUNDCUBE_FQDN_LOCALHOST="'$ROUNDCUBE_FQDN_LOCALHOST'"'
 ISPCONFIG_REMOTE_USER_ROUNDCUBE=${ISPCONFIG_REMOTE_USER_ROUNDCUBE:=roundcube}
 code 'ISPCONFIG_REMOTE_USER_ROUNDCUBE="'$ISPCONFIG_REMOTE_USER_ROUNDCUBE'"'
-ISPCONFIG_INSTALL_DIR=${ISPCONFIG_INSTALL_DIR:=/usr/local/ispconfig}
-code 'ISPCONFIG_INSTALL_DIR="'$ISPCONFIG_INSTALL_DIR'"'
-ISPCONFIG_DB_USER_HOST=${ISPCONFIG_DB_USER_HOST:=localhost}
-code 'ISPCONFIG_DB_USER_HOST="'$ISPCONFIG_DB_USER_HOST'"'
+# ISPCONFIG_INSTALL_DIR=${ISPCONFIG_INSTALL_DIR:=/usr/local/ispconfig}
+# code 'ISPCONFIG_INSTALL_DIR="'$ISPCONFIG_INSTALL_DIR'"'
+# ISPCONFIG_DB_USER_HOST=${ISPCONFIG_DB_USER_HOST:=localhost}
+# code 'ISPCONFIG_DB_USER_HOST="'$ISPCONFIG_DB_USER_HOST'"'
 ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
+nginx_user=
+conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
+if [ -f "$conf_nginx" ];then
+    nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
+fi
+code 'nginx_user="'$nginx_user'"'
+if [ -z "$nginx_user" ];then
+    error "Variable \$nginx_user failed to populate."; x
+fi
+php_fpm_user="$nginx_user"
+code 'php_fpm_user="'$php_fpm_user'"'
+prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
+code 'prefix="'$prefix'"'
+project_container="$ROUNDCUBE_FQDN_LOCALHOST"
+code 'project_container="'$project_container'"'
+root="$prefix/${project_container}/web"
+code 'root="'$root'"'
+root_realpath=$(realpath "$root")
+code 'root_realpath="'$root_realpath'"'
+if [[ ! $(basename "$root_realpath") == public_html ]];then
+    error Direktori tidak bernama '`'public_html'`'.; x
+fi
+root_source=$(dirname "$root_realpath")
+code 'root_source="'$root_source'"'
 delay=.5; [ -n "$fast" ] && unset delay
 ____
 
@@ -277,284 +307,272 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-chapter Dump variable of ISPConfig Credential
-databaseCredentialIspconfig
-ispconfig_db_user_host="$ISPCONFIG_DB_USER_HOST"
-code ispconfig_db_user="$ispconfig_db_user"
-code ispconfig_db_user_host="$ispconfig_db_user_host"
-code ispconfig_db_user_password="$ispconfig_db_user_password"
-code ispconfig_db_name="$ispconfig_db_name"
-_ispconfig_db_user=$(php -r "include '$ISPCONFIG_INSTALL_DIR/interface/lib/config.inc.php';echo DB_USER;")
-_ispconfig_db_user_password=$(php -r "include '$ISPCONFIG_INSTALL_DIR/interface/lib/config.inc.php';echo DB_PASSWORD;")
-_ispconfig_db_user_host=$(php -r "include '$ISPCONFIG_INSTALL_DIR/interface/lib/config.inc.php';echo DB_HOST;")
-_ispconfig_db_name=$(php -r "include '$ISPCONFIG_INSTALL_DIR/interface/lib/config.inc.php';echo DB_DATABASE;")
-has_different=
-for string in ispconfig_db_name ispconfig_db_user ispconfig_db_user_host ispconfig_db_user_password
-do
-    parameter=$string
-    parameter_from_shell=${!string}
-    string="_${string}"
-    parameter_from_php=${!string}
-    if [[ ! "$parameter_from_shell" == "$parameter_from_php" ]];then
-        __ Different from PHP Scripts found.
-        __; echo -n Value of '`'"$parameter"'`' from shell:' '
-        echo "$parameter_from_shell"
-        __; echo -n Value of '`'"$parameter"'`' from PHP script:' '
-        echo "$parameter_from_php"
-        has_different=1
-    fi
-done
-if [ -n "$has_different" ];then
-    __; red Terdapat perbedaan value.; x
-fi
-____
-
-chapter Mengecek Remote User ISPConfig '"'$ISPCONFIG_REMOTE_USER_ROUNDCUBE'"'
-notfound=
-if isRemoteUsernameIspconfigExist "$ISPCONFIG_REMOTE_USER_ROUNDCUBE" ;then
-    __ Found '(remote_userid:'$remote_userid')'.
+chapter Mengecek ISPConfig User.
+php_fpm_user=ispconfig
+code id -u '"'$php_fpm_user'"'
+if id "$php_fpm_user" >/dev/null 2>&1; then
+    __ User '`'$php_fpm_user'`' found.
 else
-    __ Not Found.
-    notfound=1
+    error User '`'$php_fpm_user'`' not found.; x
 fi
 ____
 
-if [ -n "$notfound" ];then
-    chapter Insert Remote User ISPConfig '"'$ISPCONFIG_REMOTE_USER_ROUNDCUBE'"'
-    functions='server_get,server_config_set,get_function_list,client_templates_get_all,server_get_serverid_by_ip,server_ip_get,server_ip_add,server_ip_update,server_ip_delete,system_config_set,system_config_get,config_value_get,config_value_add,config_value_update,config_value_replace,config_value_delete
-client_get_all,client_get,client_add,client_update,client_delete,client_get_sites_by_user,client_get_by_username,client_get_by_customer_no,client_change_password,client_get_id,client_delete_everything,client_get_emailcontact
-mail_user_get,mail_user_add,mail_user_update,mail_user_delete
-mail_alias_get,mail_alias_add,mail_alias_update,mail_alias_delete
-mail_forward_get,mail_forward_add,mail_forward_update,mail_forward_delete
-mail_spamfilter_user_get,mail_spamfilter_user_add,mail_spamfilter_user_update,mail_spamfilter_user_delete
-mail_policy_get,mail_policy_add,mail_policy_update,mail_policy_delete
-mail_fetchmail_get,mail_fetchmail_add,mail_fetchmail_update,mail_fetchmail_delete
-mail_spamfilter_whitelist_get,mail_spamfilter_whitelist_add,mail_spamfilter_whitelist_update,mail_spamfilter_whitelist_delete
-mail_spamfilter_blacklist_get,mail_spamfilter_blacklist_add,mail_spamfilter_blacklist_update,mail_spamfilter_blacklist_delete
-mail_user_filter_get,mail_user_filter_add,mail_user_filter_update,mail_user_filter_delete'
-    remoteUserCredentialIspconfig $ISPCONFIG_REMOTE_USER_ROUNDCUBE
-    if [[ -z "$ispconfig_remote_user_password" ]];then
-        __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/remote/$ISPCONFIG_REMOTE_USER_ROUNDCUBE'`'.; x
-    else
-        code ispconfig_remote_user_password="$ispconfig_remote_user_password"
-    fi
-    # Populate Variable.
-    . ispconfig.sh export >/dev/null
-    code ispconfig_install_dir="$ispconfig_install_dir"
-    if insertRemoteUsernameIspconfig  "$ISPCONFIG_REMOTE_USER_ROUNDCUBE" "$ispconfig_remote_user_password" "$functions" ;then
-        __; green Remote username "$ISPCONFIG_REMOTE_USER_ROUNDCUBE" created '(remote_userid:'$remote_userid')'.; _.
-    else
-        __; red Remote username "$ISPCONFIG_REMOTE_USER_ROUNDCUBE" failed to create.; x
-    fi
-    ____
+chapter Prepare arguments.
+functions=`Rcm_ispconfig_list_functions`
+functions_arg=
+declare -i count
+i=0
+while read line;do
+    functions_arg+=" --function=${line}"
+    count+=1
+done <<< "$functions"
+remoteUserCredentialIspconfig $ISPCONFIG_REMOTE_USER_ROUNDCUBE
+if [[ -z "$ispconfig_remote_user_name" || -z "$ispconfig_remote_user_password" ]];then
+    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/remote/$ISPCONFIG_REMOTE_USER_ROUNDCUBE'`'.; x
+else
+    code ispconfig_remote_user_name="$ispconfig_remote_user_name"
+    code ispconfig_remote_user_password="$ispconfig_remote_user_password"
 fi
-
-# Populate Variable.
-chapter Dump variable of '`'ispconfig.sh export'`' command
-. ispconfig.sh export >/dev/null
-code phpmyadmin_install_dir="$phpmyadmin_install_dir"
-code roundcube_install_dir="$roundcube_install_dir"
-code ispconfig_install_dir="$ispconfig_install_dir"
-code scripts_dir="$scripts_dir"
+magenta 'count='$count; _, ' # ${#functions}'; _.
 ____
 
-filename_path=$roundcube_install_dir/plugins/ispconfig3_account/config/config.inc.php
-filename=$(basename "$filename_path")
+INDENT+="    " \
+rcm-ispconfig-remote-user-autocreate $isfast --root-sure --ispconfig-sure \
+    --username="$ispconfig_remote_user_name" \
+    --password="$ispconfig_remote_user_password" \
+    $functions_arg \
+    ; [ ! $? -eq 0 ] && x
+path="${root_source}/plugins/ispconfig3_account/config/config.inc.php"
+filename=config.inc.php
 chapter Mengecek existing '`'$filename'`'
-__; magenta filename_path=$filename_path; _.
-isFileExists "$filename_path"
+isFileExists "$path"
 ____
 
 if [ -n "$notfound" ];then
     chapter Menginstall Plugin Integrasi Roundcube dan ISPConfig
+    php_fpm_user="$nginx_user"
+    code 'php_fpm_user="'$php_fpm_user'"'
+    code sudo -u $php_fpm_user mkdir -p '"'$root_source'"'
+    sudo -u $php_fpm_user mkdir -p "$root_source"
+    cd $root_source
     __ Mendownload Plugin
-    cd /tmp
-    if [ ! -f /tmp/ispconfig3_roundcube-master.zip ];then
-        wget https://github.com/w2c/ispconfig3_roundcube/archive/master.zip -O ispconfig3_roundcube-master.zip
+    path="${root_source}/ispconfig3_roundcube-master.zip"
+    isFileExists "$path"
+    if [ -n "$notfound" ];then
+        code sudo -u $php_fpm_user wget "https://github.com/w2c/ispconfig3_roundcube/archive/master.zip" -O ispconfig3_roundcube-master.zip
+        sudo -u $php_fpm_user wget "https://github.com/w2c/ispconfig3_roundcube/archive/master.zip" -O ispconfig3_roundcube-master.zip
+        fileMustExists "$path"
     fi
-    fileMustExists /tmp/ispconfig3_roundcube-master.zip
-    __ Mengextract Plugin
-    unzip -u -qq ispconfig3_roundcube-master.zip
-    cd ./ispconfig3_roundcube-master
-    cp -r ./ispconfig3_* $roundcube_install_dir/plugins/
-    cd $roundcube_install_dir/plugins/ispconfig3_account/config
-    cp config.inc.php.dist config.inc.php
-    fileMustExists "$filename_path"
+    [ -f "$path" ] || fileMustExists "$path"
+    __ Extract File.
+    path_zip="$path"
+    path="${root_source}/ispconfig3_roundcube-master"
+    isDirExists "$path"
+    if [ -n "$notfound" ];then
+        code sudo -u $php_fpm_user unzip -u -qq "$path_zip"
+        sudo -u $php_fpm_user unzip -u -qq "$path_zip"
+        dirMustExists "$path"
+    fi
+    [ -d "$path" ] || dirMustExists "$path"
+    __ Memindahkan hasil download ke plugin.
+    code find ispconfig3_roundcube-master -maxdepth 1 -mindepth 1 -type d -path "'"ispconfig3_roundcube-master/ispconfig3_*"'" '-exec mv -t plugins {} \;'
+    find ispconfig3_roundcube-master -maxdepth 1 -mindepth 1 -type d -path 'ispconfig3_roundcube-master/ispconfig3_*' -exec mv -t plugins {} \;
+    path="${root_source}/plugins/ispconfig3_account/config/config.inc.php"
+    isFileExists "$path"
+    if [ -n "$notfound" ];then
+        source="${root_source}/plugins/ispconfig3_account/config/config.inc.php.dist"
+        fileMustExists "$source"
+        code sudo -u $php_fpm_user cp "$source" "$path"
+        sudo -u $php_fpm_user cp "$source" "$path"
+        fileMustExists "$path"
+    fi
+    cd - >/dev/null
     ____
 fi
-
-chapter Dump variable of ispconfig remote user
-remoteUserCredentialIspconfig $ISPCONFIG_REMOTE_USER_ROUNDCUBE
-if [[ -z "$ispconfig_remote_user_password" ]];then
-    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/remote/$ISPCONFIG_REMOTE_USER_ROUNDCUBE'`'.; x
-else
-    __; magenta ISPCONFIG_REMOTE_USER_ROUNDCUBE="$ISPCONFIG_REMOTE_USER_ROUNDCUBE"; _.
-    __; magenta ispconfig_remote_user_password="$ispconfig_remote_user_password"; _.
-fi
-____
+[ -f "$path" ] || fileMustExists "$path"
 
 php=$(cat <<'EOF'
-$args = $_SERVER['argv'];
-$mode = $args[1];
-$file = $args[2];
-// die('op');
-$array = unserialize($args[3]);
-include($file);
-$config = isset($config) ? $config : [];
-//$result = array_diff_assoc($array, $config);
-//var_dump($config);
-//var_dump($result);
-$is_different = !empty(array_diff_assoc($array, $config));
-//$config = array_replace_recursive($config, $array);
-//var_dump($config);
-//var_export($config);
+$mode = $_SERVER['argv'][1];
+switch ($mode) {
+    case 'array_is_different':
+    case 'append':
+        $file = $_SERVER['argv'][2];
+        $key = $_SERVER['argv'][3];
+        $reference = unserialize($_SERVER['argv'][4]);
+        include($file);
+        $config = isset($config) ? $config : [];
+        if (!array_key_exists($key, $config)) {
+            $config[$key] = [];
+        }
+        if (!is_array($config[$key])) {
+            $config[$key] = (array) $config[$key];
+        }
+        $is_different = !empty(array_diff($reference, $config[$key]));
+        break;
+    case 'is_different':
+    case 'save':
+        # Populate variable $is_different.
+        $file = $_SERVER['argv'][2];
+        $reference = unserialize($_SERVER['argv'][3]);
+        include($file);
+        $config = isset($config) ? $config : [];
+        $is_different = !empty(array_diff_assoc(array_map('serialize',$reference), array_map('serialize',$config)));
+        break;
+}
 switch ($mode) {
     case 'is_different':
+    case 'array_is_different':
         $is_different ? exit(0) : exit(1);
         break;
-    case 'replace':
-        if ($is_different) {
-            $config = array_replace_recursive($config, $array);
-            $content = '$config = '.var_export($config, true).';'.PHP_EOL;
-            $content = <<< EOF
-<?php
-$content
-EOF;
-            file_put_contents($file, $content);
+    case 'append':
+        if (!$is_different) {
+            exit(0);
         }
+        $contents = file_get_contents($file);
+        $need_edit = array_diff($reference, $config[$key]);
+        $new_lines = [];
+        // Method append tidak bisa menghapus existing.
+        foreach ($need_edit as $value) {
+            $new_line = "__PARAMETER__[__KEY__][] = __VALUE__; # managed by RCM";
+            $new_line = str_replace(['__PARAMETER__','__KEY__','__VALUE__'],['$config', var_export($key, true), var_export($value, true)], $new_line);
+            $new_lines[] = $new_line;
+        }
+        if (substr($contents, -1) != "\n") {
+            $contents .= "\n";
+        }
+        $contents .= implode("\n", $new_lines);
+        $contents .= "\n";
+        file_put_contents($file, $contents);
+        break;
+    case 'save':
+        if (!$is_different) {
+            exit(0);
+        }
+        $contents = file_get_contents($file);
+        $need_edit = array_diff_assoc($reference, $config);
+        $new_lines = [];
+        // Method save bisa menghapus existing.
+        foreach ($need_edit as $key => $value) {
+            $new_line = "__PARAMETER__[__KEY__] = __VALUE__; # managed by RCM";
+            // Jika indexed array dan hanya satu , maka buat one line.
+            if (is_array($value) && array_key_exists(0, $value) && count($value) === 1) {
+                $new_line = str_replace(['__PARAMETER__','__KEY__','__VALUE__'],['$config', var_export($key, true), "['".$value[0]."']"], $new_line);
+            }
+            else {
+                $new_line = str_replace(['__PARAMETER__','__KEY__','__VALUE__'],['$config', var_export($key, true), var_export($value, true)], $new_line);
+            }
+            $is_one_line = preg_match('/\n/', $new_line) ? false : true;
+            $find_existing = "__PARAMETER__[__KEY__] = __VALUE__; # managed by RCM";
+            $find_existing = str_replace(['__PARAMETER__','__KEY__'],['$config', var_export($key, true)], $find_existing);
+            $find_existing = preg_quote($find_existing);
+            $find_existing = str_replace('__VALUE__', '.*', $find_existing);
+            $find_existing = '/\s*'.$find_existing.'\s*/';
+            if ($is_one_line && preg_match_all($find_existing, $contents, $matches, PREG_PATTERN_ORDER)) {
+                $contents = str_replace($matches[0], '', $contents);
+            }
+            $new_lines[] = $new_line;
+        }
+        if (substr($contents, -1) != "\n") {
+            $contents .= "\n";
+        }
+        $contents .= implode("\n", $new_lines);
+        $contents .= "\n";
+        file_put_contents($file, $contents);
         break;
 }
 EOF
 )
+
+chapter Mengecek informasi file konfigurasi RoundCube plugin '`'ispconfig3_account'`'.
+path="${root_source}/plugins/ispconfig3_account/config/config.inc.php"
+code 'path="'$path'"'
 reference="$(php -r "echo serialize([
     'identity_limit' => false,
-    'remote_soap_user' => '$ISPCONFIG_REMOTE_USER_ROUNDCUBE',
+    'remote_soap_user' => '$ispconfig_remote_user_name',
     'remote_soap_pass' => '$ispconfig_remote_user_password',
     'soap_url' => 'http://${ISPCONFIG_FQDN_LOCALHOST}/remote/',
     'soap_validate_cert' => false,
 ]);")"
-chapter Mengecek variable pada script '`'$filename'`'
 is_different=
-if php -r "$php" is_different \
-    "$filename_path" \
-    "$reference";then
+if php -r "$php" is_different "$path" "$reference";then
     is_different=1
-    __ Diperlukan modifikasi file '`'$filename'`'.
+    __ Diperlukan modifikasi file '`'config.inc.php'`'.
 else
-    __ File '`'$filename'`' tidak ada perubahan.
+    __ File '`'config.inc.php'`' tidak ada perubahan.
 fi
 ____
 
 if [ -n "$is_different" ];then
-    chapter Memodifikasi file '`'$filename'`'.
-    __ Backup file "$filename_path"
-    backupFile copy "$filename_path"
-    php -r "$php" replace \
-        "$filename_path" \
-        "$reference"
-    if php -r "$php" is_different \
-    "$filename_path" \
-    "$reference";then
-        __; red Modifikasi file '`'$filename'`' gagal.; x
+    chapter Memodifikasi file '`'config.inc.php'`'.
+    __ Backup file "$path"
+    backupFile copy "$path"
+    php -r "$php" save "$path" "$reference"
+    if php -r "$php" is_different "$path" "$reference";then
+        __; red Modifikasi file '`'config.inc.php'`' gagal.; x
     else
-        __; green Modifikasi file '`'$filename'`' berhasil.; _.
+        __; green Modifikasi file '`'config.inc.php'`' berhasil.; _.
     fi
     ____
 fi
 
-filename_path=$roundcube_install_dir/config/config.inc.php
-filename=$(basename "$filename_path")
-chapter Mengecek existing '`'$filename'`'
-__; magenta filename_path=$filename_path; _.
-isFileExists "$filename_path"
-____
-
-#@todo, ganti semua replace menjadi save.
-php=$(cat <<'EOF'
-$args = $_SERVER['argv'];
-$mode = $args[1];
-$file = $args[2];
-// die('op');
-$array = unserialize($args[3]);
-//var_dump($array);
-// die('op');
-include($file);
-$config = isset($config) ? $config : [];
-$is_different = false;
-$merge=[];
-$replace=[];
-// Compare plugins.
-$plugins = isset($config['plugins']) ? $config['plugins'] : [];
-$arg_plugins = isset($array['plugins']) ? $array['plugins'] : [];
-$result = array_diff($arg_plugins, $plugins);
-if (!empty($result)) {
-    $is_different = true;
-    $merge['plugins'] = $result;
-}
-// Compare identity_select_headers.
-$identity_select_headers = isset($config['identity_select_headers']) ? $config['identity_select_headers'] : [];
-$arg_identity_select_headers = isset($array['identity_select_headers']) ? $array['identity_select_headers'] : [];
-$result = array_diff($arg_identity_select_headers, $identity_select_headers);
-if (!empty($result)) {
-    $is_different = true;
-    $merge['identity_select_headers'] = $result;
-}
-switch ($mode) {
-    case 'is_different':
-        $is_different ? exit(0) : exit(1);
-        break;
-    case 'save':
-        if ($is_different && $merge) {
-            $config = array_merge_recursive($config, $merge);
-            $content = '$config = '.var_export($config, true).';'.PHP_EOL;
-            $content = <<< EOF
-<?php
-$content
-EOF;
-            file_put_contents($file, $content);
-        }
-        break;
-}
-EOF
-)
-
-chapter Mengecek variable pada script '`'$filename'`'
+chapter Mengecek informasi file konfigurasi RoundCube.
+path="${root_source}/config/config.inc.php"
+code 'path="'$path'"'
 reference="$(php -r "echo serialize([
-    'plugins' => [
-        'ispconfig3_account',
-        'ispconfig3_autoreply',
-        'ispconfig3_pass',
-        'ispconfig3_filter',
-        'ispconfig3_forward',
-        'ispconfig3_wblist',
-        'identity_select',
-    ],
-    'identity_select_headers' => ['To'],
+    'ispconfig3_account',
+    'ispconfig3_autoreply',
+    'ispconfig3_pass',
+    'ispconfig3_filter',
+    'ispconfig3_forward',
+    'ispconfig3_wblist',
+    'identity_select',
 ]);")"
 is_different=
-if php -r "$php" is_different \
-    "$filename_path" \
-    "$reference";then
+if php -r "$php" array_is_different "$path" plugins "$reference";then
     is_different=1
-    __ Diperlukan modifikasi file '`'$filename'`'.
+    __ Diperlukan modifikasi file '`'config.inc.php'`'.
 else
-    __ File '`'$filename'`' tidak ada perubahan.
+    __ File '`'config.inc.php'`' tidak ada perubahan.
 fi
 ____
 
 if [ -n "$is_different" ];then
-    chapter Memodifikasi file '`'$filename'`'.
-    __ Backup file "$filename_path"
-    backupFile copy "$filename_path"
-    php -r "$php" save \
-        "$filename_path" \
-        "$reference"
-    if php -r "$php" is_different \
-    "$filename_path" \
-    "$reference";then
-        __; red Modifikasi file '`'$filename'`' gagal.; x
+    chapter Memodifikasi file '`'config.inc.php'`'.
+    __ Backup file "$path"
+    backupFile copy "$path"
+    php -r "$php" append "$path" plugins "$reference"
+    if php -r "$php" array_is_different "$path" plugins "$reference";then
+        __; red Modifikasi file '`'config.inc.php'`' gagal.; x
     else
-        __; green Modifikasi file '`'$filename'`' berhasil.; _.
+        __; green Modifikasi file '`'config.inc.php'`' berhasil.; _.
+    fi
+    ____
+fi
+
+chapter Mengecek informasi file konfigurasi RoundCube.
+path="${root_source}/config/config.inc.php"
+code 'path="'$path'"'
+reference="$(php -r "echo serialize([
+    'identity_select_headers' => ['To'],
+]);")"
+is_different=
+if php -r "$php" is_different "$path" "$reference";then
+    is_different=1
+    __ Diperlukan modifikasi file '`'config.inc.php'`'.
+else
+    __ File '`'config.inc.php'`' tidak ada perubahan.
+fi
+____
+
+if [ -n "$is_different" ];then
+    chapter Memodifikasi file '`'config.inc.php'`'.
+    __ Backup file "$path"
+    backupFile copy "$path"
+    php -r "$php" save "$path" "$reference"
+    if php -r "$php" is_different "$path" "$reference";then
+        __; red Modifikasi file '`'config.inc.php'`' gagal.; x
+    else
+        __; green Modifikasi file '`'config.inc.php'`' berhasil.; _.
     fi
     ____
 fi
