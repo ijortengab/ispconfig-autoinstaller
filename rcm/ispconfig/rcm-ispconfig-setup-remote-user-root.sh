@@ -382,6 +382,7 @@ remoteUserCredentialIspconfig() {
         ispconfig_remote_user_name=$ISPCONFIG_REMOTE_USER_NAME
         ispconfig_remote_user_password=$ISPCONFIG_REMOTE_USER_PASSWORD
     else
+        ispconfig_remote_user_name="$user"
         ispconfig_remote_user_password=$(pwgen -s 32 -1)
         mkdir -p /usr/local/share/ispconfig/credential/remote
         cat << EOF > /usr/local/share/ispconfig/credential/remote/$user
