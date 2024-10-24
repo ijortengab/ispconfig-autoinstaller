@@ -10,6 +10,7 @@ while [[ $# -gt 0 ]]; do
         --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --ispconfig-domain-exists-sure) ispconfig_domain_exists_sure=1; shift ;;
+        --ispconfig-soap-exists-sure) ispconfig_soap_exists_sure=1; shift ;;
         --name=*) name="${1#*=}"; shift ;;
         --name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then name="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
@@ -56,8 +57,6 @@ Options:
         The name of mailbox.
    --domain
         The domain of mailbox.
-   --ispconfig-domain-exists-sure ^
-        Bypass domain exists checking.
 
 Global Options:
    --fast
@@ -68,14 +67,14 @@ Global Options:
         Show this help.
    --root-sure
         Bypass root checking.
+   --ispconfig-domain-exists-sure
+        Bypass domain exists checking.
 
 Environment Variables:
-   ISPCONFIG_DB_USER_HOST
-        Default to localhost
-   ROUNDCUBE_DB_NAME
-        Default to roundcubemail
-   ROUNDCUBE_DB_USER_HOST
-        Default to localhost
+   ISPCONFIG_REMOTE_USER_ROOT
+        Default to root
+   ISPCONFIG_FQDN_LOCALHOST
+        Default to ispconfig.localhost
 
 Dependency:
    rcm-ispconfig-control-manage-domain:`printVersion`
@@ -97,61 +96,36 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
-databaseCredentialIspconfig() {
-    if [ -f /usr/local/share/ispconfig/credential/database ];then
-        local ISPCONFIG_DB_NAME ISPCONFIG_DB_USER ISPCONFIG_DB_USER_PASSWORD
-        . /usr/local/share/ispconfig/credential/database
-        ispconfig_db_name=$ISPCONFIG_DB_NAME
-        ispconfig_db_user=$ISPCONFIG_DB_USER
-        ispconfig_db_user_password=$ISPCONFIG_DB_USER_PASSWORD
-    else
-        ispconfig_db_user_password=$(pwgen -s 32 -1)
-        mkdir -p /usr/local/share/ispconfig/credential
-        cat << EOF > /usr/local/share/ispconfig/credential/database
-ISPCONFIG_DB_USER_PASSWORD=$ispconfig_db_user_password
-EOF
-        chmod 0500 /usr/local/share/ispconfig/credential
-        chmod 0400 /usr/local/share/ispconfig/credential/database
-    fi
+remoteUserCredentialIspconfig() {
+    local ISPCONFIG_REMOTE_USER_PASSWORD ISPCONFIG_REMOTE_USER_NAME
+    local user="$1"
+    local path=/usr/local/share/ispconfig/credential/remote/$user
+    isFileExists "$path"
+    [ -n "$notfound" ] && fileMustExists "$path"
+    # Populate.
+    . "$path"
+    ispconfig_remote_user_name=$ISPCONFIG_REMOTE_USER_NAME
+    ispconfig_remote_user_password=$ISPCONFIG_REMOTE_USER_PASSWORD
 }
 getMailUserIdIspconfigByEmail() {
-    # Get the mailuser_id from table mail_user in ispconfig database.
-    #
-    # Globals:
-    #   ispconfig_db_user, ispconfig_db_user_password,
-    #   ispconfig_db_user_host, ispconfig_db_name
-    #
-    # Arguments:
-    #   $1: user mail
-    #   $2: host mail
-    #
-    # Output:
-    #   Write mailuser_id to stdout.
     local email="$1"@"$2"
-    local sql="SELECT mailuser_id FROM mail_user WHERE email = '$email';"
-    local u="$ispconfig_db_user"
-    local p="$ispconfig_db_user_password"
-    local mailuser_id=$(mysql \
-        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
-        -h "$ispconfig_db_user_host" "$ispconfig_db_name" -r -N -s -e "$sql"
-    )
-    echo "$mailuser_id"
+    __ Execute SOAP '`'mail_user_get'`'.
+    arguments="$(php -r "echo serialize([
+        'session_id' => null,
+        'params' => [
+            'email' => '${email}',
+        ],
+    ]);")"
+    stdout=$(php -r "$php" mail_user_get "$options" "$credentials" "$arguments")
+    __ Standard Output.
+    magenta "$stdout"; _.
+    if php -r "$php" is_empty <<< "$stdout";then
+        return
+    else
+        echo `php -r "$php" get mailuser_id <<< "$stdout"`
+    fi
 }
 isEmailIspconfigExist() {
-    # Check if the mailuser_id from table mail_user exists in ispconfig database.
-    #
-    # Globals:
-    #   Used: roundcube_db_user, roundcube_db_user_password,
-    #         roundcube_db_user_host, roundcube_db_name
-    #   Modified: mailuser_id
-    #
-    # Arguments:
-    #   $1: user mail
-    #   $2: host mail
-    #
-    # Return:
-    #   0 if exists.
-    #   1 if not exists.
     mailuser_id=$(getMailUserIdIspconfigByEmail "$1" "$2")
     if [ -n "$mailuser_id" ];then
         return 0
@@ -178,20 +152,6 @@ EOF
     fi
 }
 insertEmailIspconfig() {
-    # Insert to table mail_user a new record via SOAP.
-    #
-    # Globals:
-    #   Used: roundcube_db_user, roundcube_db_user_password,
-    #         roundcube_db_user_host, roundcube_db_name
-    #   Modified: mailuser_id
-    #
-    # Arguments:
-    #   $1: user mail
-    #   $2: host mail
-    #
-    # Return:
-    #   0 if exists.
-    #   1 if not exists.
     local user="$1"
     local host="$2"
     __ Mengecek credentials Mailbox.
@@ -201,65 +161,54 @@ insertEmailIspconfig() {
     else
         __; magenta mailbox_user_password="$mailbox_user_password"; _.
     fi
-    __ Create PHP Script from template '`'mail_user_add'`'.
-    template=mail_user_add
-    template_temp=$(ispconfig.sh mktemp "${template}.php")
-    template_temp_path=$(ispconfig.sh realpath "$template_temp")
-    __; magenta template_temp_path="$template_temp_path"; _.
-    parameter=''
-    parameter+="\t\t'server_id' => '1',\n"
-    parameter+="\t\t'email' => '$user@$host',\n"
-    parameter+="\t\t'login' => '$user@$host',\n"
-    parameter+="\t\t'password' => '$mailbox_user_password',\n"
-    parameter+="\t\t'name' => '$user',\n"
-    parameter+="\t\t'uid' => '5000',\n"
-    parameter+="\t\t'gid' => '5000',\n"
-    parameter+="\t\t'maildir' => '/var/vmail/$host/$user',\n"
-    parameter+="\t\t'maildir_format' => 'maildir',\n"
-    parameter+="\t\t'quota' => '0',\n"
-    parameter+="\t\t'cc' => '',\n"
-    parameter+="\t\t'forward_in_lda' => 'y',\n"
-    parameter+="\t\t'sender_cc' => '',\n"
-    parameter+="\t\t'homedir' => '/var/vmail',\n"
-    parameter+="\t\t'autoresponder' => 'n',\n"
-    parameter+="\t\t'autoresponder_start_date' => NULL,\n"
-    parameter+="\t\t'autoresponder_end_date' => NULL,\n"
-    parameter+="\t\t'autoresponder_subject' => '',\n"
-    parameter+="\t\t'autoresponder_text' => '',\n"
-    parameter+="\t\t'move_junk' => 'Y',\n"
-    parameter+="\t\t'purge_trash_days' => 0,\n"
-    parameter+="\t\t'purge_junk_days' => 0,\n"
-    parameter+="\t\t'custom_mailfilter' => NULL,\n"
-    parameter+="\t\t'postfix' => 'y',\n"
-    parameter+="\t\t'greylisting' => 'n',\n"
-    parameter+="\t\t'access' => 'y',\n"
-    parameter+="\t\t'disableimap' => 'n',\n"
-    parameter+="\t\t'disablepop3' => 'n',\n"
-    parameter+="\t\t'disabledeliver' => 'n',\n"
-    parameter+="\t\t'disablesmtp' => 'n',\n"
-    parameter+="\t\t'disablesieve' => 'n',\n"
-    parameter+="\t\t'disablesieve-filter' => 'n',\n"
-    parameter+="\t\t'disablelda' => 'n',\n"
-    parameter+="\t\t'disablelmtp' => 'n',\n"
-    parameter+="\t\t'disabledoveadm' => 'n',\n"
-    parameter+="\t\t'disablequota-status' => 'n',\n"
-    parameter+="\t\t'disableindexer-worker' => 'n',\n"
-    parameter+="\t\t'last_quota_notification' => NULL,\n"
-    parameter+="\t\t'backup_interval' => 'none',\n"
-    parameter+="\t\t'backup_copies' => '1',\n"
-    sed -i -E \
-        -e ':a;N;$!ba;s|\$params\s+=\s+[^;]+;|\$params = array(\n'"${parameter}"'\n\t);|g' \
-        "$template_temp_path"
-    sed -i -E -e '/echo/d' -e '/^\s*$/d' -e 's,\t,    ,g' \
-        "$template_temp_path"
-    contents=$(<"$template_temp_path")
-    __ Execute PHP Script.
-    magenta "$contents"; _.
-    ispconfig.sh php "$template_temp"
-    __ Cleaning Temporary File.
-    __; magenta rm "$template_temp_path"; _.
-    rm "$template_temp_path"
-    mailuser_id=$(getMailUserIdIspconfigByEmail "$1" "$2")
+    __ Execute SOAP '`'mail_user_add'`'.
+    arguments="$(php -r "echo serialize([
+        'session_id' => null,
+        'client_id' => 0,
+        'params' => [
+            'server_id' => '1',
+            'email' => '$user@$host',
+            'login' => '$user@$host',
+            'password' => '$mailbox_user_password',
+            'name' => '$user',
+            'uid' => '5000',
+            'gid' => '5000',
+            'maildir' => '/var/vmail/$host/$user',
+            'maildir_format' => 'maildir',
+            'quota' => '0',
+            'cc' => '',
+            'forward_in_lda' => 'y',
+            'sender_cc' => '',
+            'homedir' => '/var/vmail',
+            'autoresponder' => 'n',
+            'autoresponder_start_date' => NULL,
+            'autoresponder_end_date' => NULL,
+            'autoresponder_subject' => '',
+            'autoresponder_text' => '',
+            'move_junk' => 'Y',
+            'purge_trash_days' => 0,
+            'purge_junk_days' => 0,
+            'custom_mailfilter' => NULL,
+            'postfix' => 'y',
+            'greylisting' => 'n',
+            'access' => 'y',
+            'disableimap' => 'n',
+            'disablepop3' => 'n',
+            'disabledeliver' => 'n',
+            'disablesmtp' => 'n',
+            'disablesieve' => 'n',
+            'disablesieve-filter' => 'n',
+            'disablelda' => 'n',
+            'disablelmtp' => 'n',
+            'disabledoveadm' => 'n',
+            'disablequota-status' => 'n',
+            'disableindexer-worker' => 'n',
+            'last_quota_notification' => NULL,
+            'backup_interval' => 'none',
+            'backup_copies' => '1',
+        ],
+    ]);")"
+    mailuser_id=$(php -r "$php" mail_user_add "$options" "$credentials" "$arguments")
     if [ -n "$mailuser_id" ];then
         return 0
     fi
@@ -273,7 +222,10 @@ ____
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-ISPCONFIG_DB_USER_HOST=${ISPCONFIG_DB_USER_HOST:=localhost}
+ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
+code 'ISPCONFIG_REMOTE_USER_ROOT="'$ISPCONFIG_REMOTE_USER_ROOT'"'
+ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
+code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
@@ -283,6 +235,7 @@ if [ -z "$name" ];then
 fi
 code 'name="'$name'"'
 code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'
+code 'ispconfig_soap_exists_sure="'$ispconfig_soap_exists_sure'"'
 ____
 
 if [ -z "$root_sure" ];then
@@ -296,15 +249,11 @@ if [ -z "$root_sure" ];then
 fi
 
 if [ -z "$ispconfig_domain_exists_sure" ];then
-    _ ___________________________________________________________________;_.;_.;
-
     INDENT+="    " \
     rcm-ispconfig-control-manage-domain $isfast --root-sure \
         isset \
         --domain="$domain" \
         ; [ $? -eq 0 ] && ispconfig_domain_exists_sure=1
-    _ ___________________________________________________________________;_.;_.;
-
     if [ -n "$ispconfig_domain_exists_sure" ];then
         __; green Domain is exists.; _.
     else
@@ -312,18 +261,130 @@ if [ -z "$ispconfig_domain_exists_sure" ];then
     fi
 fi
 
-chapter Mengecek credentials ISPConfig.
-ispconfig_db_user_host="$ISPCONFIG_DB_USER_HOST"
-code ispconfig_db_user_host="$ispconfig_db_user_host"
-databaseCredentialIspconfig
-if [[ -z "$ispconfig_db_name" || -z "$ispconfig_db_user" || -z "$ispconfig_db_user_password" ]];then
-    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/database'`'.; x
+php=$(cat <<'EOF'
+$mode = $_SERVER['argv'][1];
+switch ($mode) {
+    case 'is_empty':
+    case 'get':
+        $stdin = '';
+        while (FALSE !== ($line = fgets(STDIN))) {
+           $stdin .= $line;
+        }
+        $result = @unserialize($stdin);
+        if ($result === false) {
+            echo('Unserialize failed: '. $stdin.PHP_EOL);
+            exit(1);
+        }
+        break;
+    case 'login':
+    case 'mail_user_get':
+    case 'mail_user_add':
+        $options = unserialize($_SERVER['argv'][2]);
+        // Populate variable $username, $password.
+        $credentials = unserialize($_SERVER['argv'][3]);
+        extract($credentials);
+        break;
+}
+switch ($mode) {
+    case 'get':
+        $key = $_SERVER['argv'][2];
+        $result = array_shift($result);
+        if (array_key_exists($key, $result)) {
+            echo $result[$key];
+        }
+        break;
+    case 'is_empty':
+        empty($result) ? exit(0) : exit(1);
+        break;
+    case 'login':
+        $client = new SoapClient(null, $options);
+        try {
+            if($session_id = $client->login($username, $password)) {
+                echo 'Logged successfull. Session ID:'.$session_id.PHP_EOL;
+            }
+            if($client->logout($session_id)) {
+                echo "Logged out.".PHP_EOL;
+            }
+            exit(0);
+        } catch (SoapFault $e) {
+            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
+            exit(1);
+        }
+        break;
+    case 'mail_user_add':
+        // Populate variable $session_id, $client_id, $params.
+        $arguments = unserialize($_SERVER['argv'][4]);
+        extract($arguments);
+        $client = new SoapClient(null, $options);
+        try {
+            if($session_id = $client->login($username, $password)) {
+            }
+            //* Set the function parameters.
+            $mailuser_id = $client->mail_user_add($session_id, $client_id, $params);
+            echo $mailuser_id;
+            if($client->logout($session_id)) {
+            }
+        } catch (SoapFault $e) {
+            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
+            exit(1);
+        }
+
+        break;
+    case 'mail_user_get':
+        // Populate variable $session_id, $domain.
+        $arguments = unserialize($_SERVER['argv'][4]);
+        extract($arguments);
+        $client = new SoapClient(null, $options);
+        try {
+            if($session_id = $client->login($username, $password)) {
+            }
+            //* Set the function parameters.
+            $record_record = $client->mail_user_get($session_id, $params);
+            echo serialize($record_record);
+            if($client->logout($session_id)) {
+            }
+        } catch (SoapFault $e) {
+            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
+            exit(1);
+        }
+        break;
+    default:
+        fwrite(STDERR, 'Unknown mode.'.PHP_EOL);
+        exit(1);
+        break;
+}
+EOF
+)
+
+chapter Populate variable.
+remoteUserCredentialIspconfig $ISPCONFIG_REMOTE_USER_ROOT
+if [[ -z "$ispconfig_remote_user_name" || -z "$ispconfig_remote_user_password" ]];then
+    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/remote/$ISPCONFIG_REMOTE_USER_ROOT'`'.; x
 else
-    code ispconfig_db_name="$ispconfig_db_name"
-    code ispconfig_db_user="$ispconfig_db_user"
-    code ispconfig_db_user_password="$ispconfig_db_user_password"
+    code ispconfig_remote_user_name="$ispconfig_remote_user_name"
+    code ispconfig_remote_user_password="$ispconfig_remote_user_password"
 fi
+options="$(php -r "echo serialize([
+    'location' => '"http://${ISPCONFIG_FQDN_LOCALHOST}/remote/index.php"',
+    'uri' => '"http://${ISPCONFIG_FQDN_LOCALHOST}/remote/"',
+    'trace' => 1,
+    'exceptions' => 1,
+]);")"
+credentials="$(php -r "echo serialize([
+    'username' => '"$ispconfig_remote_user_name"',
+    'password' => '"$ispconfig_remote_user_password"',
+]);")"
 ____
+
+if [ -z "$ispconfig_soap_exists_sure" ];then
+    chapter Test koneksi SOAP.
+    if php -r "$php" login "$options" "$credentials";then
+        __ Login berhasil.
+    else
+        error Login gagal; x
+    fi
+    ____
+fi
 
 user="$name"
 host="$domain"
@@ -336,18 +397,6 @@ elif insertEmailIspconfig "$user" "$host";then
     __; magenta mailuser_id=$mailuser_id; _.
 else
     __; red Email "$user"@"$host" failed to create.; x
-fi
-
-____
-
-chapter Mengecek credentials '`'/usr/local/share/credential/mailbox/$host/$user'`'.
-mailboxCredential $host $user
-if [[ -z "$mailbox_user_password" ]];then
-    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/credential/mailbox/$host/$user'`'.; x
-else
-    __; magenta host=$host; _.
-    __; magenta user=$user; _.
-    __; magenta mailbox_user_password="$mailbox_user_password"; _.
 fi
 ____
 
@@ -367,6 +416,7 @@ exit 0
 # --help
 # --root-sure
 # --ispconfig-domain-exists-sure
+# --ispconfig-soap-exists-sure
 # )
 # VALUE=(
 # --name
