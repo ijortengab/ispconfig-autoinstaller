@@ -259,8 +259,8 @@ e '   'password: $ispconfig_web_user_password
 ____
 
 chapter Manual Action
-e Command to make sure remote user working properly:
-__; magenta ispconfig.php login; _.
+e Command to create a new mailbox. Example:
+__; magenta ispconfig.php mail_user_add --email=support@${domain} --password=$(pwgen -1 12); _.
 e Command to implement '`'ispconfig.php'`' command autocompletion immediately:
 __; magenta source /etc/profile.d/ispconfig-php-completion.sh; _.
 e Command to check PTR Record:
@@ -272,13 +272,18 @@ fi
 ____
 
 if [ -n "$ip_address" ];then
-    if [[ ! $(dig -x $ip_address +short) == ${fqdn}. ]];then
+    tempfile=$(mktemp -p /dev/shm -t rcm-ispconfig-setup-dump-variables.XXXXXX)
+    dig -x $ip_address +short > "$tempfile"
+    output=$(cat "$tempfile" | grep -v ^\; | tail -1)
+    rm "$tempfile"
+    if [[ ! $output == ${fqdn}. ]];then
         error Attention
         e Your PTR Record is different with your variable of FQDN.
         __; magenta fqdn="$fqdn"; _.
-        __; magenta dig -x $ip_address +short' # ' $(dig -x $ip_address +short); _.
+        __; magenta dig -x $ip_address +short' # '$output; _.
         e "But it doesn't matter if ${domain} is addon domain."
         ____
+
         chapter Suggestion.
         e If you user of DigitalOcean, change your droplet name with FQDN.
         e More info: https://www.digitalocean.com/community/questions/how-do-i-setup-a-ptr-record
