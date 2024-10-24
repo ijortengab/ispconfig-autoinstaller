@@ -69,7 +69,7 @@ Options:
    --non-interactive ^
         Skip confirmation of --ip-address=auto.
    --timezone
-        Set the timezone of this machine.
+        Set the timezone of this machine. Available values: Asia/Jakarta, or other.
    --without-update-system ^
         Skip execute update system. Default to --with-update-system.
    --without-upgrade-system ^
@@ -118,7 +118,7 @@ Dependency:
    rcm-ispconfig-setup-internal-command:`printVersion`
    rcm-roundcube-setup-ispconfig-integration:`printVersion`
    rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:`printVersion`
-   rcm-certbot-deploy-nginx
+   rcm-ispconfig-wrapper-certbot-deploy-nginx:`printVersion`
    rcm-ispconfig-control-manage-domain:`printVersion`
    rcm-ispconfig-control-manage-email-mailbox:`printVersion`
    rcm-ispconfig-control-manage-email-alias:`printVersion`
@@ -130,6 +130,7 @@ Download:
    [rcm-ispconfig-setup-internal-command](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-internal-command.sh)
    [rcm-roundcube-setup-ispconfig-integration](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/roundcube/rcm-roundcube-setup-ispconfig-integration.sh)
    [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php.sh)
+   [rcm-ispconfig-wrapper-certbot-deploy-nginx](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-wrapper-certbot-deploy-nginx.sh)
    [rcm-ispconfig-control-manage-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-domain.sh)
    [rcm-ispconfig-control-manage-email-mailbox](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-email-mailbox.sh)
    [rcm-ispconfig-control-manage-email-alias](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-email-alias.sh)
@@ -475,7 +476,7 @@ rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sur
     --domain="localhost" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-certbot-deploy-nginx $isfast --root-sure \
+rcm-ispconfig-wrapper-certbot-deploy-nginx $isfast --root-sure \
     --domain="${SUBDOMAIN_ISPCONFIG}.${domain}" \
     --domain="${SUBDOMAIN_PHPMYADMIN}.${domain}" \
     --domain="${SUBDOMAIN_ROUNDCUBE}.${domain}" \
@@ -543,7 +544,7 @@ ____
 
 chapter Finish
 e If you want to see the credentials again, please execute this command:
-code rcm-ispconfig-setup-dump-variables${isfast} --domain=$domain --hostname=$hostname
+code rcm-ispconfig-setup-dump-variables${isfast} --domain="$domain" --hostname="$hostname" --ip-address="$ip_address"
 ____
 
 exit 0
