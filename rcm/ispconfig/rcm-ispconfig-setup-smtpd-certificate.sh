@@ -109,59 +109,88 @@ backupFile() {
             chown ${user}:${group} "$newpath"
     esac
 }
+backupDir() {
+    local oldpath="$1" i newpath
+    i=1
+    newpath="${oldpath}.${i}"
+    if [ -e "$newpath" ]; then
+        let i++
+        newpath="${oldpath}.${i}"
+        while [ -e "$newpath" ] ; do
+            let i++
+            newpath="${oldpath}.${i}"
+        done
+    fi
+    mv "$oldpath" "$newpath"
+}
 link_symbolic() {
     local source="$1"
     local target="$2"
     local sudo="$3"
     local create
-    _success=
     [ -e "$source" ] || { error Source not exist: $source.; x; }
+    [ -f "$source" ] || { error Source exists but not file: $source.; x; }
     [ -n "$target" ] || { error Target not defined.; x; }
     [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
+    [[ $(type -t backupDir) == function ]] || { error Function backupDir not found.; x; }
 
     chapter Membuat symbolic link.
     __ source: '`'$source'`'
     __ target: '`'$target'`'
-    if [ -h "$target" ];then
-        __ Path target saat ini sudah merupakan symbolic link: '`'$target'`'
-        __; _, Mengecek apakah link merujuk ke '`'$source'`':
-        _dereference=$(stat ${stat_cached} "$target" -c %N)
-        match="'$target' -> '$source'"
-        if [[ "$_dereference" == "$match" ]];then
-            _, ' 'Merujuk.; _.
+    if [ -f "$target" ];then
+        if [ -h "$target" ];then
+            __ Path target saat ini sudah merupakan file symbolic link: '`'$target'`'
+            local _readlink=$(readlink "$target")
+            __; magenta readlink "$target"; _.
+            e $_readlink
+            if [[ "$_readlink" =~ ^[^/\.] ]];then
+                local target_parent=$(dirname "$target")
+                local _dereference="${target_parent}/${_readlink}"
+            elif [[ "$_readlink" =~ ^[\.] ]];then
+                local target_parent=$(dirname "$target")
+                local _dereference="${target_parent}/${_readlink}"
+                _dereference=$(realpath -s "$_dereference")
+            else
+                _dereference="$_readlink"
+            fi
+            __; _, Mengecek apakah link merujuk ke '`'$source'`':' '
+            if [[ "$source" == "$_dereference" ]];then
+                _, merujuk.; _.
+            else
+                _, tidak merujuk.; _.
+                __ Melakukan backup.
+                backupFile move "$target"
+                create=1
+            fi
         else
-            _, ' 'Tidak merujuk.; _.
-            __ Melakukan backup.
+            __ Melakukan backup regular file: '`'"$target"'`'.
             backupFile move "$target"
             create=1
         fi
-    elif [ -e "$target" ];then
-        __ File/directory bukan merupakan symbolic link.
-        __ Melakukan backup.
-        backupFile move "$target"
+    elif [ -d "$target" ];then
+        __ Melakukan backup direktori: '`'"$target"'`'.
+        backupDir "$target"
         create=1
     else
         create=1
     fi
     if [ -n "$create" ];then
-        __ Membuat symbolic link '`'$target'`'.
+        __ Membuat symbolic link: '`'$target'`'.
+        local target_parent=$(dirname "$target")
+        code mkdir -p "$target_parent"
+        mkdir -p "$target_parent"
+        local source_relative=$(realpath -s --relative-to="$target_parent" "$source")
         if [ -n "$sudo" ];then
-            __; magenta sudo -u '"'$sudo'"' ln -s '"'$source'"' '"'$target'"'; _.
-            sudo -u "$sudo" ln -s "$source" "$target"
+            code sudo -u '"'$sudo'"' ln -s '"'$source_relative'"' '"'$target'"'
+            sudo -u "$sudo" ln -s "$source_relative" "$target"
         else
-            __; magenta ln -s '"'$source'"' '"'$target'"'; _.
-            ln -s "$source" "$target"
+            code ln -s '"'$source_relative'"' '"'$target'"'
+            ln -s "$source_relative" "$target"
         fi
-        __ Verifikasi
-        if [ -h "$target" ];then
-            _dereference=$(stat ${stat_cached} "$target" -c %N)
-            match="'$target' -> '$source'"
-            if [[ "$_dereference" == "$match" ]];then
-                __; green Symbolic link berhasil dibuat.; _.
-                _success=1
-            else
-                __; red Symbolic link gagal dibuat.; x
-            fi
+        if [ $? -eq 0 ];then
+            __; green Symbolic link berhasil dibuat.; _.
+        else
+            __; red Symbolic link gagal dibuat.; x
         fi
     fi
     ____
