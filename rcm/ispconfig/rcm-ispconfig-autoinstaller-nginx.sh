@@ -97,8 +97,6 @@ Environment Variables:
         Default to localhost
    ISPCONFIG_NGINX_CONFIG_FILE
         Default to ispconfig
-   ISPCONFIG_INSTALL_DIR
-        Default to /usr/local/ispconfig
    MARIADB_PREFIX_MASTER
         Default to /usr/local/share/mariadb
    MARIADB_USERS_CONTAINER_MASTER
@@ -140,29 +138,6 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
-backupFile() {
-    local mode="$1"
-    local oldpath="$2" i newpath
-    i=1
-    newpath="${oldpath}.${i}"
-    if [ -f "$newpath" ]; then
-        let i++
-        newpath="${oldpath}.${i}"
-        while [ -f "$newpath" ] ; do
-            let i++
-            newpath="${oldpath}.${i}"
-        done
-    fi
-    case $mode in
-        move)
-            mv "$oldpath" "$newpath" ;;
-        copy)
-            local user=$(stat -c "%U" "$oldpath")
-            local group=$(stat -c "%G" "$oldpath")
-            cp "$oldpath" "$newpath"
-            chown ${user}:${group} "$newpath"
-    esac
-}
 fileMustExists() {
     # global used:
     # global modified:
@@ -187,28 +162,13 @@ isFileExists() {
         notfound=1
     fi
 }
-# Global used: db_user.
-# Global modified: db_user.
-databaseCredentialIspconfig() {
+populateDatabaseUserPassword() {
+    local path="${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/$1"
     local DB_USER DB_USER_PASSWORD
-    if [ ! -f /usr/local/share/ispconfig/credential/database ];then
-        chapter Membuat database credentials: '`'/usr/local/share/ispconfig/credential/database'`'.
-        __ Memerlukan file '`'"${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"'`'
-        isFileExists "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
-        [ -n "$notfound" ] && fileMustExists "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
-        ____
-
-        source="${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
-        target="/usr/local/share/ispconfig/credential/database"
-        mkdir -p "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential"
-        chmod 0500 "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential"
-        link_symbolic "$source" "$target"
+    if [ -f "$path" ];then
+        . "$path"
+        db_user_password=$DB_USER_PASSWORD
     fi
-
-    # Populate.
-    . /usr/local/share/ispconfig/credential/database
-    db_user=$DB_USER
-    db_user_password=$DB_USER_PASSWORD
 }
 websiteCredentialIspconfig() {
     if [ -f /usr/local/share/ispconfig/credential/website ];then
@@ -399,63 +359,6 @@ EOF
         fi
     fi
 }
-link_symbolic() {
-    local source="$1"
-    local target="$2"
-    local sudo="$3"
-    local create
-    _success=
-    [ -e "$source" ] || { error Source not exist: $source.; x; }
-    [ -n "$target" ] || { error Target not defined.; x; }
-    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
-
-    chapter Membuat symbolic link.
-    __ source: '`'$source'`'
-    __ target: '`'$target'`'
-    if [ -h "$target" ];then
-        __ Path target saat ini sudah merupakan symbolic link: '`'$target'`'
-        __; _, Mengecek apakah link merujuk ke '`'$source'`':
-        _dereference=$(stat ${stat_cached} "$target" -c %N)
-        match="'$target' -> '$source'"
-        if [[ "$_dereference" == "$match" ]];then
-            _, ' 'Merujuk.; _.
-        else
-            _, ' 'Tidak merujuk.; _.
-            __ Melakukan backup.
-            backupFile move "$target"
-            create=1
-        fi
-    elif [ -e "$target" ];then
-        __ File/directory bukan merupakan symbolic link.
-        __ Melakukan backup.
-        backupFile move "$target"
-        create=1
-    else
-        create=1
-    fi
-    if [ -n "$create" ];then
-        __ Membuat symbolic link '`'$target'`'.
-        if [ -n "$sudo" ];then
-            __; magenta sudo -u '"'$sudo'"' ln -s '"'$source'"' '"'$target'"'; _.
-            sudo -u "$sudo" ln -s "$source" "$target"
-        else
-            __; magenta ln -s '"'$source'"' '"'$target'"'; _.
-            ln -s "$source" "$target"
-        fi
-        __ Verifikasi
-        if [ -h "$target" ];then
-            _dereference=$(stat ${stat_cached} "$target" -c %N)
-            match="'$target' -> '$source'"
-            if [[ "$_dereference" == "$match" ]];then
-                __; green Symbolic link berhasil dibuat.; _.
-                _success=1
-            else
-                __; red Symbolic link gagal dibuat.; x
-            fi
-        fi
-    fi
-    ____
-}
 backupFile() {
     local mode="$1"
     local oldpath="$2" i newpath
@@ -479,6 +382,30 @@ backupFile() {
             chown ${user}:${group} "$newpath"
     esac
 }
+dirMustExists() {
+    # global used:
+    # global modified:
+    # function used: __, success, error, x
+    if [ -d "$1" ];then
+        __; green Direktori '`'$(basename "$1")'`' ditemukan.; _.
+    else
+        __; red Direktori '`'$(basename "$1")'`' tidak ditemukan.; x
+    fi
+}
+isDirExists() {
+    # global used:
+    # global modified: found, notfound
+    # function used: __
+    found=
+    notfound=
+    if [ -d "$1" ];then
+        __ Direktori '`'$(basename "$1")'`' ditemukan.
+        found=1
+    else
+        __ Direktori '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
+    fi
+}
 
 # Title.
 title rcm-ispconfig-autoinstaller-nginx
@@ -497,8 +424,6 @@ ISPCONFIG_DB_USER_HOST=${ISPCONFIG_DB_USER_HOST:=localhost}
 code 'ISPCONFIG_DB_USER_HOST="'$ISPCONFIG_DB_USER_HOST'"'
 ISPCONFIG_NGINX_CONFIG_FILE=${ISPCONFIG_NGINX_CONFIG_FILE:=ispconfig}
 code 'ISPCONFIG_NGINX_CONFIG_FILE="'$ISPCONFIG_NGINX_CONFIG_FILE'"'
-ISPCONFIG_INSTALL_DIR=${ISPCONFIG_INSTALL_DIR:=/usr/local/ispconfig}
-code 'ISPCONFIG_INSTALL_DIR="'$ISPCONFIG_INSTALL_DIR'"'
 MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
 MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
@@ -704,7 +629,12 @@ EOF
         ; [ ! $? -eq 0 ] && x
 
     # Get password from mariadb local share.
-    databaseCredentialIspconfig
+    populateDatabaseUserPassword "$db_user"
+    if [[ -z "$db_user_password" ]];then
+        __; red Informasi credentials tidak lengkap: '`'$path'`'.; x
+    else
+        code db_user_password="$db_user_password"
+    fi
 
     path=/usr/local/share/ispconfig/credential/website
     chapter Mengecek website credentials: '`'$path'`'.
@@ -806,12 +736,14 @@ EOF
     __ Memasang password MySQL untuk root
     toggleMysqlRootPassword yes
 
-    path="$ISPCONFIG_INSTALL_DIR/interface/web/index.php"
-    filename=index.php
     __ Mulai autoinstall.
+    cd /tmp/ispconfig3_install/install
+    php install.php --autoinstall=autoinstall.ini
+    cd - >/dev/null
 
-    php /tmp/ispconfig3_install/install/install.php \
-         --autoinstall=/tmp/ispconfig3_install/install/autoinstall.ini
+    prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
+    path="$prefix/interface/web/index.php"
+    filename=index.php
     __ Mengecek existing '`'$filename'`'
     fileMustExists "$path"
     ____
@@ -823,17 +755,20 @@ EOF
 fi
 
 chapter Prepare arguments.
+if [ -z "$prefix" ];then
+    prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
+fi
 # gak tahu deh dapet dari mana ini value.
-# $project_name adalah section, maka perlu cari di installer,
+# $php_project_name adalah section, maka perlu cari di installer,
 # apakah section nya menggunakan ispconfig value.
-project_name="ispconfig"
-code 'project_name="'$project_name'"'
-____; socket_filename=$(INDENT+="    " rcm-php-fpm-setup-project-config $isfast --root-sure --php-version="$php_version" --php-fpm-user="$php_fpm_user" --project-name="$project_name" get listen)
+php_project_name="ispconfig"
+code 'php_project_name="'$php_project_name'"'
+____; socket_filename=$(INDENT+="    " rcm-php-fpm-setup-project-config $isfast --root-sure --php-version="$php_version" --php-fpm-user="$php_fpm_user" --project-name="$php_project_name" get listen)
 code 'socket_filename="'$socket_filename'"'
 if [ -z "$socket_filename" ];then
     __; red Socket Filename of PHP-FPM not found.; x
 fi
-root="$ISPCONFIG_INSTALL_DIR/interface/web"
+root="$prefix/interface/web"
 code 'root="'$root'"'
 filename="$ISPCONFIG_NGINX_CONFIG_FILE"
 code 'filename="'$filename'"'
@@ -926,6 +861,16 @@ if [ -n "$reload" ];then
     fi
     ____
 fi
+
+chapter Copy ISPConfig PHP scripts.
+isDirExists "${prefix}/remoting_client"
+if [ -n "$notfound" ];then
+    code cp -r /tmp/ispconfig3_install/remoting_client -T "${prefix}/remoting_client"
+    cp -r /tmp/ispconfig3_install/remoting_client -T "${prefix}/remoting_client"
+    dirMustExists "${prefix}/remoting_client"
+fi
+[ -d "${prefix}/remoting_client" ] || dirMustExists "${prefix}/remoting_client"
+____
 
 exit 0
 
