@@ -121,3 +121,28 @@ Prerequisite action:
   ATTENTION: give name your droplet as FQDN, example: server1.example.com for
   correct PTR record.
 - Generate token API in DigitalOcean Control Panel.
+
+## Add On Domain
+
+Assume your next domain is `example.org`, this extension will doing this for you:
+
+- Create Website ISPConfig at https://cp.example.org
+- Create Website PHPMyAdmin at https://db.example.org
+- Create Website Roundcube at https://mail.example.org
+- Create mailbox admin@example.org
+- Create mailbox support@example.org
+- Create mail alias webmaster@example.org destination to admin@example.org
+- Create mail alias hostmaster@example.org destination to admin@example.org
+- Create mail alias postmaster@example.org destination to admin@example.org
+- Additional identities of admin@example.org for three aliases above.
+- Roundcube and ISPConfig integration.
+
+You have to add DNS records manually (except DigitalOcean VPS):
+
+- A Record of `example.org` point to your VPS IP Address
+- CNAME Record of `cp.example.org` alias to `example.org`
+- CNAME Record of `db.example.org` alias to `example.org`
+- CNAME Record of `mail.example.org` alias to `example.org`
+
+Attention for MX Record, pointing MX record to your primary server.
+- MX Record of `example.org` handled by `server1.example.com`
