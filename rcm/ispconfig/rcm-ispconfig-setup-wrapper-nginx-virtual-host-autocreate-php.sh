@@ -47,12 +47,12 @@ printVersion() {
     echo '0.9.3'
 }
 printHelp() {
-    title RCM ISPConfig Setup
-    _ 'Variation '; yellow Wrapper Nginx Setup PHP-FPM; _.
+    title RCM ISPConfig Setup Wrapper
+    _ 'Variation '; yellow Nginx Virtual Host Autocreate PHP-FPM; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-ispconfig-setup-wrapper-nginx-setup-php [options]
+Usage: rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php [options]
 
 Options:
    --subdomain
@@ -121,7 +121,7 @@ backupFile() {
 }
 
 # Title.
-title rcm-ispconfig-setup-wrapper-nginx-setup-php
+title rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php
 ____
 
 # Require, validate, and populate value.
