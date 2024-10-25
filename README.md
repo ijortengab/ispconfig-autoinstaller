@@ -2,6 +2,19 @@
 
 The extension of `rcm`.
 
+Assume your domain is `example.com` and hostname is `server1`, this extension will doing this for you:
+
+- Create Website ISPConfig at https://cp.example.com
+- Create Website PHPMyAdmin at https://db.example.com
+- Create Website Roundcube at https://mail.example.com
+- Create mailbox admin@example.com
+- Create mailbox support@example.com
+- Create mail alias webmaster@example.com destination to admin@example.com
+- Create mail alias hostmaster@example.com destination to admin@example.com
+- Create mail alias postmaster@example.com destination to admin@example.com
+- Additional identities of admin@example.com for three aliases above.
+- Roundcube and ISPConfig integration.
+
 ## Prerequisite
 
 Login as root.
@@ -72,48 +85,39 @@ Feels free to execute `ispconfig` command. You will be prompt to some required v
 rcm ispconfig
 ```
 
-Assume your domain is `example.com` and hostname is `node1`, this extension will doing this for you:
+## DNS records
 
-- Create Website ISPConfig at https://cp.example.com
-- Create Website PHPMyAdmin at https://db.example.com
-- Create Website Roundcube at https://mail.example.com
-- Create mailbox admin@example.com
-- Create mailbox support@example.com
-- Create mail alias webmaster@example.com destination to admin@example.com
-- Create mail alias hostmaster@example.com destination to admin@example.com
-- Create mail alias postmaster@example.com destination to admin@example.com
-- Additional identities of admin@example.com for three aliases above.
-- Roundcube and ISPConfig integration.
+### VPS Generic
 
-However, you have to add DNS records manually (except DigitalOcean):
+You have to add DNS records manually (except DigitalOcean VPS):
 
 - A Record of `example.com` point to your VPS IP Address
-- A Record of `node1.example.com` point to your VPS IP Address
+- A Record of `server1.example.com` point to your VPS IP Address
 - CNAME Record of `cp.example.com` alias to `example.com`
 - CNAME Record of `db.example.com` alias to `example.com`
 - CNAME Record of `mail.example.com` alias to `example.com`
-- MX Record of `example.com` handled by `node1.example.com`
+- MX Record of `example.com` handled by `server1.example.com`
 
 ### VPS DigitalOcean
 
 If you use VPS from DigitalOcean and use DigitalOcean DNS, there some additional
-action:
+action automatically:
 
 - Create DNS record: A example.com
-- Create DNS record: A node1.example.com
+- Create DNS record: A server1.example.com
 - Create DNS record: CNAME cp.example.com
 - Create DNS record: CNAME db.example.com
 - Create DNS record: CNAME mail.example.com
-- Create DNS record: MX example.com to node1.example.com
+- Create DNS record: MX example.com to server1.example.com
 - Create DNS record: TXT DKIM for example.com
 - Create DNS record: TXT DMARC for example.com
 - Create DNS record: TXT SPF for example.com
 
-Note:
+Prerequisite action:
 
 - Buy domain name from your favourite registrar, then point Name Server to
   ns1.digitalocean.com, ns2.digitalocean.com, and ns3.digitalocean.com.
 - Buy server (VPS) in DigitalOcean and select OS: `Debian 12`/`Ubuntu 22.04`.
-  ATTENTION: give name your droplet as FQDN, example: node1.example.com for
+  ATTENTION: give name your droplet as FQDN, example: server1.example.com for
   correct PTR record.
 - Generate token API in DigitalOcean Control Panel.
