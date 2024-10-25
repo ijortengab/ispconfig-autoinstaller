@@ -62,10 +62,6 @@ Global Options:
    --root-sure
         Bypass root checking.
 
-Environment Variables:
-   MAILBOX_HOST
-        Default to hostmaster
-
 Dependency:
    rcm-certbot-deploy-nginx
 EOF
