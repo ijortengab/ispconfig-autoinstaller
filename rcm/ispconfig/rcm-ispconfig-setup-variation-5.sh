@@ -65,7 +65,7 @@ Options:
    --hostname *
         Hostname of the server.
    --ip-address *
-        Set the IP Address. Use with A record while registered. Tips: Try --ip-address=auto.
+        Set the IP Address. Used to verify A record in DNS. Tips: Try --ip-address=auto.
    --non-interactive ^
         Skip confirmation of --ip-address=auto.
    --timezone
@@ -105,7 +105,6 @@ Environment Variables:
 
 Dependency:
    wget
-   dig
    rcm-debian-12-setup-basic
    rcm-mariadb-autoinstaller
    rcm-nginx-autoinstaller
@@ -426,12 +425,6 @@ rcm-ispconfig-setup-remote-user-root $isfast --root-sure \
 rcm-ispconfig-setup-internal-command $isfast --root-sure \
     && INDENT+="    " \
 rcm-roundcube-setup-ispconfig-integration $isfast --root-sure \
-    && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sure \
-    --project=ispconfig \
-    --subdomain="$SUBDOMAIN_ISPCONFIG" \
-    --domain="$domain" \
-    --php-version="$php_version" \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
