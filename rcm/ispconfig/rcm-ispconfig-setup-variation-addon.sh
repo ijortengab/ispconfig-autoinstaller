@@ -54,6 +54,10 @@ Usage: rcm-ispconfig-setup-variation-addon [options]
 Options:
    --domain *
         Domain name of the server.
+   --ip-address *
+        Set the IP Address. Used to verify A record in DNS. Tips: Try --ip-address=auto.
+   --non-interactive ^
+        Skip confirmation of --ip-address=auto.
 
 Global Options:
    --fast
