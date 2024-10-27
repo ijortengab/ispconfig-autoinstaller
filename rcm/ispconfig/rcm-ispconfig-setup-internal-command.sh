@@ -411,9 +411,20 @@ if (in_array('--version', $argv)) {
 // Run Command.
 $command = $argv[1];
 switch ($command) {
+    case 'mail_domain':
+        $output = shell_exec('id -u ispconfig');
+        $eid = rtrim($output);
+        $user = posix_getpwuid($eid);
+        $home = $user['dir'];
+        chdir($home.'/interface/web');
+        require_once '../lib/config.inc.php';
+        require_once '../lib/app.inc.php';
+        // The variable $app is ready.
+        break;
     case 'login':
     case 'mail_user_add':
     case 'mail_user_get':
+    case 'mail_domain_get_by_domain':
         $path = '/usr/local/share/ispconfig/credential/remote/'.ISPCONFIG_REMOTE_USER_ROOT;
         if (!file_exists($path)) {
             fwrite(STDERR, 'File not found: '.$path.PHP_EOL);
@@ -430,6 +441,13 @@ switch ($command) {
         break;
 }
 switch ($command) {
+    case 'mail_domain':
+        $results = $app->db->queryAllRecords("SELECT domain FROM mail_domain");
+        foreach ($results as $result) {
+            echo $result['domain'].PHP_EOL;
+        }
+        break;
+
     case 'login':
         $client = new SoapClient(null, $options);
         try {
@@ -441,6 +459,31 @@ switch ($command) {
             }
         } catch (SoapFault $e) {
             fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
+            exit(1);
+        }
+        break;
+    case 'mail_domain_get_by_domain':
+        $client = new SoapClient(null, $options);
+        try {
+            if($session_id = $client->login($username, $password)) {
+            }
+            // Copy arguments.
+            $arguments = $argv;
+            array_shift($arguments); // Remove full path of script.
+            array_shift($arguments); // Remove commands.
+            $argument = array_shift($arguments); // Harusnya value dari domain.
+            if (!$argument) {
+                throw new RuntimeException('Argument <email> is required.');
+            }
+            $record_record = $client->mail_domain_get_by_domain($session_id, $argument);
+            print_r($record_record);
+            if($client->logout($session_id)) {
+            }
+        } catch (SoapFault $e) {
+            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
+            exit(1);
+        } catch (Exception $e) {
+            fwrite(STDERR, 'Error: '.$e->getMessage().PHP_EOL);
             exit(1);
         }
         break;
@@ -606,7 +649,7 @@ _ispconfig_php() {
     prev=${COMP_WORDS[COMP_CWORD-1]}
     case ${COMP_CWORD} in
         1)
-            COMPREPLY=($(compgen -W "login mail_user_get mail_user_add" -- ${cur}))
+            COMPREPLY=($(compgen -W "login mail_domain mail_domain_get_by_domain mail_user_get mail_user_add" -- ${cur}))
             ;;
         *)
             command=${COMP_WORDS[1]}
