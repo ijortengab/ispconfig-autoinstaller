@@ -191,14 +191,11 @@ if [ -z "$root_sure" ];then
 fi
 
 if [ -z "$ispconfig_domain_exists_sure" ];then
-    _ ___________________________________________________________________;_.;_.;
-
     INDENT+="    " \
     rcm-ispconfig-control-manage-domain $isfast --root-sure \
         isset \
         --domain="$domain" \
         ; [ $? -eq 0 ] && ispconfig_domain_exists_sure=1
-    _ ___________________________________________________________________;_.;_.;
 
     if [ -n "$ispconfig_domain_exists_sure" ];then
         __; green Domain is exists.; _.
@@ -208,14 +205,11 @@ if [ -z "$ispconfig_domain_exists_sure" ];then
 fi
 
 if [ -z "$digitalocean_domain_exists_sure" ];then
-    _ ___________________________________________________________________;_.;_.;
-
     INDENT+="    " \
     rcm-digitalocean-api-manage-domain $isfast --root-sure \
         --domain="$domain" \
         --ip-address="$ip_address" \
         ; [ ! $? -eq 0 ] && x
-    _ ___________________________________________________________________;_.;_.;
 
     if [ -n "$digitalocean_domain_exists_sure" ];then
         __; green Domain '`'"$domain"'`' found in DNS Digital Ocean.; _.
@@ -234,7 +228,6 @@ EOF
 if [[ $type == spf ]];then
     data="v=spf1 a:${mail_provider} ~all"
     data=$(php -r "$php" "$data" )
-    _ ___________________________________________________________________;_.;_.;
 
     INDENT+="    " \
     rcm-digitalocean-api-manage-domain-record $isfast --root-sure \
@@ -245,12 +238,10 @@ if [[ $type == spf ]];then
         --value="$data" \
         --value-summarize=SPF \
         ; [ ! $? -eq 0 ] && x
-    _ ___________________________________________________________________;_.;_.;
 fi
 if [[ $type == dmarc ]];then
     data="v=DMARC1; p=none; rua=${email}"
     data=$(php -r "$php" "$data" )
-    _ ___________________________________________________________________;_.;_.;
 
     INDENT+="    " \
     rcm-digitalocean-api-manage-domain-record $isfast --root-sure \
@@ -261,18 +252,16 @@ if [[ $type == dmarc ]];then
         --value="$data" \
         --value-summarize=DMARC \
         ; [ ! $? -eq 0 ] && x
-    _ ___________________________________________________________________;_.;_.;
 fi
 if [[ $type == dkim ]];then
     if [ -n "$dns_record_auto" ];then
-        dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain $isfast --root-sure --domain="$domain" get_dns_record)
+        dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain --fast --root-sure --ispconfig-soap-exists-sure --domain="$domain" get_dns_record 2>/dev/null)
     fi
     if [ -z "$dns_record" ];then
         __; red DNS record not found.; x
     fi
     data="v=DKIM1; t=s; p=${dns_record}"
     data=$(php -r "$php" "$data" )
-    _ ___________________________________________________________________;_.;_.;
 
     INDENT+="    " \
     rcm-digitalocean-api-manage-domain-record $isfast --root-sure \
@@ -283,7 +272,6 @@ if [[ $type == dkim ]];then
         --value="$data" \
         --value-summarize=DKIM \
         ; [ ! $? -eq 0 ] && x
-    _ ___________________________________________________________________;_.;_.;
 fi
 
 exit 0

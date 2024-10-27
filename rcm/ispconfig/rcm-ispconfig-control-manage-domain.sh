@@ -9,6 +9,7 @@ while [[ $# -gt 0 ]]; do
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
+        --ispconfig-soap-exists-sure) ispconfig_soap_exists_sure=1; shift ;;
         --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
@@ -289,6 +290,7 @@ if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
 code 'domain="'$domain'"'
+code 'ispconfig_soap_exists_sure="'$ispconfig_soap_exists_sure'"'
 vercomp `stat --version | head -1 | grep -o -E '\S+$'` 8.31
 if [[ $? -lt 2 ]];then
     stat_cached=' --cached=never'
@@ -433,13 +435,15 @@ credentials="$(php -r "echo serialize([
 ]);")"
 ____
 
-chapter Test koneksi SOAP.
-if php -r "$php" login "$options" "$credentials";then
-    __ Login berhasil.
-else
-    error Login gagal; x
+if [ -z "$ispconfig_soap_exists_sure" ];then
+    chapter Test koneksi SOAP.
+    if php -r "$php" login "$options" "$credentials";then
+        __ Login berhasil.
+    else
+        error Login gagal; x
+    fi
+    ____
 fi
-____
 
 chapter Mengecek domain '`'$domain'`' di Module Mail ISPConfig.
 __ Execute SOAP '`'mail_domain_get_by_domain'`'.
@@ -580,6 +584,7 @@ exit 0
 # --version
 # --help
 # --root-sure
+# --ispconfig-soap-exists-sure
 # )
 # VALUE=(
 # --domain
