@@ -540,7 +540,10 @@ ____
 
 chapter Finish
 e If you want to see the credentials again, please execute this command:
-code rcm-ispconfig-setup-dump-variables --domain=$domain
+code rcm-ispconfig-setup-dump-variables${isfast} --domain="$domain" --hostname="$hostname" --ip-address="$ip_address"
+e It is recommended for you to add some DNS Record about Mail Server Configuration, please execute this command:
+code rcm install rcm-ispconfig-post-setup --source ispconfig
+code rcm ispconfig-post-setup${isfast} --domain="$domain"
 ____
 
 exit 0
