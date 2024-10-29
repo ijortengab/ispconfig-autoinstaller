@@ -467,7 +467,7 @@ switch ($mode) {
             $find_existing = str_replace(['__PARAMETER__','__KEY__'],['$config', var_export($key, true)], $find_existing);
             $find_existing = preg_quote($find_existing);
             $find_existing = str_replace('__VALUE__', '.*', $find_existing);
-            $find_existing = '/\s*'.$find_existing.'\s*/';
+            $find_existing = '/\s*'.$find_existing.'/';
             if ($is_one_line && preg_match_all($find_existing, $contents, $matches, PREG_PATTERN_ORDER)) {
                 $contents = str_replace($matches[0], '', $contents);
             }
