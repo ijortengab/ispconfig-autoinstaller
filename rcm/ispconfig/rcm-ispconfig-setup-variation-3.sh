@@ -218,6 +218,16 @@ sleepExtended() {
 title rcm-ispconfig-setup-variation-3
 ____
 
+if [ -z "$root_sure" ];then
+    chapter Mengecek akses root.
+    if [[ "$EUID" -ne 0 ]]; then
+        error This script needs to be run with superuser privileges.; x
+    else
+        __ Privileges.
+    fi
+    ____
+fi
+
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
@@ -291,15 +301,17 @@ if ! grep -q -m 1 -oE '^[0-9]{1,3}(\.[0-9]{1,3}){3}$' <<<  "$ip_address" ;then
 fi
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
+chapter Mengecek ISPConfig User.
+php_fpm_user=ispconfig
+do_install=
+code id -u '"'$php_fpm_user'"'
+if id "$php_fpm_user" >/dev/null 2>&1; then
+    __ User '`'$php_fpm_user'`' found.
+    error Setup terminated. ISPConfig already installed.; x
+else
+    __ User '`'$php_fpm_user'`' not found.;
 fi
+____
 
 chapter Menyimpan DigitalOcean Token sebagai file text.
 if [ -f $HOME/.digitalocean-token.txt ];then
