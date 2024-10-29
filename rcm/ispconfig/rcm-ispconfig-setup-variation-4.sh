@@ -156,6 +156,17 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
+chapter Mengecek ISPConfig User.
+php_fpm_user=ispconfig
+code id -u '"'$php_fpm_user'"'
+if id "$php_fpm_user" >/dev/null 2>&1; then
+    __ User '`'$php_fpm_user'`' found.
+    error Setup terminated. ISPConfig already installed.; x
+else
+    __ User '`'$php_fpm_user'`' not found.;
+fi
+____
+
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { echo -e "\e[91m""Unable to proceed, "'`'"${line}"'`'" command not found." "\e[39m"; exit 1; }
@@ -288,18 +299,6 @@ fi
 code ip_address="$ip_address"
 if ! grep -q -m 1 -oE '^[0-9]{1,3}(\.[0-9]{1,3}){3}$' <<<  "$ip_address" ;then
     error IP Address version 4 format is not valid; x
-fi
-____
-
-chapter Mengecek ISPConfig User.
-php_fpm_user=ispconfig
-do_install=
-code id -u '"'$php_fpm_user'"'
-if id "$php_fpm_user" >/dev/null 2>&1; then
-    __ User '`'$php_fpm_user'`' found.
-    error Setup terminated. ISPConfig already installed.; x
-else
-    __ User '`'$php_fpm_user'`' not found.;
 fi
 ____
 
