@@ -79,6 +79,20 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Title.
+title rcm-ispconfig-post-setup
+____
+
+if [ -z "$root_sure" ];then
+    chapter Mengecek akses root.
+    if [[ "$EUID" -ne 0 ]]; then
+        error This script needs to be run with superuser privileges.; x
+    else
+        __ Privileges.
+    fi
+    ____
+fi
+
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { echo -e "\e[91m""Unable to proceed, "'`'"${line}"'`'" command not found." "\e[39m"; exit 1; }
@@ -255,7 +269,6 @@ remoteUserCredentialIspconfig() {
     ispconfig_remote_user_name=$ISPCONFIG_REMOTE_USER_NAME
     ispconfig_remote_user_password=$ISPCONFIG_REMOTE_USER_PASSWORD
 }
-
 sleepExtended() {
     local countdown=$1
     countdown=$((countdown - 1))
@@ -269,10 +282,6 @@ sleepExtended() {
         fi
     done
 }
-
-# Title.
-title rcm-ispconfig-post-setup
-____
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
@@ -292,16 +301,6 @@ else
     stat_cached=''
 fi
 ____
-
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
 
 chapter DNS TXT Record for SPF in $domain
 

@@ -147,6 +147,20 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Title.
+title rcm-ispconfig-setup-variation-3
+____
+
+if [ -z "$root_sure" ];then
+    chapter Mengecek akses root.
+    if [[ "$EUID" -ne 0 ]]; then
+        error This script needs to be run with superuser privileges.; x
+    else
+        __ Privileges.
+    fi
+    ____
+fi
+
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { echo -e "\e[91m""Unable to proceed, "'`'"${line}"'`'" command not found." "\e[39m"; exit 1; }
@@ -213,20 +227,6 @@ sleepExtended() {
         sleep .9
     done
 }
-
-# Title.
-title rcm-ispconfig-setup-variation-3
-____
-
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
 
 # Require, validate, and populate value.
 chapter Dump variable.

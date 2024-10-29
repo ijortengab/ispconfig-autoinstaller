@@ -98,6 +98,20 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Title.
+title rcm-ispconfig-setup-dump-variables
+____
+
+if [ -z "$root_sure" ];then
+    chapter Mengecek akses root.
+    if [[ "$EUID" -ne 0 ]]; then
+        error This script needs to be run with superuser privileges.; x
+    else
+        __ Privileges.
+    fi
+    ____
+fi
+
 # Functions.
 fileMustExists() {
     # global used:
@@ -170,10 +184,6 @@ websiteCredentialIspconfig() {
     ispconfig_web_user_password=$ISPCONFIG_WEB_USER_PASSWORD
 }
 
-# Title.
-title rcm-ispconfig-setup-dump-variables
-____
-
 # Require, validate, and populate value.
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
@@ -206,16 +216,6 @@ code 'hostname="'$hostname'"'
 fqdn="${hostname}.${domain}"
 code fqdn="$fqdn"
 ____
-
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
 
 chapter PHPMyAdmin: "https://${SUBDOMAIN_PHPMYADMIN}.${domain}"
 db_user=phpmyadmin

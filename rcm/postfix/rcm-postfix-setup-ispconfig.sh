@@ -69,6 +69,20 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Title.
+title rcm-postfix-setup-ispconfig
+____
+
+if [ -z "$root_sure" ];then
+    chapter Mengecek akses root.
+    if [[ "$EUID" -ne 0 ]]; then
+        error This script needs to be run with superuser privileges.; x
+    else
+        __ Privileges.
+    fi
+    ____
+fi
+
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { echo -e "\e[91m""Unable to proceed, "'`'"${line}"'`'" command not found." "\e[39m"; exit 1; }
@@ -292,25 +306,11 @@ postfixConfigEditor() {
     return 1
 }
 
-# Title.
-title rcm-postfix-setup-ispconfig
-____
-
 # Requirement, validate, and populate value.
 chapter Dump variable.
 POSTFIX_CONFIG_FILE=${POSTFIX_CONFIG_FILE:=/etc/postfix/master.cf}
 code 'POSTFIX_CONFIG_FILE="'$POSTFIX_CONFIG_FILE'"'
 ____
-
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
 
 application=
 application+=' postfix-mysql postfix-doc'

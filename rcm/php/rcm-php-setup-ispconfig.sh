@@ -68,6 +68,20 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Title.
+title rcm-php-setup-ispconfig
+____
+
+if [ -z "$root_sure" ];then
+    chapter Mengecek akses root.
+    if [[ "$EUID" -ne 0 ]]; then
+        error This script needs to be run with superuser privileges.; x
+    else
+        __ Privileges.
+    fi
+    ____
+fi
+
 # Functions.
 downloadApplication() {
     local aptnotfound=
@@ -102,10 +116,6 @@ validateApplication() {
     fi
 }
 
-# Title.
-title rcm-php-setup-ispconfig
-____
-
 # Require, validate, and populate value.
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
@@ -114,16 +124,6 @@ chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
 code 'php_version="'$php_version'"'
 ____
-
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
 
 chapter Instalasi PHP Extension.
 downloadApplication php"$php_version"-{common,gd,mysql,imap,cli,fpm,curl,intl,pspell,sqlite3,tidy,xmlrpc,xsl,zip,mbstring,soap,opcache}

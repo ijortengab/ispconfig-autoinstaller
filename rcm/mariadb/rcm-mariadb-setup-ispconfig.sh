@@ -71,23 +71,8 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
-# Dependency.
-while IFS= read -r line; do
-    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { echo -e "\e[91m""Unable to proceed, "'`'"${line}"'`'" command not found." "\e[39m"; exit 1; }
-done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
-
-# Functions.
-
 # Title.
 title rcm-mariadb-setup-ispconfig
-____
-
-# Requirement, validate, and populate value.
-chapter Dump variable.
-MYSQL_ROOT_PASSWD=${MYSQL_ROOT_PASSWD:=$HOME/.mysql-root-passwd.txt}
-code 'MYSQL_ROOT_PASSWD="'$MYSQL_ROOT_PASSWD'"'
-MYSQL_ROOT_PASSWD_INI=${MYSQL_ROOT_PASSWD_INI:=$HOME/.mysql-root-passwd.ini}
-code 'MYSQL_ROOT_PASSWD_INI="'$MYSQL_ROOT_PASSWD_INI'"'
 ____
 
 if [ -z "$root_sure" ];then
@@ -99,6 +84,21 @@ if [ -z "$root_sure" ];then
     fi
     ____
 fi
+
+# Dependency.
+while IFS= read -r line; do
+    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { echo -e "\e[91m""Unable to proceed, "'`'"${line}"'`'" command not found." "\e[39m"; exit 1; }
+done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
+
+# Functions.
+
+# Requirement, validate, and populate value.
+chapter Dump variable.
+MYSQL_ROOT_PASSWD=${MYSQL_ROOT_PASSWD:=$HOME/.mysql-root-passwd.txt}
+code 'MYSQL_ROOT_PASSWD="'$MYSQL_ROOT_PASSWD'"'
+MYSQL_ROOT_PASSWD_INI=${MYSQL_ROOT_PASSWD_INI:=$HOME/.mysql-root-passwd.ini}
+code 'MYSQL_ROOT_PASSWD_INI="'$MYSQL_ROOT_PASSWD_INI'"'
+____
 
 chapter Mengecek konfigurasi MariaDB '`'/etc/mysql/mariadb.conf.d/50-server.cnf'`'.
 if [ -f /etc/mysql/mariadb.conf.d/50-server.cnf ];then

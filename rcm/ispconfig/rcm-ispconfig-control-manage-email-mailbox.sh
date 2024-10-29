@@ -90,6 +90,20 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Title.
+title rcm-ispconfig-control-manage-email-mailbox
+____
+
+if [ -z "$root_sure" ];then
+    chapter Mengecek akses root.
+    if [[ "$EUID" -ne 0 ]]; then
+        error This script needs to be run with superuser privileges.; x
+    else
+        __ Privileges.
+    fi
+    ____
+fi
+
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { echo -e "\e[91m""Unable to proceed, "'`'"${line}"'`'" command not found." "\e[39m"; exit 1; }
@@ -215,10 +229,6 @@ insertEmailIspconfig() {
     return 1
 }
 
-# Title.
-title rcm-ispconfig-control-manage-email-mailbox
-____
-
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
@@ -237,16 +247,6 @@ code 'name="'$name'"'
 code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'
 code 'ispconfig_soap_exists_sure="'$ispconfig_soap_exists_sure'"'
 ____
-
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
 
 if [ -z "$ispconfig_domain_exists_sure" ];then
     INDENT+="    " \
