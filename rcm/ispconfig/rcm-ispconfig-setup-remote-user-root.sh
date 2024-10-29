@@ -43,7 +43,7 @@ printHelp() {
     _ 'Variation '; yellow Internal Command; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-ispconfig-setup-remote-user-root [options]
 
 Global Options:

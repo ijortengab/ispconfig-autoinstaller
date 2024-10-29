@@ -274,7 +274,7 @@ ____
 if [ -n "$ip_address" ];then
     tempfile=$(mktemp -p /dev/shm -t rcm-ispconfig-setup-dump-variables.XXXXXX)
     dig -x $ip_address +short > "$tempfile"
-    output=$(cat "$tempfile" | grep -v ^\; | tail -1)
+    output=$(cat "$tempfile" | grep -v ^\; | head -1)
     rm "$tempfile"
     if [[ ! $output == ${fqdn}. ]];then
         error Attention
