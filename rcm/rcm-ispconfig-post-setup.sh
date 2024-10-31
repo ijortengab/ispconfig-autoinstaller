@@ -302,50 +302,42 @@ else
 fi
 ____
 
-chapter DNS TXT Record for SPF in $domain
-
-e Hostname:
-magenta '@'; _.
-
-e Value:
 current_fqdn=$(hostname -f 2>/dev/null)
 mail_provider="$current_fqdn"
 data="v=spf1 a:${mail_provider} ~all"
 data_spf="$data"
-magenta "$data"; _.
+chapter DNS TXT Record for SPF in $domain
+e ' - 'hostname:
+_ '   'value'   ':' '; magenta "$data"; _.
 ____
 
-chapter DNS TXT Record for DKIM in $domain
-
-e Hostname:
-magenta $DKIM_SELECTOR._domainkey; _.
-
-e Value:
 dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain --fast --root-sure --ispconfig-soap-exists-sure --domain="$domain" get_dns_record 2>/dev/null)
 data="v=DKIM1; t=s; p=${dns_record}"
 data_dkim="$data"
-magenta "$data"; _.
+chapter DNS TXT Record for DKIM in $domain
+_ ' - 'hostname:' '; magenta "${DKIM_SELECTOR}._domainkey"; _.
+_ '   'value'   ':' '; magenta "$data"; _.
 ____
 
-chapter DNS TXT Record for DMARC in $domain
-
-e Hostname:
-magenta _dmarc; _.
-
-e Value:
 email="${MAILBOX_POST}@${domain}"
 data="v=DMARC1; p=none; rua=${email}"
 data_dmarc="$data"
-magenta "$data"; _.
+chapter DNS TXT Record for DMARC in $domain
+email="${MAILBOX_POST}@${domain}"
+_ ' - 'hostname:' '; magenta "_dmarc"; _.
+_ '   'value'   ':' '; magenta "$data"; _.
 ____
 
-chapter Watching
-__ Make sure the DNS Record '(TXT)' about SPF, DKIM, and DMARC is exist.
+chapter Watching Begin
+__ Make sure all DNS Record '(TXT)' about SPF, DKIM, and DMARC is exist.
 finish=
 e Begin: $(date +%Y%m%d-%H%M%S)
 Rcm_BEGIN=$SECONDS
+____
+
 until [ -n "$finish" ];do
     _finish=""
+
     INDENT+="    " \
     rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
         --domain="$domain" \
@@ -374,7 +366,8 @@ until [ -n "$finish" ];do
     ; [ $? -eq 0 ] && _finish+=1
 
     if [[ "$_finish" == 111 ]];then
-        success Finish. ALL of DNS Records already exist '(TXT)'.
+        chapter Watching End
+        success ALL of DNS Records already exist '(TXT)'.
         e End: $(date +%Y%m%d-%H%M%S)
         Rcm_END=$SECONDS
         duration=$(( Rcm_END - Rcm_BEGIN ))
@@ -382,6 +375,7 @@ until [ -n "$finish" ];do
         runtime=`printf "%02d:%02d:%02d" $hours $minutes $seconds`
         _ Duration: $runtime; if [ $duration -gt 60 ];then _, " (${duration} seconds)"; fi; _, '.'; _.
         finish=1
+        ____
     else
         error All of DNS Record of '`'$domain'`' '(TXT) is not exists.'.
         e We are still waiting.
