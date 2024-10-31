@@ -618,22 +618,24 @@ rcm-ispconfig-setup-wrapper-digitalocean $isfast --root-sure --digitalocean-doma
     --dns-record-auto \
     ; [ ! $? -eq 0 ] && x
 
-INDENT+="    " \
-rcm-ispconfig-setup-dump-variables $isfast --root-sure \
-    --domain="$domain" \
-    --hostname="$hostname" \
-    --ip-address="$ip_address" \
-    ; [ ! $? -eq 0 ] && x
-
 chapter Send Welcome email.
 code postqueue -f
-sleepExtended 3
 postqueue -f
 ____
 
+chapter Take a break.
+e Everything is OK, "let's" dump variables.
+sleepExtended 3
+____
+
+INDENT+="    " \
+rcm-ispconfig-setup-dump-variables $isfast --root-sure \
+    --additional-info=digitalocean \
+    --domain="$domain" \
+    --ip-address="$ip_address" \
+    ; [ ! $? -eq 0 ] && x
+
 chapter Finish
-e If you want to see the credentials again, please execute this command:
-code rcm-ispconfig-setup-dump-variables --domain=$domain
 ____
 
 exit 0
