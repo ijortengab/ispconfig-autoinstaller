@@ -49,8 +49,11 @@ command="$1"; shift
 if [ -n "$command" ];then
     case "$command" in
         eligible) ;;
-        # Bring back command as argument position.
-        *) set -- "$command" "$@"
+        *)
+            # Bring back command as argument position.
+            set -- "$command" "$@"
+            # Reset command.
+            command=
     esac
 fi
 
@@ -104,25 +107,6 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
-# Title.
-title rcm-ispconfig
-____
-
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
-
-# Dependency.
-while IFS= read -r line; do
-    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
-done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
-
 # Functions.
 eligible() {
     # chapter Available:
@@ -151,10 +135,29 @@ eligible() {
 }
 
 # Execute command.
-if [[ $command == eligible ]];then
-    eligible
+if [[ -n "$command" && $(type -t "$command") == function ]];then
+    "$command"
     exit 0
 fi
+
+# Title.
+title rcm-ispconfig
+____
+
+if [ -z "$root_sure" ];then
+    chapter Mengecek akses root.
+    if [[ "$EUID" -ne 0 ]]; then
+        error This script needs to be run with superuser privileges.; x
+    else
+        __ Privileges.
+    fi
+    ____
+fi
+
+# Dependency.
+while IFS= read -r line; do
+    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
+done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Require, validate, and populate value.
 chapter Dump variable.
