@@ -6,11 +6,11 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --additional-info=*) additional_info="${1#*=}"; shift ;;
+        --additional-info) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then additional_info="$2"; shift; fi; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
-        --hostname=*) hostname="${1#*=}"; shift ;;
-        --hostname) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then hostname="$2"; shift; fi; shift ;;
         --ip-address=*) ip_address="${1#*=}"; shift ;;
         --ip-address) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then ip_address="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
@@ -55,8 +55,6 @@ Usage: rcm-ispconfig-setup-dump-variables [options]
 Options:
    --domain *
         Set the domain to setup.
-   --hostname
-        Set the hostname.
    --ip-address
         Set the IP Address.
 
@@ -81,16 +79,14 @@ Environment Variables:
         Default to admin
    MAILBOX_SUPPORT
         Default to support
-   MAILBOX_WEB
-        Default to webmaster
-   MAILBOX_HOST
-        Default to hostmaster
    MAILBOX_POST
         Default to postmaster
    MARIADB_PREFIX_MASTER
         Default to /usr/local/share/mariadb
    MARIADB_USERS_CONTAINER_MASTER
         Default to users
+   DKIM_SELECTOR
+        Default to default
 EOF
 }
 
@@ -197,24 +193,22 @@ MAILBOX_ADMIN=${MAILBOX_ADMIN:=admin}
 code 'MAILBOX_ADMIN="'$MAILBOX_ADMIN'"'
 MAILBOX_SUPPORT=${MAILBOX_SUPPORT:=support}
 code 'MAILBOX_SUPPORT="'$MAILBOX_SUPPORT'"'
-MAILBOX_WEB=${MAILBOX_WEB:=webmaster}
-code 'MAILBOX_WEB="'$MAILBOX_WEB'"'
-MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
-code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
 MAILBOX_POST=${MAILBOX_POST:=postmaster}
 code 'MAILBOX_POST="'$MAILBOX_POST'"'
 MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
 MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
+DKIM_SELECTOR=${DKIM_SELECTOR:=default}
+code 'DKIM_SELECTOR="'$DKIM_SELECTOR'"'
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
 code 'domain="'$domain'"'
 code 'ip_address="'$ip_address'"'
-code 'hostname="'$hostname'"'
-fqdn="${hostname}.${domain}"
-code fqdn="$fqdn"
+current_fqdn=$(hostname -f 2>/dev/null)
+code current_fqdn="$current_fqdn"
+code additional_info="$additional_info"
 ____
 
 chapter PHPMyAdmin: "https://${SUBDOMAIN_PHPMYADMIN}.${domain}"
@@ -258,17 +252,22 @@ e ' - 'username: admin
 e '   'password: $ispconfig_web_user_password
 ____
 
-chapter Manual Action
-e Command to create a new mailbox. Example:
-__; magenta ispconfig.php mail_user_add --email=support@${domain} --password=$(pwgen -1 12); _.
-e Command to implement '`'ispconfig.php'`' command autocompletion immediately:
-__; magenta source /etc/profile.d/ispconfig-php-completion.sh; _.
-e Command to check PTR Record:
-if [ -n "$ip_address" ];then
-    __; magenta dig -x "$ip_address" +short; _.
-else
-    __; magenta dig -x "\$ip_address" +short; _.
-fi
+chapter DNS TXT Record for SPF in $domain
+mail_provider="$current_fqdn"
+e ' - 'hostname:
+_ '   'value'   ':' '; magenta "v=spf1 a:${mail_provider} ~all"; _.
+____
+
+chapter DNS TXT Record for DKIM in $domain
+dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain --fast --root-sure --ispconfig-soap-exists-sure --domain="$domain" get_dns_record 2>/dev/null)
+_ ' - 'hostname:' '; magenta "${DKIM_SELECTOR}._domainkey"; _.
+_ '   'value'   ':' '; magenta "v=DKIM1; t=s; p=${dns_record}"; _.
+____
+
+chapter DNS TXT Record for DMARC in $domain
+email="${MAILBOX_POST}@${domain}"
+_ ' - 'hostname:' '; magenta "_dmarc"; _.
+_ '   'value'   ':' '; magenta "v=DMARC1; p=none; rua=${email}"; _.
 ____
 
 if [ -n "$ip_address" ];then
@@ -276,19 +275,38 @@ if [ -n "$ip_address" ];then
     dig -x $ip_address +short > "$tempfile"
     output=$(cat "$tempfile" | grep -v ^\; | head -1)
     rm "$tempfile"
-    if [[ ! $output == ${fqdn}. ]];then
+    if [[ ! "$output" == "${current_fqdn}." ]];then
         error Attention
         e Your PTR Record is different with your variable of FQDN.
-        __; magenta fqdn="$fqdn"; _.
-        __; magenta dig -x $ip_address +short' # '$output; _.
-        e "But it doesn't matter if ${domain} is addon domain."
-        ____
-
-        chapter Suggestion.
-        e If you user of DigitalOcean, change your droplet name with FQDN.
-        e More info: https://www.digitalocean.com/community/questions/how-do-i-setup-a-ptr-record
+        _ ' - 'FQDN:' '; magenta "$current_fqdn"; _.
+        _ '   'PTR :' '; magenta "$output"; _.
         ____
     fi
+fi
+
+chapter Manual Action
+e Command to create a new mailbox. Example:
+__; magenta ispconfig.php mail_user_add --email=support@${domain} --password=$(pwgen -1 12); _.
+e Command to implement '`'ispconfig.php'`' command autocompletion immediately:
+__; magenta source /etc/profile.d/ispconfig-php-completion.sh; _.
+if [ -n "$ip_address" ];then
+    e Command to check PTR Record:
+    __; magenta dig -x "$ip_address" +short; _.
+fi
+e If you want to see the credentials again, please execute this command:
+[[ -n "$ip_address" ]] && is_ip_address=' --ip-address='"$ip_address" || is_ip_address=
+__; magenta rcm-ispconfig-setup-dump-variables${isfast} --domain="$domain" --hostname="$hostname"${is_ip_address}; _.
+e It is recommended for you to make sure DNS TXT Record about Mail Server '('SPF, DKIM, DMARC')' has exists,
+e '    'please execute this command:
+__; magenta rcm install ispconfig-post-setup --source ispconfig; _.
+__; magenta rcm ispconfig-post-setup${isfast} -- --domain="$domain"; _.
+____
+
+if [[ "$additional_info" == digitalocean ]];then
+    chapter Suggestion.
+    e If you user of DigitalOcean, change your droplet name with FQDN to automatically set as PTR Record.
+    e More info: https://www.digitalocean.com/community/questions/how-do-i-setup-a-ptr-record
+    ____
 fi
 
 exit 0
@@ -308,9 +326,9 @@ exit 0
 # --root-sure
 # )
 # VALUE=(
-# --hostname
 # --domain
 # --ip-address
+# --additional-info
 # )
 # MULTIVALUE=(
 # )
