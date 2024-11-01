@@ -67,7 +67,7 @@ Options:
    --hostname *
         Hostname of the server.
    --ip-address *
-        Set the IP Address. Use with A record while registered. Tips: Try --ip-address=auto.
+        Set the IP Address. Use with A record while registered. Available value: auto, or other.
    --digitalocean-token *
         Token access from digitalocean.com to consume DigitalOcean API.
    --non-interactive ^

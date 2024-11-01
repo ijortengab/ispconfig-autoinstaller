@@ -55,7 +55,7 @@ Options:
    --domain *
         Domain name of the server.
    --ip-address *
-        Set the IP Address. Used to verify A record in DNS. Tips: Try --ip-address=auto.
+        Set the IP Address. Used to verify A record in DNS. Available value: auto, or other.
    --non-interactive ^
         Skip confirmation of --ip-address=auto.
 
