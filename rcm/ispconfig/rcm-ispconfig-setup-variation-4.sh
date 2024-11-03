@@ -118,7 +118,6 @@ Dependency:
    rcm-roundcube-setup-ispconfig-integration:`printVersion`
    rcm-amavis-setup-ispconfig:`printVersion`
    rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:`printVersion`
-   rcm-ispconfig-wrapper-certbot-deploy-nginx:`printVersion`
    rcm-ispconfig-control-manage-domain:`printVersion`
    rcm-ispconfig-control-manage-email-mailbox:`printVersion`
    rcm-ispconfig-control-manage-email-alias:`printVersion`
@@ -130,7 +129,6 @@ Download:
    [rcm-ispconfig-setup-internal-command](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-internal-command.sh)
    [rcm-roundcube-setup-ispconfig-integration](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/roundcube/rcm-roundcube-setup-ispconfig-integration.sh)
    [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php.sh)
-   [rcm-ispconfig-wrapper-certbot-deploy-nginx](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-wrapper-certbot-deploy-nginx.sh)
    [rcm-ispconfig-control-manage-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-domain.sh)
    [rcm-ispconfig-control-manage-email-mailbox](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-email-mailbox.sh)
    [rcm-ispconfig-control-manage-email-alias](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-email-alias.sh)
@@ -482,8 +480,28 @@ rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sur
     --subdomain="${SUBDOMAIN_PHPMYADMIN}.${domain}" \
     --domain="localhost" \
     --php-version="$php_version" \
-    && INDENT+="    " \
-rcm-ispconfig-wrapper-certbot-deploy-nginx $isfast --root-sure \
+    ; [ ! $? -eq 0 ] && x
+
+chapter Mengecek '$PATH'.
+code PATH="$PATH"
+if grep -q '/snap/bin' <<< "$PATH";then
+  __ '$PATH' sudah lengkap.
+else
+  __ '$PATH' belum lengkap.
+  __ Memperbaiki '$PATH'
+  PATH=/snap/bin:$PATH
+    if grep -q '/snap/bin' <<< "$PATH";then
+        __; green '$PATH' sudah lengkap.; _.
+        __; magenta PATH="$PATH"; _.
+    else
+        __; red '$PATH' belum lengkap.; x
+    fi
+fi
+____
+
+INDENT+="    " \
+PATH=$PATH \
+rcm-certbot-deploy-nginx $isfast --root-sure \
     --domain="${SUBDOMAIN_ISPCONFIG}.${domain}" \
     --domain="${SUBDOMAIN_PHPMYADMIN}.${domain}" \
     --domain="${SUBDOMAIN_ROUNDCUBE}.${domain}" \

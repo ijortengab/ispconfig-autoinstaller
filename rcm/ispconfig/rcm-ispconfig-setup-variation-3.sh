@@ -555,8 +555,27 @@ rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sur
     --subdomain="${SUBDOMAIN_PHPMYADMIN}.${domain}" \
     --domain="localhost" \
     --php-version="$php_version" \
-    && INDENT+="    " \
-PATH=/snap/bin:$PATH \
+    ; [ ! $? -eq 0 ] && x
+
+chapter Mengecek '$PATH'.
+code PATH="$PATH"
+if grep -q '/snap/bin' <<< "$PATH";then
+  __ '$PATH' sudah lengkap.
+else
+  __ '$PATH' belum lengkap.
+  __ Memperbaiki '$PATH'
+  PATH=/snap/bin:$PATH
+    if grep -q '/snap/bin' <<< "$PATH";then
+        __; green '$PATH' sudah lengkap.; _.
+        __; magenta PATH="$PATH"; _.
+    else
+        __; red '$PATH' belum lengkap.; x
+    fi
+fi
+____
+
+INDENT+="    " \
+PATH=$PATH \
 rcm-certbot-deploy-installer-nginx-authenticator-digitalocean $isfast --root-sure \
     --certbot-dns-digitalocean-sure \
     --domain="${SUBDOMAIN_ISPCONFIG}.${domain}" \
