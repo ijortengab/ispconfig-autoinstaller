@@ -110,6 +110,25 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
+isFileExists() {
+    # global used:
+    # global modified: found, notfound
+    # function used: __
+    if [[ -f "$1" && ! -s "$1" ]];then
+        __ Empty file detected.
+        __; magenta rm "$1"; _.
+        rm "$1"
+    fi
+    found=
+    notfound=
+    if [ -f "$1" ];then
+        __ File '`'$(basename "$1")'`' ditemukan.
+        found=1
+    else
+        __ File '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
+    fi
+}
 remoteUserCredentialIspconfig() {
     local ISPCONFIG_REMOTE_USER_PASSWORD ISPCONFIG_REMOTE_USER_NAME
     local user="$1"
