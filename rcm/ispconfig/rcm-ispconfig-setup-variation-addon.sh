@@ -255,6 +255,10 @@ if [ -z "$ip_address" ];then
     error "Argument --ip-address required."; x
 fi
 code ip_address="$ip_address"
+if ! grep -q -m 1 -oE '^[0-9]{1,3}(\.[0-9]{1,3}){3}$' <<<  "$ip_address" ;then
+    error IP Address version 4 format is not valid; x
+fi
+code non_interactive="$non_interactive"
 ____
 
 chapter Mengecek ISPConfig User.
@@ -443,6 +447,11 @@ rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-
     --destination-domain="$domain" \
     ; [ ! $? -eq 0 ] && x
 
+chapter Send Welcome email.
+code postqueue -f
+postqueue -f
+____
+
 chapter Take a break.
 e Everything is OK, "let's" dump variables.
 sleepExtended 3
@@ -454,18 +463,7 @@ rcm-ispconfig-setup-dump-variables $isfast --root-sure \
     --ip-address="$ip_address" \
     ; [ ! $? -eq 0 ] && x
 
-chapter Send Welcome email.
-code postqueue -f
-sleepExtended 3
-postqueue -f
-____
-
 chapter Finish
-e If you want to see the credentials again, please execute this command:
-code rcm-ispconfig-setup-dump-variables${isfast} --domain="$domain" --ip-address="$ip_address"
-e It is recommended for you to add some DNS Record about Mail Server Configuration, please execute this command:
-code rcm install ispconfig-post-setup --source ispconfig
-code rcm ispconfig-post-setup${isfast} -- --domain="$domain"
 ____
 
 exit 0
