@@ -8,13 +8,13 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --fast) fast=1; shift ;;
         --function=*) function+=("${1#*=}"); shift ;;
-        --function) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then function+=("$2"); shift; fi; shift ;;
+        --function) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then function+=("$2"); shift; fi; shift ;;
         --ispconfig-sure) ispconfig_sure=1; shift ;;
         --password=*) password="${1#*=}"; shift ;;
-        --password) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then password="$2"; shift; fi; shift ;;
+        --password) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then password="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
         --username=*) username="${1#*=}"; shift ;;
-        --username) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then username="$2"; shift; fi; shift ;;
+        --username) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then username="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac

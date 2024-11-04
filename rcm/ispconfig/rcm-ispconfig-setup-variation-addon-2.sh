@@ -7,12 +7,12 @@ while [[ $# -gt 0 ]]; do
         --help) help=1; shift ;;
         --version) version=1; shift ;;
         --digitalocean-token=*) digitalocean_token="${1#*=}"; shift ;;
-        --digitalocean-token) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then digitalocean_token="$2"; shift; fi; shift ;;
+        --digitalocean-token) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then digitalocean_token="$2"; shift; fi; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
-        --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
+        --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --ip-address=*) ip_address="${1#*=}"; shift ;;
-        --ip-address) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then ip_address="$2"; shift; fi; shift ;;
+        --ip-address) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then ip_address="$2"; shift; fi; shift ;;
         --non-interactive) non_interactive=1; shift ;;
         --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;

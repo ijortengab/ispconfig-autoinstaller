@@ -7,21 +7,21 @@ while [[ $# -gt 0 ]]; do
         --help) help=1; shift ;;
         --version) version=1; shift ;;
         --certbot-authenticator=*) certbot_authenticator="${1#*=}"; shift ;;
-        --certbot-authenticator) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then certbot_authenticator="$2"; shift; fi; shift ;;
+        --certbot-authenticator) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then certbot_authenticator="$2"; shift; fi; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
-        --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
+        --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --hostname=*) hostname="${1#*=}"; shift ;;
-        --hostname) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then hostname="$2"; shift; fi; shift ;;
+        --hostname) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then hostname="$2"; shift; fi; shift ;;
         --ispconfig-version=*) ispconfig_version="${1#*=}"; shift ;;
-        --ispconfig-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then ispconfig_version="$2"; shift; fi; shift ;;
+        --ispconfig-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then ispconfig_version="$2"; shift; fi; shift ;;
         --php-version=*) php_version="${1#*=}"; shift ;;
-        --php-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_version="$2"; shift; fi; shift ;;
+        --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
         --phpmyadmin-version=*) phpmyadmin_version="${1#*=}"; shift ;;
-        --phpmyadmin-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then phpmyadmin_version="$2"; shift; fi; shift ;;
+        --phpmyadmin-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then phpmyadmin_version="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
         --roundcube-version=*) roundcube_version="${1#*=}"; shift ;;
-        --roundcube-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then roundcube_version="$2"; shift; fi; shift ;;
+        --roundcube-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then roundcube_version="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac

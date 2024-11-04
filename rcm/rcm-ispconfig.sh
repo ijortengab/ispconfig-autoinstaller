@@ -10,11 +10,11 @@ while [[ $# -gt 0 ]]; do
         --digitalocean) digitalocean=1; shift ;;
         --fast) fast=1; shift ;;
         --mode=*) mode="${1#*=}"; shift ;;
-        --mode) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then mode="$2"; shift; fi; shift ;;
+        --mode) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mode="$2"; shift; fi; shift ;;
         --non-interactive) non_interactive=1; shift ;;
         --root-sure) root_sure=1; shift ;;
         --variation=*) variation="${1#*=}"; shift ;;
-        --variation) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then variation="$2"; shift; fi; shift ;;
+        --variation) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then variation="$2"; shift; fi; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
         --)
             while [[ $# -gt 0 ]]; do

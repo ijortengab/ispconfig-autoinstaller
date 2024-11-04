@@ -7,12 +7,12 @@ while [[ $# -gt 0 ]]; do
         --help) help=1; shift ;;
         --version) version=1; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
-        --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
+        --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --ispconfig-domain-exists-sure) ispconfig_domain_exists_sure=1; shift ;;
         --ispconfig-soap-exists-sure) ispconfig_soap_exists_sure=1; shift ;;
         --name=*) name="${1#*=}"; shift ;;
-        --name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then name="$2"; shift; fi; shift ;;
+        --name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then name="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
