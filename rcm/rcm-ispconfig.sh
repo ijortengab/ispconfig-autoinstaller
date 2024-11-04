@@ -96,7 +96,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.9.4'
+    echo '0.9.3'
 }
 printHelp() {
     title ISPConfig Auto-Installer
@@ -214,17 +214,17 @@ mode-available() {
     mode_available=()
     php_fpm_user=ispconfig
     if id "$php_fpm_user" >/dev/null 2>&1; then
-        mode_available+=(2)
+        mode_available+=(addon)
     else
-        mode_available+=(1)
+        mode_available+=(setup)
     fi
     _; _.
-    if ArraySearch 1 mode_available[@] ]];then color=green; else color=red; fi
-    __; _, 'Mode '; $color 1; _, . Install ISPConfig + LEMP Stack Setup. ; _.;
-    __; _, '        '; _, LEMP Stack '('Linux, Nginx, MySQL, PHP')'.; _.;
-    if ArraySearch 2 mode_available[@] ]];then color=green; else color=red; fi
-    __; _, 'Mode '; $color 2; _, . Add on Domain. ; _.;
-    for each in 1 2; do
+    if ArraySearch setup mode_available[@] ]];then color=green; else color=red; fi
+    __; _, 'Mode '; $color 1; _, ': '; _, setup; _, . Install ISPConfig + LEMP Stack Setup. ; _.;
+    __; _, '               '; _, LEMP Stack '('Linux, Nginx, MySQL, PHP')'.; _.;
+    if ArraySearch addon mode_available[@] ]];then color=green; else color=red; fi
+    __; _, 'Mode '; $color 2; _, ': '; _, addon; _, . Add on Domain. ; _.;
+    for each in setup addon; do
         if ArraySearch $each mode_available[@] ]];then echo $each; fi
     done
 }
@@ -266,7 +266,7 @@ delay=.5; [ -n "$fast" ] && unset delay
 } || isverbose=
 if [ -n "$mode" ];then
     case "$mode" in
-        1|2) ;;
+        setup|addon) ;;
         *) error "Argument --mode not valid."; x ;;
     esac
 fi
@@ -285,7 +285,7 @@ code 'variation="'$variation'"'
 ____
 
 case "$mode" in
-    1)
+    setup)
         if [ -n "$digitalocean" ];then
             case "$variation" in
                 1|2|3)
@@ -302,7 +302,7 @@ case "$mode" in
             esac
         fi
         ;;
-    2)
+    addon)
         if [ -n "$digitalocean" ];then
             rcm_operand=ispconfig-setup-variation-addon-2
         else
