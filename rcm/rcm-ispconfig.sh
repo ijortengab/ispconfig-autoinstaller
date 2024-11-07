@@ -171,7 +171,7 @@ eligible() {
         . /etc/os-release
     fi
     case "$mode" in
-        1)
+        setup)
         _; _.
             case "$is_digitalocean" in
                 1)
@@ -195,7 +195,7 @@ eligible() {
                     ;;
             esac
             ;;
-        2)
+        addon)
             ;;
     esac
     for each in "${eligible[@]}";do
@@ -220,10 +220,10 @@ mode-available() {
     fi
     _; _.
     if ArraySearch setup mode_available[@] ]];then color=green; else color=red; fi
-    __; _, 'Mode '; $color 1; _, ': '; _, setup; _, . Install ISPConfig + LEMP Stack Setup. ; _.;
-    __; _, '               '; _, LEMP Stack '('Linux, Nginx, MySQL, PHP')'.; _.;
+    __; _, 'Mode '; $color setup; _, .; _, ' 'Install ISPConfig + LEMP Stack Setup. ; _.;
+    __; _, '            '; _, LEMP Stack '('Linux, Nginx, MySQL, PHP')'.; _.;
     if ArraySearch addon mode_available[@] ]];then color=green; else color=red; fi
-    __; _, 'Mode '; $color 2; _, ': '; _, addon; _, . Add on Domain. ; _.;
+    __; _, 'Mode '; $color addon; _, .; _, ' 'Add on Domain. ; _.;
     for each in setup addon; do
         if ArraySearch $each mode_available[@] ]];then echo $each; fi
     done
