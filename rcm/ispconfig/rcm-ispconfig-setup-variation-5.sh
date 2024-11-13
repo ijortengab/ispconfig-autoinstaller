@@ -6,6 +6,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --bypass-validation-is-installed) bypass_validation_is_installed=1; shift ;;
         --fast) fast=1; shift ;;
         --fqdn=*) fqdn="${1#*=}"; shift ;;
         --fqdn) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fqdn="$2"; shift; fi; shift ;;
@@ -128,6 +129,8 @@ Global Options:
         Show this help.
    --root-sure
         Bypass root checking.
+   --bypass-validation-is-installed
+        Bypass ISPConfig installed validation.
 
 Environment Variables:
    SUBDOMAIN_ISPCONFIG
@@ -163,6 +166,7 @@ Dependency:
    rcm-ispconfig-setup-internal-command:`printVersion`
    rcm-roundcube-setup-ispconfig-integration:`printVersion`
    rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:`printVersion`
+   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root:`printVersion`
    rcm-ispconfig-control-manage-domain:`printVersion`
    rcm-ispconfig-control-manage-email-mailbox:`printVersion`
    rcm-ispconfig-control-manage-email-alias:`printVersion`
@@ -174,7 +178,7 @@ Download:
    [rcm-ispconfig-setup-internal-command](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-internal-command.sh)
    [rcm-roundcube-setup-ispconfig-integration](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/roundcube/rcm-roundcube-setup-ispconfig-integration.sh)
    [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php.sh)
-   [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-mulitple-root](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-mulitple-root.sh)
+   [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root.sh)
    [rcm-ispconfig-control-manage-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-domain.sh)
    [rcm-ispconfig-control-manage-email-mailbox](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-email-mailbox.sh)
    [rcm-ispconfig-control-manage-email-alias](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-email-alias.sh)
@@ -325,16 +329,18 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-chapter Mengecek ISPConfig User.
-php_fpm_user=ispconfig
-code id -u '"'$php_fpm_user'"'
-if id "$php_fpm_user" >/dev/null 2>&1; then
-    __ User '`'$php_fpm_user'`' found.
-    error Setup terminated. ISPConfig already installed.; x
-else
-    __ User '`'$php_fpm_user'`' not found.;
+if [ -z "$bypass_validation_is_installed" ];then
+    chapter Mengecek ISPConfig User.
+    php_fpm_user=ispconfig
+    code id -u '"'$php_fpm_user'"'
+    if id "$php_fpm_user" >/dev/null 2>&1; then
+        __ User '`'$php_fpm_user'`' found.
+        error Setup terminated. ISPConfig already installed.; x
+    else
+        __ User '`'$php_fpm_user'`' not found.;
+    fi
+    ____
 fi
-____
 
 # Dependency.
 while IFS= read -r line; do
@@ -684,7 +690,7 @@ for each in ispconfig phpmyadmin roundcube;do
 
         if ArraySearch "$url_host" fqdn_path_array[@];then
             INDENT+="    " \
-            rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-mulitple-root $isfast --root-sure \
+            rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root $isfast --root-sure \
                 --project="$each" \
                 --php-version="$php_version" \
                 --url-scheme="$url_scheme" \
@@ -781,6 +787,7 @@ exit 0
 # --version
 # --help
 # --root-sure
+# --bypass-validation-is-installed
 # )
 # VALUE=(
 # --timezone
