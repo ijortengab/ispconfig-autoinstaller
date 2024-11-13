@@ -6,16 +6,18 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --domain=*) domain="${1#*=}"; shift ;;
-        --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --php-version=*) php_version="${1#*=}"; shift ;;
         --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
         --project=*) project="${1#*=}"; shift ;;
         --project) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then project="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
-        --subdomain=*) subdomain="${1#*=}"; shift ;;
-        --subdomain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then subdomain="$2"; shift; fi; shift ;;
+        --url-host=*) url_host="${1#*=}"; shift ;;
+        --url-host) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_host="$2"; shift; fi; shift ;;
+        --url-port=*) url_port="${1#*=}"; shift ;;
+        --url-port) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_port="$2"; shift; fi; shift ;;
+        --url-scheme=*) url_scheme="${1#*=}"; shift ;;
+        --url-scheme) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_scheme="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -154,18 +156,19 @@ until [[ -n "$project" ]];do
         *) project=
     esac
 done
+if [ -z "$url_scheme" ];then
+    error "Argument --url-scheme required."; x
+fi
+if [ -z "$url_host" ];then
+    error "Argument --url-host required."; x
+fi
+if [ -z "$url_port" ];then
+    error "Argument --url-port required."; x
+fi
 code 'project="'$project'"'
-code 'subdomain="'$subdomain'"'
-if [ -z "$domain" ];then
-    error "Argument --domain required."; x
-fi
-code 'domain="'$domain'"'
-if [ -n "$subdomain" ];then
-    fqdn_project="${subdomain}.${domain}"
-else
-    fqdn_project="${domain}"
-fi
-code 'fqdn_project="'$fqdn_project'"'
+code 'url_scheme="'$url_scheme'"'
+code 'url_host="'$url_host'"'
+code 'url_port="'$url_port'"'
 code 'php_version="'$php_version'"'
 ____
 
@@ -219,10 +222,12 @@ if [ -z "$socket_filename" ];then
 fi
 code 'socket_filename="'$socket_filename'"'
 code root="$root"
-filename="$fqdn_project"
+if [[ "$url_port" == 80 || "$url_port" == 443 ]];then
+    filename="$url_host"
+else
+    filename="${url_host}.${url_port}"
+fi
 code filename="$filename"
-server_name="$fqdn_project"
-code server_name="$server_name"
 ____
 
 INDENT+="    " \
@@ -231,14 +236,22 @@ rcm-nginx-virtual-host-autocreate-php $isfast --root-sure \
     --fastcgi-pass="unix:${socket_filename}" \
     --filename="$filename" \
     --server-name="$server_name" \
+    --url-host="$url_host" \
+    --url-scheme="$url_scheme" \
+    --url-port="$url_port" \
     ; [ ! $? -eq 0 ] && x
 
 chapter Mengecek HTTP Response Code.
-code curl http://127.0.0.1 -H '"'Host: ${fqdn_project}'"'
-code=$(curl -L \
+if [ "$url_scheme" == https ];then
+    _k=' -k'
+else
+    _k=''
+fi
+code curl${_k} -L ${url_scheme}://127.0.0.1:${url_port}${url_path} -H '"'Host: ${url_host}'"'
+code=$(curl${_k} -L \
     -o /dev/null -s -w "%{http_code}\n" \
-    http://127.0.0.1 -H "Host: ${fqdn_project}")
-[[ $code =~ ^[2,3] ]] && {
+    ${url_scheme}://127.0.0.1:${url_port}${url_path} -H "Host: ${url_host}")
+[[ $code =~ ^2 ]] && {
     __ HTTP Response code '`'$code'`' '('Required')'.
 } || {
     __; red Terjadi kesalahan. HTTP Response code '`'$code'`'.; x
@@ -262,10 +275,11 @@ exit 0
 # --root-sure
 # )
 # VALUE=(
-# --domain
-# --subdomain
 # --project
 # --php-version
+# --url-scheme
+# --url-host
+# --url-port
 # )
 # FLAG_VALUE=(
 # )
