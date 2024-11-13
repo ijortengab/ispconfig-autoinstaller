@@ -234,56 +234,56 @@ if [ -z "$certbot_authenticator" ];then
     x
 fi
 code 'certbot_authenticator="'$certbot_authenticator'"'
-certificate_name="$domain"
-code 'certificate_name="'$certificate_name'"'
+certbot_certificate_name="$domain"
+code 'certbot_certificate_name="'$certbot_certificate_name'"'
 ____
 
-chapter Mengecek '$PATH'.
-code PATH="$PATH"
-notfound=
-if grep -q '/snap/bin' <<< "$PATH";then
-  __ '$PATH' sudah lengkap.
-else
-  __ '$PATH' belum lengkap.
-  notfound=1
-fi
+path="/etc/letsencrypt/live/${certbot_certificate_name}"
+chapter Mengecek direktori certbot '`'$path'`'.
+isDirExists "$path"
 ____
 
-if [[ -n "$notfound" ]];then
-    chapter Memperbaiki '$PATH'
-    PATH=/snap/bin:$PATH
+if [ -n "$notfound" ];then
+    chapter Mengecek '$PATH'.
+    code PATH="$PATH"
     if grep -q '/snap/bin' <<< "$PATH";then
-      __; green '$PATH' sudah lengkap.; _.
-      __; magenta PATH="$PATH"; _.
-
+        __ '$PATH' sudah lengkap.
     else
-      __; red '$PATH' belum lengkap.; x
+        __ '$PATH' belum lengkap.
+        __ Memperbaiki '$PATH'
+        PATH=/snap/bin:$PATH
+        if grep -q '/snap/bin' <<< "$PATH";then
+            __; green '$PATH' sudah lengkap.; _.
+            __; magenta PATH="$PATH"; _.
+        else
+            __; red '$PATH' belum lengkap.; x
+        fi
     fi
     ____
-fi
 
-if [[ "$certbot_authenticator" == 'digitalocean' ]]; then
-    INDENT+="    " \
-    PATH=$PATH \
-    rcm-certbot-obtain-authenticator-digitalocean $isfast --root-sure \
-        --certbot-dns-digitalocean-sure \
-        --domain="$domain" \
-        ; [ ! $? -eq 0 ] && x
-    # @todo, cek harusnya parent sudah validate certbot-dns-digitalocean
-    # sehingga bisa kita kasih option --certbot-dns-digitalocean-sure
-elif [[ "$certbot_authenticator" == 'nginx' ]]; then
-    INDENT+="    " \
-    PATH=$PATH \
-    rcm-certbot-obtain-authenticator-nginx $isfast --root-sure \
-        --domain="$domain" \
-        ; [ ! $? -eq 0 ] && x
+    if [[ "$certbot_authenticator" == 'digitalocean' ]]; then
+        INDENT+="    " \
+        PATH=$PATH \
+        rcm-certbot-obtain-authenticator-digitalocean $isfast --root-sure \
+            --certbot-dns-digitalocean-sure \
+            --domain="$domain" \
+            ; [ ! $? -eq 0 ] && x
+        # @todo, cek harusnya parent sudah validate certbot-dns-digitalocean
+        # sehingga bisa kita kasih option --certbot-dns-digitalocean-sure
+    elif [[ "$certbot_authenticator" == 'nginx' ]]; then
+        INDENT+="    " \
+        PATH=$PATH \
+        rcm-certbot-obtain-authenticator-nginx $isfast --root-sure \
+            --domain="$domain" \
+            ; [ ! $? -eq 0 ] && x
+    fi
 fi
 
 restart=
-link_symbolic "/etc/letsencrypt/live/${certificate_name}/fullchain.pem" \
+link_symbolic "/etc/letsencrypt/live/${certbot_certificate_name}/fullchain.pem" \
     /etc/postfix/smtpd.cert
 [ -n "$_success" ] && restart=1
-link_symbolic "/etc/letsencrypt/live/${certificate_name}/privkey.pem" \
+link_symbolic "/etc/letsencrypt/live/${certbot_certificate_name}/privkey.pem" \
     /etc/postfix/smtpd.key
 [ -n "$_success" ] && restart=1
 if [ -n "$restart" ];then
