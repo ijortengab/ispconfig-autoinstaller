@@ -79,6 +79,7 @@ _() { echo -n "$INDENT" >&2; echo -n "#" "$@" >&2; }
 _,() { echo -n "$@" >&2; }
 _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2 || echo -n  >&2; }
+___() { echo -n "$INDENT" >&2; echo -n "#" '        ' >&2; [ -n "$1" ] && echo "$@" >&2 || echo -n  >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Command.
@@ -220,12 +221,65 @@ mode-available() {
     fi
     _; _.
     if ArraySearch setup mode_available[@] ]];then color=green; else color=red; fi
-    __; _, 'Mode '; $color setup; _, .; _, ' 'Install ISPConfig + LEMP Stack Setup. ; _.;
-    __; _, '            '; _, LEMP Stack '('Linux, Nginx, MySQL, PHP')'.; _.;
+    ___; _, 'Mode '; $color setup; _, .; _, ' 'Install ISPConfig + LEMP Stack Setup. ; _.;
+    ___; _, '            '; _, LEMP Stack '('Linux, Nginx, MySQL, PHP')'.; _.;
     if ArraySearch addon mode_available[@] ]];then color=green; else color=red; fi
-    __; _, 'Mode '; $color addon; _, .; _, ' 'Add on Domain. ; _.;
+    ___; _, 'Mode '; $color addon; _, .; _, ' 'Add on Domain. ; _.;
     for each in setup addon; do
         if ArraySearch $each mode_available[@] ]];then echo $each; fi
+    done
+}
+wordWrapCommand() {
+    # global words_array
+    local inline_label="$1"
+    local parts current_line first_line
+    declare -i min; min=80
+    declare -i max; max=100
+    declare -i i; i=0
+    local count="${#words_array[@]}"
+    current_line=
+    first_line=1
+    for each in "${words_array[@]}"; do
+        i+=1
+        [ "$i" == "$count" ] && last=1 || last=
+        if [ -z "$current_line" ]; then
+            if [ -z "$first_line" ];then
+                current_line="    ${each}"
+                e; magenta "    $each";
+            else
+                first_line=
+                if [ -n "$inline_label" ];then
+                    e; _, "${inline_label} "; magenta "$each"
+                    current_line="${inline_label} ${each}"
+                else
+                    e; magenta "$each"
+                    current_line="$each"
+                fi
+            fi
+            if [ -n "$last" ];then
+                _.
+            fi
+        else
+            _current_line="${current_line} ${each}"
+            if [ "${#_current_line}" -le $min ];then
+                if [ -n "$last" ];then
+                    _, ' '; magenta "$each"; _.
+                else
+                    _, ' '; magenta "$each"
+                fi
+                current_line+=" ${each}"
+            elif [ "${#_current_line}" -le $max ];then
+                if [ -n "$last" ];then
+                    _, ' '; magenta "${each}"''; _.
+                else
+                    _, ' '; magenta "${each}"' \'; _.
+                fi
+                current_line=
+            else
+                magenta ' \'; _.; e; magenta "$each"
+                current_line="    ${each}"
+            fi
+        fi
     done
 }
 
@@ -312,12 +366,15 @@ case "$mode" in
 esac
 
 chapter Execute:
+case "$rcm_operand" in
+    *)
+        words_array=(rcm ${isfast} ${isnoninteractive} ${isverbose} $rcm_operand -- "$@")
+esac
+wordWrapCommand
+____
 
 case "$rcm_operand" in
     *)
-        code rcm${isfast}${isnoninteractive}${isverbose} $rcm_operand -- "$@"
-        ____
-
         INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" rcm${isfast}${isnoninteractive}${isverbose} $rcm_operand --root-sure --binary-directory-exists-sure --non-immediately -- "$@"
 esac
 ____
