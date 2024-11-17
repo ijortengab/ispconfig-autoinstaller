@@ -29,7 +29,7 @@ chapter() { echo -n "$INDENT" >&2; yellow '#' "$@" >&2; echo >&2; }
 title() { echo -n "$INDENT" >&2; blue '#' "$@" >&2; echo >&2; }
 code() { echo -n "$INDENT" >&2; magenta "$@" >&2; echo >&2; }
 x() { echo >&2; exit 1; }
-e() { echo -n "$INDENT" >&2; echo "#" "$@" >&2; }
+e() { echo -n "$INDENT" >&2; echo -n "$@" >&2; }
 _() { echo -n "$INDENT" >&2; echo -n "#" "$@" >&2; }
 _,() { echo -n "$@" >&2; }
 _.() { echo >&2; }
