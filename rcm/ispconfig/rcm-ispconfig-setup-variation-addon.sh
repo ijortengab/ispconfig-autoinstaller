@@ -232,7 +232,7 @@ if [ -z "$domain" ];then
 fi
 code 'domain="'$domain'"'
 if [ -z "$ip_address" ];then
-    e Tips: Try --ip-address=auto
+    _ Tips: Try --ip-address=auto; _.
 fi
 if [[ $ip_address == auto ]];then
     ip_address=
@@ -424,7 +424,7 @@ rcm-certbot-deploy-nginx $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
-e Lets play with Mailbox.
+_ Lets play with Mailbox.; _.
 sleepExtended 3
 ____
 
@@ -471,7 +471,7 @@ postqueue -f
 ____
 
 chapter Take a break.
-e Everything is OK, "let's" dump variables.
+_ Everything is OK, "let's" dump variables.; _.
 sleepExtended 3
 ____
 

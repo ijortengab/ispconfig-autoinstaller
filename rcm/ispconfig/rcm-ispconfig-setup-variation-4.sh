@@ -274,7 +274,7 @@ code roundcube_version="$roundcube_version"
 ispconfig_version=3.2.11p2
 code ispconfig_version="$ispconfig_version"
 if [ -z "$ip_address" ];then
-    e Tips: Try --ip-address=auto
+    _ Tips: Try --ip-address=auto; _.
 fi
 if [[ $ip_address == auto ]];then
     ip_address=
@@ -416,7 +416,7 @@ rcm-certbot-autoinstaller $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
-e Begin to Install ISPConfig and Friends.
+_ Begin to Install ISPConfig and Friends.; _.
 sleepExtended 3
 ____
 
@@ -440,7 +440,7 @@ rcm-amavis-setup-ispconfig $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
-e Lets play with Certbot LetsEncrypt with Nginx Plugin.
+_ Lets play with Certbot LetsEncrypt with Nginx Plugin.; _.
 sleepExtended 3
 ____
 
@@ -508,7 +508,7 @@ rcm-certbot-deploy-nginx $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
-e Lets play with Mailbox.
+_ Lets play with Mailbox.; _.
 sleepExtended 3
 ____
 
@@ -555,7 +555,7 @@ postqueue -f
 ____
 
 chapter Take a break.
-e Everything is OK, "let's" dump variables.
+_ Everything is OK, "let's" dump variables.; _.
 sleepExtended 3
 ____
 

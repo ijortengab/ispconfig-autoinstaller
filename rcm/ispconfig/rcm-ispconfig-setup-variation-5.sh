@@ -559,7 +559,7 @@ rcm-dig-autoinstaller $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
-e Begin to Validate DNS Record.
+_ Begin to Validate DNS Record.; _.
 sleepExtended 3
 ____
 
@@ -596,7 +596,7 @@ for each in "${fqdn_array[@]}";do
 done
 
 chapter Take a break.
-e Setup LEMP Stack.
+_ Setup LEMP Stack.; _.
 sleepExtended 3
 ____
 
@@ -651,7 +651,7 @@ rcm-certbot-autoinstaller $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
-e Begin to Install ISPConfig and Friends.
+_ Begin to Install ISPConfig and Friends.; _.
 sleepExtended 3
 ____
 
@@ -673,7 +673,7 @@ rcm-roundcube-setup-ispconfig-integration $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
-e Lets play with Certbot LetsEncrypt with Nginx Plugin.
+_ Lets play with Certbot LetsEncrypt with Nginx Plugin.; _.
 sleepExtended 3
 ____
 
@@ -712,7 +712,7 @@ for each in ispconfig phpmyadmin roundcube;do
 done
 
 chapter Take a break.
-e Lets play with Mailbox.
+_ Lets play with Mailbox.; _.
 sleepExtended 3
 ____
 
@@ -759,7 +759,7 @@ postqueue -f
 ____
 
 chapter Take a break.
-e Everything is OK, "let's" dump variables.
+_ Everything is OK, "let's" dump variables.; _.
 sleepExtended 3
 ____
 

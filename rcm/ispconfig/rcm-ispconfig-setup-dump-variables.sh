@@ -214,47 +214,47 @@ ____
 chapter PHPMyAdmin: "https://${SUBDOMAIN_PHPMYADMIN}.${domain}"
 db_user=phpmyadmin
 populateDatabaseUserPassword "$db_user"
-e ' - 'username: $db_user
-e '   'password: $db_user_password
+_ ' - 'username: $db_user; _.
+_ '   'password: $db_user_password; _.
 db_user=roundcube
 populateDatabaseUserPassword "$db_user"
-e ' - 'username: $db_user
-e '   'password: $db_user_password
+_ ' - 'username: $db_user; _.
+_ '   'password: $db_user_password; _.
 databaseCredentialIspconfig
-e ' - 'username: $db_user
-e '   'password: $db_user_password
+_ ' - 'username: $db_user; _.
+_ '   'password: $db_user_password; _.
 ____
 
 chapter Roundcube: "https://${SUBDOMAIN_ROUNDCUBE}.${domain}"
-e ' - 'username: $MAILBOX_ADMIN
+_ ' - 'username: $MAILBOX_ADMIN; _.
 if [ -n "$domain" ];then
     user="$MAILBOX_ADMIN"
     host="$domain"
     . /usr/local/share/credential/mailbox/$host/$user
-    e '   'password: $MAILBOX_USER_PASSWORD
+    _ '   'password: $MAILBOX_USER_PASSWORD; _.
 else
-    e '   'password: ...
+    _ '   'password: ...; _.
 fi
-e ' - 'username: $MAILBOX_SUPPORT
+_ ' - 'username: $MAILBOX_SUPPORT; _.
 if [ -n "$domain" ];then
     user="$MAILBOX_SUPPORT"
     host="$domain"
     . /usr/local/share/credential/mailbox/$host/$user
-    e '   'password: $MAILBOX_USER_PASSWORD
+    _ '   'password: $MAILBOX_USER_PASSWORD; _.
 else
-    e '   'password: ...
+    _ '   'password: ...; _.
 fi
 ____
 
 chapter ISPConfig: "https://${SUBDOMAIN_ISPCONFIG}.${domain}"
 websiteCredentialIspconfig
-e ' - 'username: admin
-e '   'password: $ispconfig_web_user_password
+_ ' - 'username: admin; _.
+_ '   'password: $ispconfig_web_user_password; _.
 ____
 
 chapter DNS TXT Record for SPF in $domain
 mail_provider="$current_fqdn"
-e ' - 'hostname:
+_ ' - 'hostname:; _.
 _ '   'value'   ':' '; magenta "v=spf1 a:${mail_provider} ~all"; _.
 ____
 
@@ -277,7 +277,7 @@ if [ -n "$ip_address" ];then
     rm "$tempfile"
     if [[ ! "$output" == "${current_fqdn}." ]];then
         error Attention
-        e Your PTR Record is different with your variable of FQDN.
+        _ Your PTR Record is different with your variable of FQDN.; _.
         _ ' - 'FQDN:' '; magenta "$current_fqdn"; _.
         _ '   'PTR :' '; magenta "$output"; _.
         ____
@@ -285,27 +285,27 @@ if [ -n "$ip_address" ];then
 fi
 
 chapter Manual Action
-e Command to create a new mailbox. Example:
+_ Command to create a new mailbox. Example:; _.
 __; magenta ispconfig.php mail_user_add --email=support@${domain} --password=$(pwgen -1 12); _.
-e Command to implement '`'ispconfig.php'`' command autocompletion immediately:
+_ Command to implement '`'ispconfig.php'`' command autocompletion immediately:; _.
 __; magenta source /etc/profile.d/ispconfig-php-completion.sh; _.
 if [ -n "$ip_address" ];then
-    e Command to check PTR Record:
+    _ Command to check PTR Record:; _.
     __; magenta dig -x "$ip_address" +short; _.
 fi
-e If you want to see the credentials again, please execute this command:
+_ If you want to see the credentials again, please execute this command:; _.
 [[ -n "$ip_address" ]] && is_ip_address=' --ip-address='"$ip_address" || is_ip_address=
 __; magenta rcm-ispconfig-setup-dump-variables${isfast} --domain="$domain" --hostname="$hostname"${is_ip_address}; _.
-e It is recommended for you to make sure DNS TXT Record about Mail Server '('SPF, DKIM, DMARC')' has exists,
-e '    'please execute this command:
+_ It is recommended for you to make sure DNS TXT Record about Mail Server '('SPF, DKIM, DMARC')' has exists,; _.
+_ '    'please execute this command:; _.
 __; magenta rcm install ispconfig-post-setup --source ispconfig; _.
 __; magenta rcm ispconfig-post-setup${isfast} -- --domain="$domain"; _.
 ____
 
 if [[ "$additional_info" == digitalocean ]];then
     chapter Suggestion.
-    e If you user of DigitalOcean, change your droplet name with FQDN to automatically set as PTR Record.
-    e More info: https://www.digitalocean.com/community/questions/how-do-i-setup-a-ptr-record
+    _ If you user of DigitalOcean, change your droplet name with FQDN to automatically set as PTR Record.; _.
+    _ More info: https://www.digitalocean.com/community/questions/how-do-i-setup-a-ptr-record; _.
     ____
 fi
 

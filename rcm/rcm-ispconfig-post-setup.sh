@@ -179,7 +179,7 @@ link_symbolic() {
             __ Path target saat ini sudah merupakan file symbolic link: '`'$target'`'
             local _readlink=$(readlink "$target")
             __; magenta readlink "$target"; _.
-            e $_readlink
+            _ $_readlink; _.
             if [[ "$_readlink" =~ ^[^/\.] ]];then
                 local target_parent=$(dirname "$target")
                 local _dereference="${target_parent}/${_readlink}"
@@ -307,7 +307,7 @@ mail_provider="$current_fqdn"
 data="v=spf1 a:${mail_provider} ~all"
 data_spf="$data"
 chapter DNS TXT Record for SPF in $domain
-e ' - 'hostname:
+_ ' - 'hostname:; _.
 _ '   'value'   ':' '; magenta "$data"; _.
 ____
 
@@ -331,7 +331,7 @@ ____
 chapter Watching Begin
 __ Make sure all DNS Record '(TXT)' about SPF, DKIM, and DMARC is exist.
 finish=
-e Begin: $(date +%Y%m%d-%H%M%S)
+_ Begin: $(date +%Y%m%d-%H%M%S); _.
 Rcm_BEGIN=$SECONDS
 ____
 
@@ -368,7 +368,7 @@ until [ -n "$finish" ];do
     if [[ "$_finish" == 111 ]];then
         chapter Watching End
         success ALL of DNS Records already exist '(TXT)'.
-        e End: $(date +%Y%m%d-%H%M%S)
+        _ End: $(date +%Y%m%d-%H%M%S); _.
         Rcm_END=$SECONDS
         duration=$(( Rcm_END - Rcm_BEGIN ))
         hours=$((duration / 3600)); minutes=$(( (duration % 3600) / 60 )); seconds=$(( (duration % 3600) % 60 ));
@@ -378,7 +378,7 @@ until [ -n "$finish" ];do
         ____
     else
         error All of DNS Record of '`'$domain'`' '(TXT) is not exists.'.
-        e We are still waiting.
+        _ We are still waiting.; _.
         sleepExtended 60
     fi
 done

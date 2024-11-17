@@ -287,7 +287,7 @@ code roundcube_version="$roundcube_version"
 ispconfig_version=3.2.7
 code ispconfig_version="$ispconfig_version"
 until [[ -n "$ip_address" ]];do
-    e Tips: Try --ip-address=auto
+    _ Tips: Try --ip-address=auto; _.
     _; read -p "Argument --ip-address required: " ip_address
 done
 if [[ $ip_address == auto ]];then
@@ -373,7 +373,7 @@ if [ -n "$found" ];then
     code dig NS $domain +short
     stdout=$(dig NS $domain +short)
     if [ -n "$stdout" ];then
-        e "$stdout"
+        _ "$stdout"; _.
     fi
     if grep -q --ignore-case 'ns.\.digitalocean\.com\.' <<< "$stdout";then
         __ Name Server pada domain "$domain" sudah mengarah ke DigitalOcean.
@@ -382,7 +382,7 @@ if [ -n "$found" ];then
     fi
 else
     error Name Server pada domain "$domain" tidak mengarah ke DigitalOcean.
-    e Memerlukan manual edit pada registrar domain.; x
+    _ Memerlukan manual edit pada registrar domain.; x; _.
 fi
 # Contoh:
 # nsid2.rumahweb.net.
@@ -415,7 +415,7 @@ rcm-certbot-digitalocean-autoinstaller $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
-e Lets play with DigitalOcean API.
+_ Lets play with DigitalOcean API.; _.
 sleepExtended 3
 ____
 
@@ -493,7 +493,7 @@ rcm-digitalocean-api-manage-domain-record $isfast --root-sure --digitalocean-dom
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
-e Begin to Install ISPConfig and Friends.
+_ Begin to Install ISPConfig and Friends.; _.
 sleepExtended 3
 ____
 
@@ -515,7 +515,7 @@ rcm-roundcube-setup-ispconfig-integration $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
-e Lets play with Certbot LetsEncrypt with Nginx Plugin.
+_ Lets play with Certbot LetsEncrypt with Nginx Plugin.; _.
 sleepExtended 3
 ____
 
@@ -584,7 +584,7 @@ rcm-certbot-deploy-installer-nginx-authenticator-digitalocean $isfast --root-sur
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
-e Lets play with Mailbox.
+_ Lets play with Mailbox.; _.
 sleepExtended 3
 ____
 
@@ -650,7 +650,7 @@ postqueue -f
 ____
 
 chapter Take a break.
-e Everything is OK, "let's" dump variables.
+_ Everything is OK, "let's" dump variables.; _.
 sleepExtended 3
 ____
 
