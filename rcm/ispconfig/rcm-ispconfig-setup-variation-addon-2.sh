@@ -204,14 +204,29 @@ userInputBooleanDefaultNo() {
 }
 sleepExtended() {
     local countdown=$1
-    countdown=$((countdown - 1))
-    while [ "$countdown" -ge 0 ]; do
+    local width=$2
+    if [ -z "$width" ];then
+        width=80
+    fi
+    if [ "$countdown" -gt 0 ];then
+        dikali10=$((countdown*10))
+        _dikali10=$dikali10
+        _dotLength=$(( ( width * _dikali10 ) / dikali10 ))
         printf "\r\033[K" >&2
-        printf %"$countdown"s | tr " " "." >&2
+        printf %"$_dotLength"s | tr " " "." >&2
         printf "\r"
-        countdown=$((countdown - 1))
-        sleep .9
-    done
+        while [ "$_dikali10" -ge 0 ]; do
+            dotLength=$(( ( width * _dikali10 ) / dikali10 ))
+            if [[ ! "$dotLength" == "$_dotLength" ]];then
+                _dotLength="$dotLength"
+                printf "\r\033[K" >&2
+                printf %"$dotLength"s | tr " " "." >&2
+                printf "\r"
+            fi
+            _dikali10=$((_dikali10 - 1))
+            sleep .1
+        done
+    fi
 }
 
 # Require, validate, and populate value.
@@ -331,7 +346,6 @@ fi
 # ns2.digitalocean.com.
 ____
 
-
 chapter Take a break.
 _ Lets play with DigitalOcean API.; _.
 sleepExtended 3
@@ -429,7 +443,6 @@ minor=$(sed -E 's,^([0-9]+)\.([0-9]+)\.([0-9]+)$,\2,' <<< "$php_version")
 php_version="${major}.${minor}"
 __; magenta php_version="$php_version"; _.
 ____
-
 
 chapter Take a break.
 _ Lets play with Certbot LetsEncrypt with Nginx Plugin.; _.
