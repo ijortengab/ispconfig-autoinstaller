@@ -423,8 +423,7 @@ rcm-php-setup-adjust-cli-version $isfast --root-sure \
     --php-version="$php_version" \
     && INDENT+="    " \
 rcm-postfix-autoinstaller $isfast --root-sure \
-    --hostname="$hostname" \
-    --domain="$domain" \
+    --fqdn="$fqdn" \
     && INDENT+="    " \
 rcm-certbot-autoinstaller $isfast --root-sure \
     && INDENT+="    " \
