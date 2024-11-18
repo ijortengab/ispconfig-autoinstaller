@@ -36,7 +36,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.9.4'
+    echo '0.9.5'
 }
 printHelp() {
     title RCM Amavis Setup

@@ -97,7 +97,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.9.3'
+    echo '0.9.5'
 }
 printHelp() {
     title ISPConfig Auto-Installer
