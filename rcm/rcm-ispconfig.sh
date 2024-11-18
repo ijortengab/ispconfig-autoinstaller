@@ -176,23 +176,28 @@ eligible() {
         _; _.
             case "$is_digitalocean" in
                 1)
-                    __; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11    ]] && color=green || color=red; $color 1;
-                    _, . Debian 11, '  ' ISPConfig 3.2.7, '  ' PHPMyAdmin 5.2.0, Roundcube 1.6.0, PHP 7.4, DigitalOcean DNS. ; _.;
-                    eligible+=("1;debian;11")
-                    __; _, 'Variation '; [[ "$ID" == ubuntu && "$VERSION_ID" == 22.04 ]] && color=green || color=red; $color 2;
-                    _, . Ubuntu 22.04,   ISPConfig 3.2.7, '  ' PHPMyAdmin 5.2.0, Roundcube 1.6.0, PHP 7.4, DigitalOcean DNS. ; _.;
-                    eligible+=("2;ubuntu;22.04")
-                    __; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 12    ]] && color=green || color=red; $color 3;
-                    _, . Debian 12, '  ' ISPConfig 3.2.10, ' ' PHPMyAdmin 5.2.1, Roundcube 1.6.2, PHP 8.1, DigitalOcean DNS. ; _.;
-                    eligible+=("3;debian;12")
+                    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11    ]] && color=green || color=red; $color d1;
+                    _, . Debian 11, PHP 7.4, ISPConfig 3.2.7,; _.
+                    ___; _,  '             ' PHPMyAdmin 5.2.0, Roundcube 1.6.0, DigitalOcean DNS.; _.
+                    eligible+=("d1;debian;11")
+                    ___; _, 'Variation '; [[ "$ID" == ubuntu && "$VERSION_ID" == 22.04 ]] && color=green || color=red; $color u2;
+                    _, . Ubuntu 22.04, PHP 7.4, ISPConfig 3.2.7,; _.
+                    ___; _,  '             ' PHPMyAdmin 5.2.0, Roundcube 1.6.0, DigitalOcean DNS.; _.
+                    eligible+=("u2;ubuntu;22.04")
+                    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 12    ]] && color=green || color=red; $color d3;
+                    _, . Debian 12, PHP 8.1, ISPConfig 3.2.10,; _.
+                    ___; _,  '             ' PHPMyAdmin 5.2.1, Roundcube 1.6.2, DigitalOcean DNS.; _.
+                    eligible+=("d3;debian;12")
                     ;;
                 0)
-                    __; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11    ]] && color=green || color=red; $color 4;
-                    _, . Debian 11, '  ' ISPConfig 3.2.11p2,   PHPMyAdmin 5.2.1, Roundcube 1.6.6, PHP 8.1, Manual DNS.       ; _.;
-                    eligible+=("4;debian;11")
-                    __; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 12    ]] && color=green || color=red; $color 5;
-                    _, . Debian 12, '  ' ISPConfig 3.2.11p2,   PHPMyAdmin 5.2.1, Roundcube 1.6.6, PHP 8.3, Manual DNS.       ; _.;
-                    eligible+=("5;debian;12")
+                    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11    ]] && color=green || color=red; $color d4;
+                    _, . Debian 11, PHP 8.1, ISPConfig 3.2.11p2,; _.
+                    ___; _,  '             ' PHPMyAdmin 5.2.1, Roundcube 1.6.6, Manual DNS.; _.
+                    eligible+=("d4;debian;11")
+                    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 12    ]] && color=green || color=red; $color d5;
+                    _, . Debian 12, PHP 8.3, ISPConfig 3.2.11p2,; _.
+                    ___; _,  '             ' PHPMyAdmin 5.2.1, Roundcube 1.6.6, Manual DNS.; _.
+                    eligible+=("d5;debian;12")
                     ;;
             esac
             ;;
@@ -276,7 +281,7 @@ wordWrapCommand() {
                 fi
                 current_line=
             else
-                magenta ' \'; _.; e; magenta "$each"
+                magenta ' \'; _.; e; magenta "    $each"
                 current_line="    ${each}"
             fi
         fi
@@ -326,7 +331,7 @@ if [ -n "$mode" ];then
 fi
 if [ -n "$variation" ];then
     case "$variation" in
-        1|2|3|4|5) ;;
+        d1|u2|d3|d4|d5) ;;
         *) error "Argument --variation not valid."; x ;;
     esac
 fi
@@ -342,16 +347,15 @@ case "$mode" in
     setup)
         if [ -n "$digitalocean" ];then
             case "$variation" in
-                1|2|3)
-                    rcm_operand=ispconfig-setup-variation-"$variation"
-                    ;;
+                d1) rcm_operand=ispconfig-setup-variation-1 ;;
+                u2) rcm_operand=ispconfig-setup-variation-2 ;;
+                d3) rcm_operand=ispconfig-setup-variation-3 ;;
                 *) error "Argument --variation not valid."; x ;;
             esac
         else
             case "$variation" in
-                4|5)
-                    rcm_operand=ispconfig-setup-variation-"$variation"
-                    ;;
+                d4) rcm_operand=ispconfig-setup-variation-4 ;;
+                d5) rcm_operand=ispconfig-setup-variation-5 ;;
                 *) error "Argument --variation not valid."; x ;;
             esac
         fi
