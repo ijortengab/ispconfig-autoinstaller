@@ -57,6 +57,7 @@ _() { echo -n "$INDENT" >&2; echo -n "#" "$@" >&2; }
 _,() { echo -n "$@" >&2; }
 _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2 || echo -n  >&2; }
+___() { echo -n "$INDENT" >&2; echo -n "#" '        ' >&2; [ -n "$1" ] && echo "$@" >&2 || echo -n  >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Command.
@@ -101,18 +102,18 @@ Options:
         Set the IP Address. Used to verify A record in DNS.
         Value available from command: rcm-ispconfig-setup-variation-5(get-ipv4).
    --url-ispconfig *
-        The address to set up ISPConfig, for example: \`cp.example.org\` or \`https://example.org:8080/ispconfig/\`.
+        The address to set up ISPConfig, domain or URL, for example: \`cp.example.org\` or \`https://example.org:8080/\`.
         Value available from command: rcm-ispconfig-setup-variation-5(suggest-url ispconfig [--fqdn]), or other.
    --with-phpmyadmin ^
         Enable PHPMyAdmin. By default, --without-phpmyadmin is used.
    --url-phpmyadmin *
-        The address to set up PHPMyAdmin, for example: \`db.example.org\` or \`https://example.org:8080/phpmyadmin/\`.
-        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url phpmyadmin [--with-phpmyadmin] [--url-ispconfig]), or other.
+        The address to set up PHPMyAdmin, domain or URL, for example: \`db.example.org\` or \`https://example.org:8080/phpmyadmin/\`.
+        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url phpmyadmin [--with-phpmyadmin] [--url-ispconfig] [--fqdn]), or other.
    --with-roundcube ^
         Enable Roundcube. By default, --without-roundcube is used.
    --url-roundcube *
-        The address to set up Roundcube, for example: \`mail.example.org\` or \`https://example.org:8080/roundcube/\`.
-        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url roundcube [--with-roundcube] [--url-ispconfig]), or other.
+        The address to set up Roundcube, domain or URL, for example: \`mail.example.org\` or \`https://example.org:8080/roundcube/\`.
+        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url roundcube [--with-roundcube] [--url-ispconfig] [--fqdn]), or other.
    --timezone
         Set the timezone of this machine. Available values: Asia/Jakarta, or other.
    --without-update-system ^
@@ -244,6 +245,7 @@ Rcm_parse_url() {
 }
 siblingHost() {
     local url=$1 subdomain=$2
+    local PHP_URL_SCHEME PHP_URL_USER PHP_URL_PASS PHP_URL_HOST PHP_URL_PORT PHP_URL_PATH
     Rcm_parse_url $url
     local hostname=$(echo "$PHP_URL_HOST" | sed -E 's|^([^\.]+)\..*|\1|g')
     local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
@@ -255,6 +257,7 @@ siblingHost() {
 }
 urlAlternative() {
     local url=$1 path=$2
+    local PHP_URL_SCHEME PHP_URL_USER PHP_URL_PASS PHP_URL_HOST PHP_URL_PORT PHP_URL_PATH
     local scheme port
     Rcm_parse_url $url
     [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
@@ -268,19 +271,21 @@ urlAlternative() {
     fi
 }
 suggest-url() {
+    local PHP_URL_SCHEME PHP_URL_USER PHP_URL_PASS PHP_URL_HOST PHP_URL_PORT PHP_URL_PATH
     local which=$1
     case "$which" in
         ispconfig)
-            e
-            __; yellow Attention; _, . ISPConfig cannot install inside subpath.; _.
+            _; _.
+            ___; yellow Attention; _, . ISPConfig cannot install inside subpath.; _.
             local fqdn=$2
             Rcm_parse_url $fqdn
             local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
             siblingHost "$domain" $SUBDOMAIN_ISPCONFIG
             urlAlternative "$domain"
+            echo "https://${PHP_URL_HOST}:8080"
             ;;
         phpmyadmin)
-            local with_phpmyadmin=$2 url_ispconfig=$3
+            local with_phpmyadmin=$2 url_ispconfig=$3 fqdn=$4
             [ $with_phpmyadmin == 0 ] && with_phpmyadmin=
             [ $url_ispconfig == - ] && url_ispconfig=
             # Set to skip, return exit code non zero.
@@ -288,9 +293,17 @@ suggest-url() {
             siblingHost "$url_ispconfig" $SUBDOMAIN_PHPMYADMIN
             urlAlternative "$url_ispconfig" /phpmyadmin
             urlAlternative "$url_ispconfig" /$SUBDOMAIN_PHPMYADMIN
+            # Jika url ispconfig adalah fqdn, maka
+            Rcm_parse_url "$url_ispconfig"
+            if [ "$PHP_URL_HOST" == "$fqdn" ];then
+                local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
+                siblingHost "$domain" $SUBDOMAIN_PHPMYADMIN
+                urlAlternative "$domain" /phpmyadmin
+                urlAlternative "$domain" /$SUBDOMAIN_PHPMYADMIN
+            fi
             ;;
         roundcube)
-            local with_roundcube=$2 url_ispconfig=$3
+            local with_roundcube=$2 url_ispconfig=$3 fqdn=$4
             [ $with_roundcube == 0 ] && with_roundcube=
             [ $url_ispconfig == - ] && url_ispconfig=
             # Set to skip, return exit code non zero.
@@ -298,6 +311,14 @@ suggest-url() {
             siblingHost "$url_ispconfig" $SUBDOMAIN_ROUNDCUBE
             urlAlternative "$url_ispconfig" /roundcube
             urlAlternative "$url_ispconfig" /$SUBDOMAIN_ROUNDCUBE
+            # Jika url ispconfig adalah fqdn, maka
+            Rcm_parse_url "$url_ispconfig"
+            if [ "$PHP_URL_HOST" == "$fqdn" ];then
+                local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
+                siblingHost "$domain" $SUBDOMAIN_ROUNDCUBE
+                urlAlternative "$domain" /roundcube
+                urlAlternative "$domain" /$SUBDOMAIN_ROUNDCUBE
+            fi
             ;;
     esac
 }
