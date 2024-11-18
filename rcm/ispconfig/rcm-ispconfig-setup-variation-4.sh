@@ -231,14 +231,14 @@ sleepExtended() {
         _dikali10=$dikali10
         _dotLength=$(( ( width * _dikali10 ) / dikali10 ))
         printf "\r\033[K" >&2
-        printf %"$_dotLength"s | tr " " "." >&2
+        e; printf %"$_dotLength"s | tr " " "." >&2
         printf "\r"
         while [ "$_dikali10" -ge 0 ]; do
             dotLength=$(( ( width * _dikali10 ) / dikali10 ))
             if [[ ! "$dotLength" == "$_dotLength" ]];then
                 _dotLength="$dotLength"
                 printf "\r\033[K" >&2
-                printf %"$dotLength"s | tr " " "." >&2
+                e; printf %"$dotLength"s | tr " " "." >&2
                 printf "\r"
             fi
             _dikali10=$((_dikali10 - 1))
