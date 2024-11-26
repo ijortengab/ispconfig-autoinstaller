@@ -494,6 +494,8 @@ for each in PHP_URL_SCHEME PHP_URL_PORT PHP_URL_USER PHP_URL_PASS PHP_URL_PATH P
         error Argument --fqdn cannot have component "$each": '`'"$fqdn"'`'.; x
     fi
 done
+hostname=$(echo "$PHP_URL_HOST" | sed -E 's|^([^\.]+)\..*|\1|g')
+code hostname="$hostname"
 fqdn_array_raw=()
 fqdn_path_array_raw=()
 Rcm_parse_url "$url_ispconfig"
