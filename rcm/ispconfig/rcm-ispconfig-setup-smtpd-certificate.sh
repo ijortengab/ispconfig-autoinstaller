@@ -8,9 +8,9 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --certbot-authenticator=*) certbot_authenticator="${1#*=}"; shift ;;
         --certbot-authenticator) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then certbot_authenticator="$2"; shift; fi; shift ;;
-        --domain=*) domain="${1#*=}"; shift ;;
-        --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
+        --fqdn=*) fqdn="${1#*=}"; shift ;;
+        --fqdn) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fqdn="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
@@ -51,8 +51,8 @@ printHelp() {
 Usage: rcm-ispconfig-setup-smtpd-certificate [options]
 
 Options:
-   --domain *
-        Set the domain.
+   --fqdn *
+        Fully Qualified Domain Name of this server, for example: \`server1.example.org\`.
    --certbot-authenticator *
         Available value: digitalocean, nginx.
 
@@ -209,6 +209,20 @@ link_symbolic() {
     fi
     ____
 }
+isDirExists() {
+    # global used:
+    # global modified: found, notfound
+    # function used: __
+    found=
+    notfound=
+    if [ -d "$1" ];then
+        __ Direktori '`'$(basename "$1")'`' ditemukan.
+        found=1
+    else
+        __ Direktori '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
+    fi
+}
 
 # Require, validate, and populate value.
 chapter Dump variable.
@@ -216,10 +230,10 @@ chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
 MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
-if [ -z "$domain" ];then
-    error "Argument --domain required."; x
+if [ -z "$fqdn" ];then
+    error "Argument --fqdn required."; x
 fi
-code 'domain="'$domain'"'
+code 'fqdn="'$fqdn'"'
 if [ -z "$certbot_authenticator" ];then
     error "Argument --certbot-authenticator required."; x
 fi
@@ -234,7 +248,7 @@ if [ -z "$certbot_authenticator" ];then
     x
 fi
 code 'certbot_authenticator="'$certbot_authenticator'"'
-certbot_certificate_name="$domain"
+certbot_certificate_name="$fqdn"
 code 'certbot_certificate_name="'$certbot_certificate_name'"'
 ____
 
@@ -266,7 +280,7 @@ if [ -n "$notfound" ];then
         PATH=$PATH \
         rcm-certbot-obtain-authenticator-digitalocean $isfast --root-sure \
             --certbot-dns-digitalocean-sure \
-            --domain="$domain" \
+            --domain="$fqdn" \
             ; [ ! $? -eq 0 ] && x
         # @todo, cek harusnya parent sudah validate certbot-dns-digitalocean
         # sehingga bisa kita kasih option --certbot-dns-digitalocean-sure
@@ -274,7 +288,7 @@ if [ -n "$notfound" ];then
         INDENT+="    " \
         PATH=$PATH \
         rcm-certbot-obtain-authenticator-nginx $isfast --root-sure \
-            --domain="$domain" \
+            --domain="$fqdn" \
             ; [ ! $? -eq 0 ] && x
     fi
 fi
@@ -310,7 +324,7 @@ exit 0
 # --root-sure
 # )
 # VALUE=(
-# --domain
+# --fqdn
 # --certbot-authenticator
 # )
 # MULTIVALUE=(
