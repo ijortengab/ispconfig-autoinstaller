@@ -222,15 +222,15 @@ mode-available() {
     if id "$php_fpm_user" >/dev/null 2>&1; then
         mode_available+=(addon)
     else
-        mode_available+=(setup)
+        mode_available+=(init)
     fi
     _; _.
-    if ArraySearch setup mode_available[@] ]];then color=green; else color=red; fi
-    ___; _, 'Mode '; $color setup; _, .; _, ' 'Install ISPConfig + LEMP Stack Setup. ; _.;
+    if ArraySearch init mode_available[@] ]];then color=green; else color=red; fi
+    ___; _, 'Mode '; $color init; _, .; _, '  'Install ISPConfig + LEMP Stack Setup. ; _.;
     ___; _, '            '; _, LEMP Stack '('Linux, Nginx, MySQL, PHP')'.; _.;
     if ArraySearch addon mode_available[@] ]];then color=green; else color=red; fi
     ___; _, 'Mode '; $color addon; _, .; _, ' 'Add on Domain. ; _.;
-    for each in setup addon; do
+    for each in init addon; do
         if ArraySearch $each mode_available[@] ]];then echo $each; fi
     done
 }
@@ -325,7 +325,7 @@ delay=.5; [ -n "$fast" ] && unset delay
 } || isverbose=
 if [ -n "$mode" ];then
     case "$mode" in
-        setup|addon) ;;
+        init|addon) ;;
         *) error "Argument --mode not valid."; x ;;
     esac
 fi
@@ -344,7 +344,7 @@ code 'variation="'$variation'"'
 ____
 
 case "$mode" in
-    setup)
+    init)
         if [ -n "$digitalocean" ];then
             case "$variation" in
                 d1) rcm_operand=ispconfig-setup-variation-1 ;;
