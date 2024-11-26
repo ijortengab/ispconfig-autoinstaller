@@ -77,7 +77,7 @@ MAILBOX_POST=${MAILBOX_POST:=postmaster}
 
 # Functions.
 printVersion() {
-    echo '0.9.5'
+    echo '0.9.6'
 }
 printHelp() {
     title RCM ISPConfig Setup
