@@ -450,7 +450,7 @@ fi
 
 chapter Prepare Arguments.
 master_root="$nginx_web_root"
-master_include="$nginx_config_dir"
+master_include="${nginx_config_dir}/*"
 master_include_2="$nginx_config_file"
 master_filename="$filename"
 master_url_host="$url_host"
