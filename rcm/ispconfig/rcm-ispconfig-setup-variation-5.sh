@@ -40,6 +40,13 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
+# Command.
+if [ -n "$1" ];then
+    case "$1" in
+        suggest-url|get-ipv4) command="$1"; shift ;;
+    esac
+fi
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -60,28 +67,10 @@ __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >
 ___() { echo -n "$INDENT" >&2; echo -n "#" '        ' >&2; [ -n "$1" ] && echo "$@" >&2 || echo -n  >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
-# Command.
-command="$1"; shift
-if [ -n "$command" ];then
-    case "$command" in
-        suggest-url|get-ipv4) ;;
-        *)
-            # Bring back command as argument position.
-            set -- "$command" "$@"
-            # Reset command.
-            command=
-    esac
-fi
-
 # Define variables.
 SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
 SUBDOMAIN_PHPMYADMIN=${SUBDOMAIN_PHPMYADMIN:=db}
 SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
-MAILBOX_ADMIN=${MAILBOX_ADMIN:=admin}
-MAILBOX_SUPPORT=${MAILBOX_SUPPORT:=support}
-MAILBOX_WEB=${MAILBOX_WEB:=webmaster}
-MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
-MAILBOX_POST=${MAILBOX_POST:=postmaster}
 
 # Functions.
 printVersion() {
@@ -103,14 +92,19 @@ Options:
         Value available from command: rcm-ispconfig-setup-variation-5(get-ipv4).
    --url-ispconfig *
         The address to set up ISPConfig, domain or URL, for example: \`cp.example.org\` or \`https://example.org:8080/\`.
+        By default, ISPConfig automatically has address at http://ispconfig.localhost/.
         Value available from command: rcm-ispconfig-setup-variation-5(suggest-url ispconfig [--fqdn]), or other.
    --with-phpmyadmin ^
-        Enable PHPMyAdmin. By default, --without-phpmyadmin is used.
+        Add PHPMyAdmin public domain.
+        If skipped, the option --without-phpmyadmin is used.
+        By default, PHPMyAdmin automatically has address at http://phpmyadmin.localhost/.
    --url-phpmyadmin *
         The address to set up PHPMyAdmin, domain or URL, for example: \`db.example.org\` or \`https://example.org:8080/phpmyadmin/\`.
         Value available from command: rcm-ispconfig-setup-variation-5(suggest-url phpmyadmin [--with-phpmyadmin] [--url-ispconfig] [--fqdn]), or other.
    --with-roundcube ^
-        Enable Roundcube. By default, --without-roundcube is used.
+        Add Roundcube public domain.
+        If skipped, the option --without-roundcube is used.
+        By default, Roundcube automatically has address at http://roundcube.localhost/.
    --url-roundcube *
         The address to set up Roundcube, domain or URL, for example: \`mail.example.org\` or \`https://example.org:8080/roundcube/\`.
         Value available from command: rcm-ispconfig-setup-variation-5(suggest-url roundcube [--with-roundcube] [--url-ispconfig] [--fqdn]), or other.
@@ -140,16 +134,6 @@ Environment Variables:
         Default to $SUBDOMAIN_PHPMYADMIN
    SUBDOMAIN_ROUNDCUBE
         Default to $SUBDOMAIN_ROUNDCUBE
-   MAILBOX_ADMIN
-        Default to $MAILBOX_ADMIN
-   MAILBOX_SUPPORT
-        Default to $MAILBOX_SUPPORT
-   MAILBOX_WEB
-        Default to $MAILBOX_WEB
-   MAILBOX_HOST
-        Default to $MAILBOX_HOST
-   MAILBOX_POST
-        Default to $MAILBOX_POST
 
 Dependency:
    wget
@@ -162,16 +146,14 @@ Dependency:
    rcm-certbot-autoinstaller
    rcm-dig-autoinstaller
    rcm-dig-has-address
+   rcm-dig-watch-domain-exists
    rcm-ispconfig-autoinstaller-nginx:`printVersion`
    rcm-ispconfig-setup-remote-user-root:`printVersion`
    rcm-ispconfig-setup-internal-command:`printVersion`
    rcm-roundcube-setup-ispconfig-integration:`printVersion`
    rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:`printVersion`
    rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root:`printVersion`
-   rcm-ispconfig-control-manage-domain:`printVersion`
-   rcm-ispconfig-control-manage-email-mailbox:`printVersion`
-   rcm-ispconfig-control-manage-email-alias:`printVersion`
-   rcm-ispconfig-setup-dump-variables:`printVersion`
+   rcm-ispconfig-setup-dump-variables-init:`printVersion`
 
 Download:
    [rcm-ispconfig-autoinstaller-nginx](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-autoinstaller-nginx.sh)
@@ -180,10 +162,7 @@ Download:
    [rcm-roundcube-setup-ispconfig-integration](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/roundcube/rcm-roundcube-setup-ispconfig-integration.sh)
    [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php.sh)
    [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root.sh)
-   [rcm-ispconfig-control-manage-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-domain.sh)
-   [rcm-ispconfig-control-manage-email-mailbox](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-email-mailbox.sh)
-   [rcm-ispconfig-control-manage-email-alias](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-email-alias.sh)
-   [rcm-ispconfig-setup-dump-variables](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-dump-variables.sh)
+   [rcm-ispconfig-setup-dump-variables-init](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-dump-variables-init.sh)
 EOF
 }
 
@@ -270,7 +249,7 @@ urlAlternative() {
         echo "${scheme}://${PHP_URL_HOST}:${port}${path}"
     fi
 }
-suggest-url() {
+command-suggest-url() {
     local PHP_URL_SCHEME PHP_URL_USER PHP_URL_PASS PHP_URL_HOST PHP_URL_PORT PHP_URL_PATH
     local which=$1
     case "$which" in
@@ -322,7 +301,7 @@ suggest-url() {
             ;;
     esac
 }
-get-ipv4() {
+command-get-ipv4() {
     _ip=`wget -T 3 -t 1 -4qO- "http://ip1.dynupdate.no-ip.com/"`
     if [ -n "$_ip" ];then
         echo "$_ip"
@@ -330,15 +309,21 @@ get-ipv4() {
         ip addr show | grep -o "inet [0-9]*\.[0-9]*\.[0-9]*\.[0-9]*" | grep -o "[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*"
     fi
 }
+
 # Execute command.
-if [[ -n "$command" && $(type -t "$command") == function ]];then
-    "$command" "$@"
+if [[ -n "$command" && $(type -t "command-${command}") == function ]];then
+    command-${command} "$@"
     exit 0
 fi
 
 # Title.
 title rcm-ispconfig-setup-variation-5
 ____
+
+# Dependency.
+while IFS= read -r line; do
+    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
+done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 if [ -z "$root_sure" ];then
     chapter Mengecek akses root.
@@ -362,11 +347,6 @@ if [ -z "$bypass_validation_is_installed" ];then
     fi
     ____
 fi
-
-# Dependency.
-while IFS= read -r line; do
-    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
-done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
 backupFile() {
@@ -479,11 +459,6 @@ chapter Dump variable.
 code 'SUBDOMAIN_ISPCONFIG="'$SUBDOMAIN_ISPCONFIG'"'
 code 'SUBDOMAIN_PHPMYADMIN="'$SUBDOMAIN_PHPMYADMIN'"'
 code 'SUBDOMAIN_ROUNDCUBE="'$SUBDOMAIN_ROUNDCUBE'"'
-code 'MAILBOX_ADMIN="'$MAILBOX_ADMIN'"'
-code 'MAILBOX_SUPPORT="'$MAILBOX_SUPPORT'"'
-code 'MAILBOX_WEB="'$MAILBOX_WEB'"'
-code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
-code 'MAILBOX_POST="'$MAILBOX_POST'"'
 code 'timezone="'$timezone'"'
 if [ -z "$fqdn" ];then
     error "Argument --fqdn required."; x
@@ -513,10 +488,6 @@ code url_roundcube="$url_roundcube"
 code update_system="$update_system"
 code upgrade_system="$upgrade_system"
 Rcm_parse_url "$fqdn"
-hostname=$(echo "$PHP_URL_HOST" | sed -E 's|^([^\.]+)\..*|\1|g')
-domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
-code hostname="$hostname"
-code domain="$domain"
 for each in PHP_URL_SCHEME PHP_URL_PORT PHP_URL_USER PHP_URL_PASS PHP_URL_PATH PHP_URL_QUERY PHP_URL_FRAGMENT; do
     value=${!each}
     if [ -n "$value" ];then
@@ -531,14 +502,17 @@ if [ -z "$PHP_URL_HOST" ];then
 elif [ -n "$PHP_URL_PATH" ];then
     error Argument --url-ispconfig is cannot have subpath: '`'"$url_ispconfig"'`'.; x
 else
-    [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=http
-    [ -n "$PHP_URL_PORT" ] && port="$PHP_URL_PORT" || port=80
+    [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
+    [ -n "$PHP_URL_PORT" ] && port="$PHP_URL_PORT" || port=443
     [ -n "$PHP_URL_PATH" ] && fqdn_path_array_raw+=("$PHP_URL_HOST")
     ispconfig_url_scheme="$scheme"
     ispconfig_url_host="$PHP_URL_HOST"
     ispconfig_url_port="$port"
     ispconfig_url_path="$PHP_URL_PATH"
     fqdn_array_raw+=("$PHP_URL_HOST")
+    # Modify variable url_ispconfig.
+    [ -n "$PHP_URL_SCHEME" ] || url_ispconfig="${scheme}://${url_ispconfig}"
+    code url_ispconfig="$url_ispconfig"
 fi
 if [ "$install_phpmyadmin" == 1 ];then
     Rcm_parse_url "$url_phpmyadmin"
@@ -553,7 +527,9 @@ if [ "$install_phpmyadmin" == 1 ];then
         phpmyadmin_url_port="$port"
         phpmyadmin_url_path="$PHP_URL_PATH"
         fqdn_array_raw+=("$PHP_URL_HOST")
-
+        # Modify variable url_phpmyadmin.
+        [ -n "$PHP_URL_SCHEME" ] || url_phpmyadmin="${scheme}://${url_phpmyadmin}"
+        code url_phpmyadmin="$url_phpmyadmin"
     fi
 fi
 if [ "$install_roundcube" == 1 ];then
@@ -569,6 +545,9 @@ if [ "$install_roundcube" == 1 ];then
         roundcube_url_port="$port"
         roundcube_url_path="$PHP_URL_PATH"
         fqdn_array_raw+=("$PHP_URL_HOST")
+        # Modify variable url_roundcube.
+        [ -n "$PHP_URL_SCHEME" ] || url_roundcube="${scheme}://${url_roundcube}"
+        code url_roundcube="$url_roundcube"
     fi
 fi
 ArrayUnique fqdn_array_raw[@]
@@ -586,6 +565,9 @@ code roundcube_version="$roundcube_version"
 ispconfig_version=3.2.11p2
 code ispconfig_version="$ispconfig_version"
 code ip_address="$ip_address"
+if ! grep -q -m 1 -oE '^[0-9]{1,3}(\.[0-9]{1,3}){3}$' <<< "$ip_address";then
+    error IP Address version 4 format is not valid; x
+fi
 code 'fqdn_array=('"${fqdn_array[@]}"')'
 code 'fqdn_path_array=('"${fqdn_path_array[@]}"')'
 ____
@@ -611,12 +593,6 @@ rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
     --domain="$fqdn" \
     --type=a \
     --ip-address="$ip_address" \
-    && INDENT+="    " \
-rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
-    --domain="$domain" \
-    --type=mx \
-    --hostname=@ \
-    --mail-provider="$fqdn" \
     ; [ ! $? -eq 0 ] && x
 
 for each in "${fqdn_array[@]}";do
@@ -693,8 +669,7 @@ ____
 INDENT+="    " \
 rcm-ispconfig-autoinstaller-nginx $isfast --root-sure \
     --certbot-authenticator=nginx \
-    --hostname="$hostname" \
-    --domain="$domain" \
+    --fqdn="$fqdn" \
     --ispconfig-version="$ispconfig_version" \
     --roundcube-version="$roundcube_version" \
     --phpmyadmin-version="$phpmyadmin_version" \
@@ -747,61 +722,37 @@ for each in ispconfig phpmyadmin roundcube;do
 done
 
 chapter Take a break.
-_ Lets play with Mailbox.; _.
-sleepExtended 3
-____
-
-INDENT+="    " \
-rcm-ispconfig-control-manage-domain $isfast --root-sure \
-    add \
-    --domain="$domain" \
-    && INDENT+="    " \
-rcm-ispconfig-control-manage-email-mailbox $isfast --root-sure --ispconfig-domain-exists-sure \
-    --ispconfig-soap-exists-sure \
-    --name="$MAILBOX_ADMIN" \
-    --domain="$domain" \
-    && INDENT+="    " \
-rcm-ispconfig-control-manage-email-mailbox $isfast --root-sure --ispconfig-domain-exists-sure \
-    --ispconfig-soap-exists-sure \
-    --name="$MAILBOX_SUPPORT" \
-    --domain="$domain" \
-    && INDENT+="    " \
-rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-exists-sure \
-    --ispconfig-soap-exists-sure \
-    --name="$MAILBOX_HOST" \
-    --domain="$domain" \
-    --destination-name="$MAILBOX_ADMIN" \
-    --destination-domain="$domain" \
-    && INDENT+="    " \
-rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-exists-sure \
-    --ispconfig-soap-exists-sure \
-    --name="$MAILBOX_POST" \
-    --domain="$domain" \
-    --destination-name="$MAILBOX_ADMIN" \
-    --destination-domain="$domain" \
-    && INDENT+="    " \
-rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-exists-sure \
-    --ispconfig-soap-exists-sure \
-    --name="$MAILBOX_WEB" \
-    --domain="$domain" \
-    --destination-name="$MAILBOX_ADMIN" \
-    --destination-domain="$domain" \
-    ; [ ! $? -eq 0 ] && x
-
-chapter Send Welcome email.
-code postqueue -f
-postqueue -f
-____
-
-chapter Take a break.
 _ Everything is OK, "let's" dump variables.; _.
 sleepExtended 3
 ____
 
+chapter Saving URL information.
+code mkdir -p /usr/local/share/ispconfig/
+mkdir -p /usr/local/share/ispconfig/
+cat << EOF > /usr/local/share/ispconfig/website
+URL_ISPCONFIG=$url_ispconfig
+EOF
+fileMustExists /usr/local/share/ispconfig/website
+if [ "$install_phpmyadmin" == 1 ];then
+    code mkdir -p /usr/local/share/phpmyadmin/
+    mkdir -p /usr/local/share/phpmyadmin/
+    cat << EOF > /usr/local/share/phpmyadmin/website
+URL_PHPMYADMIN=$url_phpmyadmin
+EOF
+    fileMustExists /usr/local/share/phpmyadmin/website
+fi
+if [ "$install_roundcube" == 1 ];then
+    code mkdir -p /usr/local/share/roundcube/
+    mkdir -p /usr/local/share/roundcube/
+    cat << EOF > /usr/local/share/roundcube/website
+URL_ROUNDCUBE=$url_roundcube
+EOF
+    fileMustExists /usr/local/share/roundcube/website
+fi
+____
+
 INDENT+="    " \
-rcm-ispconfig-setup-dump-variables $isfast --root-sure \
-    --domain="$domain" \
-    --ip-address="$ip_address" \
+rcm-ispconfig-setup-dump-variables-init $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
 
 chapter Finish
