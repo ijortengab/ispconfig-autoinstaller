@@ -8,17 +8,15 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --certbot-authenticator=*) certbot_authenticator="${1#*=}"; shift ;;
         --certbot-authenticator) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then certbot_authenticator="$2"; shift; fi; shift ;;
-        --domain=*) domain="${1#*=}"; shift ;;
-        --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
-        --hostname=*) hostname="${1#*=}"; shift ;;
-        --hostname) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then hostname="$2"; shift; fi; shift ;;
+        --fqdn=*) fqdn="${1#*=}"; shift ;;
+        --fqdn) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fqdn="$2"; shift; fi; shift ;;
         --ispconfig-version=*) ispconfig_version="${1#*=}"; shift ;;
         --ispconfig-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then ispconfig_version="$2"; shift; fi; shift ;;
-        --php-version=*) php_version="${1#*=}"; shift ;;
-        --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
         --phpmyadmin-version=*) phpmyadmin_version="${1#*=}"; shift ;;
         --phpmyadmin-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then phpmyadmin_version="$2"; shift; fi; shift ;;
+        --php-version=*) php_version="${1#*=}"; shift ;;
+        --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
         --roundcube-version=*) roundcube_version="${1#*=}"; shift ;;
         --roundcube-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then roundcube_version="$2"; shift; fi; shift ;;
@@ -61,10 +59,8 @@ printHelp() {
 Usage: rcm-ispconfig-autoinstaller-nginx [options]
 
 Options:
-   --hostname *
-        Hostname of the server.
-   --domain *
-        Domain name of the server.
+   --fqdn *
+        Fully Qualified Domain Name of this server, for example: \`server1.example.org\`.
    --php-version *
         Set the version of PHP FPM.
    --ispconfig-version *
@@ -455,16 +451,10 @@ if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
 code 'php_version="'$php_version'"'
-if [ -z "$domain" ];then
-    error "Argument --domain required."; x
+if [ -z "$fqdn" ];then
+    error "Argument --fqdn required."; x
 fi
-code 'domain="'$domain'"'
-if [ -z "$hostname" ];then
-    error "Argument --hostname required."; x
-fi
-code 'hostname="'$hostname'"'
-fqdn_project="${hostname}.${domain}"
-code fqdn_project="$fqdn_project"
+code 'fqdn="'$fqdn'"'
 case "$certbot_authenticator" in
     digitalocean) ;;
     nginx) ;;
@@ -490,7 +480,7 @@ rcm-postfix-setup-ispconfig $isfast --root-sure \
     && INDENT+="    " \
 rcm-ispconfig-setup-smtpd-certificate $isfast --root-sure \
     --certbot-authenticator="$certbot_authenticator" \
-    --domain="$domain" \
+    --fqdn="$fqdn" \
     && INDENT+="    " \
 rcm-phpmyadmin-autoinstaller-nginx $isfast --root-sure \
     --phpmyadmin-version="$phpmyadmin_version" \
@@ -670,7 +660,7 @@ EOF
         'configure_apache' => 'n',
         'configure_nginx' => 'n',
         'configure_firewall' => 'n',
-        'hostname' => '$fqdn_project',
+        'hostname' => '$fqdn',
         'mysql_root_password' => '$mysql_root_passwd',
         'http_server' => 'nginx',
         'ispconfig_use_ssl' => 'n',
@@ -697,7 +687,7 @@ EOF
             -e "s,^configure_apache=.*$,configure_apache=n," \
             -e "s,^configure_nginx=.*$,configure_nginx=n," \
             -e "s,^configure_firewall=.*$,configure_firewall=n," \
-            -e "s,^hostname=.*$,hostname=${fqdn_project}," \
+            -e "s,^hostname=.*$,hostname=${fqdn}," \
             -e "s,^mysql_root_password=.*$,mysql_root_password=${mysql_root_passwd}," \
             -e "s,^http_server=.*$,http_server=nginx," \
             -e "s,^ispconfig_use_ssl=.*$,ispconfig_use_ssl=n," \
@@ -790,25 +780,25 @@ rcm-nginx-virtual-host-autocreate-php $isfast --root-sure \
     --url-port="$url_port" \
     ; [ ! $? -eq 0 ] && x
 
-chapter Mengecek subdomain '`'$ISPCONFIG_FQDN_LOCALHOST'`'.
+chapter Mengecek address host local '`'$ISPCONFIG_FQDN_LOCALHOST'`'.
 notfound=
 string="$ISPCONFIG_FQDN_LOCALHOST"
 string_quoted=$(sed "s/\./\\\./g" <<< "$string")
 if grep -q -E "^\s*127\.0\.0\.1\s+${string_quoted}" /etc/hosts;then
-    __ Subdomain terdapat pada local DNS resolver '`'/etc/hosts'`'.
+    __ Address Host local terdapat pada local DNS resolver '`'/etc/hosts'`'.
 else
-    __ Subdomain tidak terdapat pada local DNS resolver '`'/etc/hosts'`'.
+    __ Address Host local tidak terdapat pada local DNS resolver '`'/etc/hosts'`'.
     notfound=1
 fi
 ____
 
 if [ -n "$notfound" ];then
-    chapter Menambahkan subdomain '`'$ISPCONFIG_FQDN_LOCALHOST'`'.
+    chapter Menambahkan host '`'$ISPCONFIG_FQDN_LOCALHOST'`'.
     echo "127.0.0.1"$'\t'"${ISPCONFIG_FQDN_LOCALHOST}" >> /etc/hosts
     if grep -q -E "^\s*127\.0\.0\.1\s+${string_quoted}" /etc/hosts;then
-        __; green Subdomain terdapat pada local DNS resolver '`'/etc/hosts'`'.; _.
+        __; green Address Host local terdapat pada local DNS resolver '`'/etc/hosts'`'.; _.
     else
-        __; red Subdomain tidak terdapat pada local DNS resolver '`'/etc/hosts'`'.; x
+        __; red Address Host local tidak terdapat pada local DNS resolver '`'/etc/hosts'`'.; x
     fi
     ____
 fi
@@ -895,8 +885,7 @@ exit 0
 # --root-sure
 # )
 # VALUE=(
-# --hostname
-# --domain
+# --fqdn
 # --ispconfig-version
 # --php-version
 # --phpmyadmin-version
