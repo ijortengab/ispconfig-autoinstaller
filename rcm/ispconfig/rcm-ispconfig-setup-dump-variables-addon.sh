@@ -50,7 +50,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-ispconfig-setup-dump-variables-init [options]
+rcm-ispconfig-setup-dump-variables-addon [options]
 
 Options:
 
@@ -91,7 +91,7 @@ EOF
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Title.
-title rcm-ispconfig-setup-dump-variables-init
+title rcm-ispconfig-setup-dump-variables-addon
 ____
 
 if [ -z "$root_sure" ];then
@@ -246,6 +246,12 @@ if [ -n "$domain" ];then
 else
     _ '   'password: ...; _.
 fi
+____
+
+chapter DNS MX Record for $domain
+mail_provider="$current_fqdn"
+_ ' - 'hostname:; _.
+_ '   'value'   ':' '; magenta "$mail_provider"; _.
 ____
 
 chapter DNS TXT Record for SPF in $domain
