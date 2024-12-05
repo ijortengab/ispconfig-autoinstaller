@@ -60,6 +60,11 @@ while read file; do
     sed -i "$number_below"'s/.*/'"    echo '$version'"'/' "$file"
 done <<< `find * -mindepth 1 -type f -name '*.sh'`
 while read file; do
+    number=$(grep -n -F "$string" "$file" | head -1 | cut -d: -f1)
+    number_below=$((number + 1))
+    sed -i "$number_below"'s/.*/'"    echo '$version';"'/' "$file"
+done <<< `find * -mindepth 1 -type f -name '*.php'`
+while read file; do
     case "$file" in
         rcm\.sh)
             number=$(grep -n -F "$string" "$file" | head -1 | cut -d: -f1)
