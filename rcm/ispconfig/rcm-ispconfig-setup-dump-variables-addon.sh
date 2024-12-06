@@ -49,7 +49,7 @@ printHelp() {
     _ 'Variation '; yellow Dump Variables; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 rcm-ispconfig-setup-dump-variables-addon [options]
 
 Options:
