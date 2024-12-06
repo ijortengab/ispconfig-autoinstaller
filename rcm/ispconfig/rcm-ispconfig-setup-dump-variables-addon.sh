@@ -83,6 +83,13 @@ Environment Variables:
         Default to users
    DKIM_SELECTOR
         Default to default
+
+Dependency:
+   rcm-ispconfig-control-manage-domain:`printVersion`
+   php
+
+Download:
+   [rcm-ispconfig-control-manage-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-domain.sh)
 EOF
 }
 
@@ -232,8 +239,7 @@ _ ' - 'username: $MAILBOX_ADMIN; _.
 if [ -n "$domain" ];then
     user="$MAILBOX_ADMIN"
     host="$domain"
-    . /usr/local/share/credential/mailbox/$host/$user
-    _ '   'password: $MAILBOX_USER_PASSWORD; _.
+    _ '   'password: $(</usr/local/share/credential/mailbox/$host/$user); _.
 else
     _ '   'password: ...; _.
 fi
@@ -241,8 +247,7 @@ _ ' - 'username: $MAILBOX_SUPPORT; _.
 if [ -n "$domain" ];then
     user="$MAILBOX_SUPPORT"
     host="$domain"
-    . /usr/local/share/credential/mailbox/$host/$user
-    _ '   'password: $MAILBOX_USER_PASSWORD; _.
+    _ '   'password: $(</usr/local/share/credential/mailbox/$host/$user); _.
 else
     _ '   'password: ...; _.
 fi
@@ -261,7 +266,7 @@ _ '   'value'   ':' '; magenta "v=spf1 a:${mail_provider} ~all"; _.
 ____
 
 chapter DNS TXT Record for DKIM in $domain
-dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain --fast --root-sure --ispconfig-soap-exists-sure --domain="$domain" get_dns_record 2>/dev/null)
+dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain --fast --root-sure --ispconfig-soap-exists-sure --domain="$domain" get-dns-record 2>/dev/null)
 _ ' - 'hostname:' '; magenta "${DKIM_SELECTOR}._domainkey"; _.
 _ '   'value'   ':' '; magenta "v=DKIM1; t=s; p=${dns_record}"; _.
 ____
