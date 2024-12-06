@@ -186,7 +186,7 @@ websiteCredentialIspconfig() {
         . /usr/local/share/ispconfig/credential/website
         ispconfig_web_user_password=$ISPCONFIG_WEB_USER_PASSWORD
     else
-        ispconfig_web_user_password=$(pwgen 6 -1vA0B)
+        ispconfig_web_user_password=$(pwgen 9 -1vA0B)
         mkdir -p /usr/local/share/ispconfig/credential
         cat << EOF > /usr/local/share/ispconfig/credential/website
 ISPCONFIG_WEB_USER_PASSWORD=$ispconfig_web_user_password
