@@ -311,6 +311,8 @@ if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
 code 'domain="'$domain'"'
+current_fqdn=$(hostname -f 2>/dev/null)
+code 'current_fqdn="'$current_fqdn'"'
 vercomp `stat --version | head -1 | grep -o -E '\S+$'` 8.31
 if [[ $? -lt 2 ]];then
     stat_cached=' --cached=never'
@@ -319,30 +321,32 @@ else
 fi
 ____
 
-current_fqdn=$(hostname -f 2>/dev/null)
+chapter DNS MX Record for $domain
 mail_provider="$current_fqdn"
-data="v=spf1 a:${mail_provider} ~all"
-data_spf="$data"
+_ ' - 'hostname:; _.
+_ '   'value'   ':' '; magenta "$mail_provider"; _.
+____
+
+mail_provider="$current_fqdn"
+data_spf="v=spf1 a:${mail_provider} ~all"
 chapter DNS TXT Record for SPF in $domain
 _ ' - 'hostname:; _.
-_ '   'value'   ':' '; magenta "$data"; _.
+_ '   'value'   ':' '; magenta "$data_spf"; _.
 ____
 
 dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain --fast --root-sure --ispconfig-soap-exists-sure --domain="$domain" get_dns_record 2>/dev/null)
-data="v=DKIM1; t=s; p=${dns_record}"
-data_dkim="$data"
+data_dkim="v=DKIM1; t=s; p=${dns_record}"
 chapter DNS TXT Record for DKIM in $domain
 _ ' - 'hostname:' '; magenta "${DKIM_SELECTOR}._domainkey"; _.
-_ '   'value'   ':' '; magenta "$data"; _.
+_ '   'value'   ':' '; magenta "$data_dkim"; _.
 ____
 
 email="${MAILBOX_POST}@${domain}"
-data="v=DMARC1; p=none; rua=${email}"
-data_dmarc="$data"
+data_dmarc="v=DMARC1; p=none; rua=${email}"
 chapter DNS TXT Record for DMARC in $domain
 email="${MAILBOX_POST}@${domain}"
 _ ' - 'hostname:' '; magenta "_dmarc"; _.
-_ '   'value'   ':' '; magenta "$data"; _.
+_ '   'value'   ':' '; magenta "$data_dmarc"; _.
 ____
 
 chapter Watching Begin
@@ -354,6 +358,14 @@ ____
 
 until [ -n "$finish" ];do
     _finish=""
+
+    INDENT+="    " \
+    rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+        --domain="$domain" \
+        --type=mx \
+        --hostname=@ \
+        --mail-provider="$current_fqdn" \
+    ; [ $? -eq 0 ] && _finish+="1"
 
     INDENT+="    " \
     rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
@@ -382,9 +394,9 @@ until [ -n "$finish" ];do
         --value-summarize="DMARC" \
     ; [ $? -eq 0 ] && _finish+=1
 
-    if [[ "$_finish" == 111 ]];then
+    if [[ "$_finish" == 1111 ]];then
         chapter Watching End
-        success ALL of DNS Records already exist '(TXT)'.
+        success ALL of DNS Records already exist '(MX, TXT)'.
         _ End: $(date +%Y%m%d-%H%M%S); _.
         Rcm_END=$SECONDS
         duration=$(( Rcm_END - Rcm_BEGIN ))
@@ -394,7 +406,33 @@ until [ -n "$finish" ];do
         finish=1
         ____
     else
-        error All of DNS Record of '`'$domain'`' '(TXT) is not exists.'.
+
+        chapter DNS MX Record for $domain
+        _ ' - 'hostname:; _.
+        _ '   'value'   ':' '; magenta "$mail_provider"; _.
+        ____
+
+        chapter DNS TXT Record for SPF in $domain
+        _ ' - 'hostname:; _.
+        _ '   'value'   ':' '; magenta "$data_spf"; _.
+        ____
+
+        chapter DNS TXT Record for DKIM in $domain
+        _ ' - 'hostname:' '; magenta "${DKIM_SELECTOR}._domainkey"; _.
+        _ '   'value'   ':' '; magenta "$data_dkim"; _.
+        ____
+
+        chapter DNS TXT Record for DMARC in $domain
+        email="${MAILBOX_POST}@${domain}"
+        _ ' - 'hostname:' '; magenta "_dmarc"; _.
+        _ '   'value'   ':' '; magenta "$data_dmarc"; _.
+        ____
+
+        if [ -z "$_finish" ];then
+            error All of DNS Record of '`'$domain'`' '(MX, TXT) is not exists.'
+        else
+            error DNS Record of '`'$domain'`' '(MX, TXT) is not complete.'
+        fi
         _ We are still waiting.; _.
         sleepExtended 60
     fi
