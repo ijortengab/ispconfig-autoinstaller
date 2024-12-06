@@ -433,6 +433,10 @@ fi
 ____
 
 chapter Membuat welcome mail.
+php_fpm_user=ispconfig
+code 'php_fpm_user="'$php_fpm_user'"'
+prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
+code 'prefix="'$prefix'"'
 code mkdir -p '/usr/local/share/ispconfig/mail'
 mkdir -p '/usr/local/share/ispconfig/mail'
 source="/usr/local/share/ispconfig/mail/welcome_email_${domain}.html"
