@@ -265,7 +265,7 @@ if [[ $type == dmarc ]];then
 fi
 if [[ $type == dkim ]];then
     if [ -n "$dns_record_auto" ];then
-        dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain --fast --root-sure --ispconfig-soap-exists-sure --domain="$domain" get_dns_record 2>/dev/null)
+        dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain --fast --root-sure --ispconfig-soap-exists-sure --domain="$domain" get-dns-record 2>/dev/null)
     fi
     if [ -z "$dns_record" ];then
         __; red DNS record not found.; x
