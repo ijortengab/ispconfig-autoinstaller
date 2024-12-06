@@ -18,6 +18,13 @@ while [[ $# -gt 0 ]]; do
         --name=*) name="${1#*=}"; shift ;;
         --name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then name="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
+        --) shift
+            while [[ $# -gt 0 ]]; do
+                case "$1" in
+                    *) _new_arguments+=("$1"); shift ;;
+                esac
+            done
+            ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -65,6 +72,8 @@ Options:
         The destination name of email alias.
    --destination-domain
         The destination domain of email alias.
+   --
+        Every arguments after double dash will pass to \`rcm-php-ispconfig soap mail_alias_add\` command.
 
 Global Options:
    --fast
@@ -90,11 +99,13 @@ Environment Variables:
 
 Dependency:
    rcm-ispconfig-control-manage-domain:`printVersion`
+   rcm-php-ispconfig:`printVersion`
    php
    mysql
 
 Download:
    [rcm-ispconfig-control-manage-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-domain.sh)
+   [rcm-php-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/php/rcm-php-ispconfig.php)
 EOF
 }
 
@@ -106,6 +117,11 @@ EOF
 title rcm-ispconfig-control-manage-email-alias
 ____
 
+# Dependency.
+while IFS= read -r line; do
+    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
+done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
+
 if [ -z "$root_sure" ];then
     chapter Mengecek akses root.
     if [[ "$EUID" -ne 0 ]]; then
@@ -116,97 +132,13 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-# Dependency.
-while IFS= read -r line; do
-    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
-done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
-
 # Functions.
-remoteUserCredentialIspconfig() {
-    local ISPCONFIG_REMOTE_USER_PASSWORD ISPCONFIG_REMOTE_USER_NAME
-    local user="$1"
-    local path=/usr/local/share/ispconfig/credential/remote/$user
-    isFileExists "$path"
-    [ -n "$notfound" ] && fileMustExists "$path"
-    # Populate.
-    . "$path"
-    ispconfig_remote_user_name=$ISPCONFIG_REMOTE_USER_NAME
-    ispconfig_remote_user_password=$ISPCONFIG_REMOTE_USER_PASSWORD
-}
 populateDatabaseUserPassword() {
     local path="${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/$1"
     local DB_USER DB_USER_PASSWORD
     if [ -f "$path" ];then
         . "$path"
         db_user_password=$DB_USER_PASSWORD
-    fi
-}
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
-isFileExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
-}
-getMailUserIdIspconfigByEmail() {
-    local email="$1"@"$2"
-    __ Execute SOAP '`'mail_user_get'`'.
-    arguments="$(php -r "echo serialize([
-        'session_id' => null,
-        'params' => [
-            'email' => '${email}',
-        ],
-    ]);")"
-    stdout=$(php -r "$php" mail_user_get "$options" "$credentials" "$arguments")
-    __ Standard Output.
-    magenta "$stdout"; _.
-    if php -r "$php" is_empty <<< "$stdout";then
-        return
-    else
-        echo `php -r "$php" get mailuser_id <<< "$stdout"`
-    fi
-}
-isEmailIspconfigExist() {
-    mailuser_id=$(getMailUserIdIspconfigByEmail "$1" "$2")
-    if [ -n "$mailuser_id" ];then
-        return 0
-    fi
-    return 1
-}
-mailboxCredential() {
-    local host="$1"
-    local user="$2"
-    if [ -f /usr/local/share/credential/mailbox/$host/$user ];then
-        local MAILBOX_USER_PASSWORD
-        . /usr/local/share/credential/mailbox/$host/$user
-        mailbox_user_password=$MAILBOX_USER_PASSWORD
-    else
-        mailbox_user_password=$(pwgen 9 -1vA0B)
-        mkdir -p /usr/local/share/credential/mailbox/$host/
-        cat << EOF > /usr/local/share/credential/mailbox/$host/$user
-MAILBOX_USER_PASSWORD=$mailbox_user_password
-EOF
-        chmod 0500 /usr/local/share/credential
-        chmod 0500 /usr/local/share/credential/mailbox
-        chmod 0500 /usr/local/share/credential/mailbox/$host
-        chmod 0400 /usr/local/share/credential/mailbox/$host/$user
     fi
 }
 getUserIdRoundcubeByUsername() {
@@ -379,56 +311,61 @@ insertIdentitiesRoundcube() {
     fi
     return 1
 }
-getForwardingIdIspconfigByEmailAlias() {
-    local source="$1"
-    local destination="$2"
-    __ Execute SOAP '`'mail_alias_get'`'.
-    arguments="$(php -r "echo serialize([
-        'session_id' => null,
-        'params' => [
-            'source' => '${source}',
-            'destination' => '${destination}',
-        ],
-    ]);")"
-    stdout=$(php -r "$php" mail_alias_get "$options" "$credentials" "$arguments")
-    __ Standard Output.
-    magenta "$stdout"; _.
-    if php -r "$php" is_empty <<< "$stdout";then
-        return
+isMailboxExists() {
+    # global $user, $host, $tempfile
+    # global modified $mailuser_id
+    [ -n "$user" ] || { error Variable user is required; x; }
+    [ -n "$host" ] || { error Variable host is required; x; }
+    [ -n "$tempfile" ] || { error Variable tempfile is required; x; }
+    local email="${user}@${host}"
+    code rcm-php-ispconfig soap --empty-array-is-false mail_user_get --email='"'$email'"'
+    rcm-php-ispconfig soap --empty-array-is-false mail_user_get --email="$email" 2>&1 &> "$tempfile"
+    local exit_code=$?
+    if [ $exit_code -eq 0 ];then
+        mailuser_id=$(rcm-php-ispconfig echo [0][mailuser_id] < "$tempfile")
+        __; magenta mailuser_id=$mailuser_id; _.
     else
-        echo `php -r "$php" get forwarding_id <<< "$stdout"`
+        while IFS= read line; do e "$line"; _.; done < "$tempfile"
     fi
+    return $exit_code
+}
+isExists() {
+    # global $destination, $source, $tempfile
+    # global modified $forwarding_id
+    [ -n "$source" ] || { error Variable source is required; x; }
+    [ -n "$destination" ] || { error Variable destination is required; x; }
+    [ -n "$tempfile" ] || { error Variable tempfile is required; x; }
+    code rcm-php-ispconfig soap --empty-array-is-false mail_alias_get --source='"'$source'"' --destination='"'$destination'"'
+    rcm-php-ispconfig soap --empty-array-is-false mail_alias_get --source="$source" --destination="$destination" 2>&1 &> "$tempfile"
+    local exit_code=$?
+    if [ $exit_code -eq 0 ];then
+        forwarding_id=$(rcm-php-ispconfig echo [0][forwarding_id] < "$tempfile")
+        __; magenta forwarding_id=$forwarding_id; _.
+    else
+        while IFS= read line; do e "$line"; _.; done < "$tempfile"
+    fi
+    return $exit_code
+}
+create() {
+    # global $destination, $source, $tempfile
+    # global modified $forwarding_id
+    [ -n "$source" ] || { error Variable source is required; x; }
+    [ -n "$destination" ] || { error Variable destination is required; x; }
+    [ -n "$tempfile" ] || { error Variable tempfile is required; x; }
 
-}
-isEmailAliasIspconfigExist() {
-    local source="$1"
-    local destination="$2"
-    forwarding_id=$(getForwardingIdIspconfigByEmailAlias "$source" "$destination")
-    if [ -n "$forwarding_id" ];then
-        return 0
+    ____; client_id=$(INDENT+="    " rcm-ispconfig-control-manage-client $isfast get-client-id --username "$domain")
+    code 'client_id="'$client_id'"'
+    [ -n "$client_id" ] || { client_id=0; code 'client_id="'$client_id'"'; }
+    code rcm-php-ispconfig soap mail_alias_add '"'$client_id'"' --server-id='"'1'"' --source='"'$source'"' --destination='"'$destination'"' "$@"
+    rcm-php-ispconfig soap mail_alias_add "$client_id" --server-id="1" --source="$source" --destination="$destination" "$@" 2>&1 &> "$tempfile"
+    local exit_code=$?
+    if [ $exit_code -eq 0 ];then
+        forwarding_id=$(cat "$tempfile" | rcm-php-ispconfig echo)
+        __; magenta forwarding_id=$forwarding_id; _.
+    else
+        while IFS= read line; do e "$line"; _.; done < "$tempfile"
     fi
-    return 1
-}
-insertEmailAliasIspconfig() {
-    local source="$1"
-    local destination="$2"
-    __ Execute SOAP '`'mail_alias_add'`'.
-    arguments="$(php -r "echo serialize([
-        'session_id' => null,
-        'client_id' => 0,
-        'params' => [
-            'server_id' => '1',
-            'source' => '$source',
-            'destination' => '$destination',
-            'type' => 'alias',
-            'active' => 'y',
-        ],
-    ]);")"
-    forwarding_id=$(php -r "$php" mail_alias_add "$options" "$credentials" "$arguments")
-    if [ -n "$forwarding_id" ];then
-        return 0
-    fi
-    return 1
+    return $exit_code
 }
 
 # Require, validate, and populate value.
@@ -462,153 +399,31 @@ code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'
 code 'ispconfig_soap_exists_sure="'$ispconfig_soap_exists_sure'"'
 mariadb_project_name=roundcube
 code 'mariadb_project_name="'$mariadb_project_name'"'
+tempfile=
 ____
 
 if [ -z "$ispconfig_domain_exists_sure" ];then
     INDENT+="    " \
     rcm-ispconfig-control-manage-domain $isfast --root-sure \
-        isset \
         --domain="$domain" \
-        ; [ $? -eq 0 ] && ispconfig_domain_exists_sure=1
-
-    if [ -n "$ispconfig_domain_exists_sure" ];then
-        __; green Domain is exists.; _.
-    else
-        __; red Domain is not exists.; x
-    fi
+        ; [ ! $? -eq 0 ] && x
 fi
 
-php=$(cat <<'EOF'
-$mode = $_SERVER['argv'][1];
-switch ($mode) {
-    case 'is_empty':
-    case 'get':
-        $stdin = '';
-        while (FALSE !== ($line = fgets(STDIN))) {
-           $stdin .= $line;
-        }
-        $result = @unserialize($stdin);
-        if ($result === false) {
-            echo('Unserialize failed: '. $stdin.PHP_EOL);
-            exit(1);
-        }
-        break;
-    case 'login':
-    case 'mail_user_get':
-    case 'mail_user_add':
-    case 'mail_alias_get':
-    case 'mail_alias_add':
-        $options = unserialize($_SERVER['argv'][2]);
-        // Populate variable $username, $password.
-        $credentials = unserialize($_SERVER['argv'][3]);
-        extract($credentials);
-        break;
-}
-switch ($mode) {
-    case 'get':
-        $key = $_SERVER['argv'][2];
-        $result = array_shift($result);
-        if (array_key_exists($key, $result)) {
-            echo $result[$key];
-        }
-        break;
-    case 'is_empty':
-        empty($result) ? exit(0) : exit(1);
-        break;
-    case 'login':
-        $client = new SoapClient(null, $options);
-        try {
-            if($session_id = $client->login($username, $password)) {
-                echo 'Logged successfull. Session ID:'.$session_id.PHP_EOL;
-            }
-            if($client->logout($session_id)) {
-                echo "Logged out.".PHP_EOL;
-            }
-            exit(0);
-        } catch (SoapFault $e) {
-            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
-            exit(1);
-        }
-        break;
-    case 'mail_user_add':
-        // Populate variable $session_id, $client_id, $params.
-        $arguments = unserialize($_SERVER['argv'][4]);
-        extract($arguments);
-        $client = new SoapClient(null, $options);
-        try {
-            if($session_id = $client->login($username, $password)) {
-            }
-            //* Set the function parameters.
-            $mailuser_id = $client->mail_user_add($session_id, $client_id, $params);
-            echo $mailuser_id;
-            if($client->logout($session_id)) {
-            }
-        } catch (SoapFault $e) {
-            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
-            exit(1);
-        }
-        break;
-    case 'mail_user_get':
-        // Populate variable $session_id, $domain.
-        $arguments = unserialize($_SERVER['argv'][4]);
-        extract($arguments);
-        $client = new SoapClient(null, $options);
-        try {
-            if($session_id = $client->login($username, $password)) {
-            }
-            //* Set the function parameters.
-            $record_record = $client->mail_user_get($session_id, $params);
-            echo serialize($record_record);
-            if($client->logout($session_id)) {
-            }
-        } catch (SoapFault $e) {
-            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
-            exit(1);
-        }
-        break;
-    case 'mail_alias_get':
-        // Populate variable $session_id, $domain.
-        $arguments = unserialize($_SERVER['argv'][4]);
-        extract($arguments);
-        $client = new SoapClient(null, $options);
-        try {
-            if($session_id = $client->login($username, $password)) {
-            }
-            //* Set the function parameters.
-            $record_record = $client->mail_alias_get($session_id, $params);
-            echo serialize($record_record);
-            if($client->logout($session_id)) {
-            }
-        } catch (SoapFault $e) {
-            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
-            exit(1);
-        }
-        break;
-    case 'mail_alias_add':
-        // Populate variable $session_id, $client_id, $params.
-        $arguments = unserialize($_SERVER['argv'][4]);
-        extract($arguments);
-        $client = new SoapClient(null, $options);
-        try {
-            if($session_id = $client->login($username, $password)) {
-            }
-            //* Set the function parameters.
-            $forwarding_id = $client->mail_alias_add($session_id, $client_id, $params);
-            echo $forwarding_id;
-            if($client->logout($session_id)) {
-            }
-        } catch (SoapFault $e) {
-            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
-            exit(1);
-        }
-        break;
-    default:
-        fwrite(STDERR, 'Unknown mode.'.PHP_EOL);
-        exit(1);
-        break;
-}
-EOF
-)
+if [ -z "$ispconfig_soap_exists_sure" ];then
+    chapter Test koneksi SOAP.
+    code rcm-php-ispconfig soap login
+    if [ -z "$tempfile" ];then
+        tempfile=$(mktemp -p /dev/shm -t rcm-ispconfig-control-manage-email-mailbox.XXXXXX)
+    fi
+    if rcm-php-ispconfig soap login 2> "$tempfile";then
+        while IFS= read line; do e "$line"; _.; done < "$tempfile"
+        __ Login berhasil.
+    else
+        rm "$tempfile"
+        error Login gagal; x
+    fi
+    ____
+fi
 
 chapter Populate variable.
 db_name="$mariadb_project_name"
@@ -617,66 +432,43 @@ code 'db_name="'$db_name'"'
 code 'db_user="'$db_user'"'
 populateDatabaseUserPassword "$db_user"
 code 'db_user_password="'$db_user_password'"'
-remoteUserCredentialIspconfig $ISPCONFIG_REMOTE_USER_ROOT
-if [[ -z "$ispconfig_remote_user_name" || -z "$ispconfig_remote_user_password" ]];then
-    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/remote/$ISPCONFIG_REMOTE_USER_ROOT'`'.; x
-else
-    code ispconfig_remote_user_name="$ispconfig_remote_user_name"
-    code ispconfig_remote_user_password="$ispconfig_remote_user_password"
-fi
-options="$(php -r "echo serialize([
-    'location' => '"http://${ISPCONFIG_FQDN_LOCALHOST}/remote/index.php"',
-    'uri' => '"http://${ISPCONFIG_FQDN_LOCALHOST}/remote/"',
-    'trace' => 1,
-    'exceptions' => 1,
-]);")"
-credentials="$(php -r "echo serialize([
-    'username' => '"$ispconfig_remote_user_name"',
-    'password' => '"$ispconfig_remote_user_password"',
-]);")"
 ____
 
-if [ -z "$ispconfig_soap_exists_sure" ];then
-    chapter Test koneksi SOAP.
-    if php -r "$php" login "$options" "$credentials";then
-        __ Login berhasil.
-    else
-        error Login gagal; x
-    fi
-    ____
+if [ -z "$tempfile" ];then
+    tempfile=$(mktemp -p /dev/shm -t rcm-ispconfig-control-manage-email-mailbox.XXXXXX)
 fi
 
 user="$destination_name"
 host="$destination_domain"
-chapter Mengecek mailbox destination "$user"@"$host"
-if isEmailIspconfigExist "$user" "$host";then
-    __ Email Destination "$user"@"$host" found.
+email="${user}@${host}"
+chapter Mengecek mailbox destination '`'$email'`'
+if isMailboxExists;then
+    __ Email Destination '`'$email'`' found.
 else
-    __; red Email Destination "$user"@"$host" not found.; x
+    __; red Email Destination '`'$email'`' not found.; x
 fi
 ____
 
 user="$name"
 host="$domain"
-chapter Mengecek mailbox "$user"@"$host"
-if isEmailIspconfigExist "$user" "$host";then
-    __; red Email Mailbox "$user"@"$host" already exists.; x
+email="${user}@${host}"
+chapter Mengecek mailbox '`'$email'`'
+if isMailboxExists;then
+    __; red Email Mailbox '`'$email'`' already exists.; x
 else
-    __ Email Mailbox "$user"@"$host" not found.
+    __ Email Mailbox '`'$email'`' not found.
 fi
 ____
 
 destination="$destination_name"@"$destination_domain"
 source="$name"@"$domain"
 chapter Mengecek alias of "$source"
-if isEmailAliasIspconfigExist "$source" "$destination";then
+if isExists;then
     __ Email "$source" alias of "$destination" already exists.
-    __; magenta forwarding_id=$forwarding_id; _.
-elif insertEmailAliasIspconfig "$source" "$destination";then
-    __; green Email "$source" alias of "$destination" created.; _.
-    __; magenta forwarding_id=$forwarding_id; _.
+elif create "$@";then
+    success Email "$source" alias of "$destination" created.
 else
-    __; red Email "$source" alias of "$destination" failed to create.; x
+    error Email "$source" alias of "$destination" failed to create.; x
 fi
 ____
 
@@ -721,10 +513,11 @@ else
 fi
 ____
 
+[ -n "$tempfile" ] && rm "$tempfile"
+
 exit 0
 
 # parse-options.sh \
-# --without-end-options-double-dash \
 # --compact \
 # --clean \
 # --no-hash-bang \
