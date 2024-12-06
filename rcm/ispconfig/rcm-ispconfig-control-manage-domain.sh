@@ -9,6 +9,7 @@ while [[ $# -gt 0 ]]; do
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
+        --get-domain-id) get_domain_id=1; shift ;;
         --ispconfig-soap-exists-sure) ispconfig_soap_exists_sure=1; shift ;;
         --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;
@@ -17,6 +18,13 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
+
+# Command.
+if [ -n "$1" ];then
+    case "$1" in
+        get-dns-record|get-domain-id) command="$1"; shift ;;
+    esac
+fi
 
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -37,15 +45,6 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2 || echo -n  >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
-# Command.
-command="$1"; shift
-if [ -n "$command" ];then
-    case "$command" in
-        add|delete|isset|get_dns_record) ;;
-        *) echo -e "\e[91m""Command ${command} is unknown.""\e[39m"; exit 1
-    esac
-fi
-
 # Functions.
 printVersion() {
     echo '0.9.6'
@@ -55,10 +54,10 @@ printHelp() {
     _ 'Variation '; yellow Manage Domain; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-ispconfig-control-manage-domain [command] [options]
 
-Available commands: add, delete, isset, get_dns_record.
+Available commands: get-dns-record.
 
 Options:
    --domain
@@ -85,7 +84,14 @@ Environment Variables:
         Default to ispconfig.localhost
 
 Dependency:
-   php
+   rcm-ispconfig:`printVersion`
+   rcm-php-ispconfig:`printVersion`
+   rcm-ispconfig-control-manage-client:`printVersion`
+
+Download:
+   [rcm-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/rcm-ispconfig.sh)
+   [rcm-php-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/php/rcm-php-ispconfig.php)
+   [rcm-ispconfig-control-manage-client](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-client.sh)
 EOF
 }
 
@@ -93,10 +99,58 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Functions before execute command.
+command-get-dns-record() {
+    # global $domain, $tempfile
+    if [ -z "$domain" ];then
+        error "Argument --domain required."; x
+    fi
+    local tempfile=$(mktemp -p /dev/shm -t rcm-ispconfig-control-manage-domain.XXXXXX)
+    code rcm-php-ispconfig soap --empty-array-is-false mail_domain_get_by_domain '"'$domain'"'
+    rcm-php-ispconfig soap --empty-array-is-false mail_domain_get_by_domain "$domain" 2>&1 &> "$tempfile"
+    local exit_code=$?
+    if [ $exit_code -eq 0 ];then
+        dkim_public=$(rcm-php-ispconfig echo [0][dkim_public] < "$tempfile")
+        dns_record=$(echo "$dkim_public" | sed -e "/-----BEGIN PUBLIC KEY-----/d" -e "/-----END PUBLIC KEY-----/d" | tr '\r' ' '  | tr '\n' ' ' | sed 's/\ //g')
+        echo "$dns_record"
+    else
+        while IFS= read line; do e "$line"; _.; done < "$tempfile"
+    fi
+    rm "$tempfile"
+}
+command-get-domain-id() {
+    # global $domain, $tempfile
+    if [ -z "$domain" ];then
+        error "Argument --domain required."; x
+    fi
+    local tempfile=$(mktemp -p /dev/shm -t rcm-ispconfig-control-manage-domain.XXXXXX)
+    code rcm-php-ispconfig soap --empty-array-is-false mail_domain_get_by_domain '"'$domain'"'
+    rcm-php-ispconfig soap --empty-array-is-false mail_domain_get_by_domain "$domain" 2>&1 &> "$tempfile"
+    local exit_code=$?
+    if [ $exit_code -eq 0 ];then
+        rcm-php-ispconfig echo [0][domain_id] < "$tempfile"
+    else
+        while IFS= read line; do e "$line"; _.; done < "$tempfile"
+    fi
+    rm "$tempfile"
+}
+
+# Execute command.
+if [[ -n "$command" && $(type -t "command-${command}") == function ]];then
+    command-${command} "$@"
+    exit 0
+fi
+
 # Title.
 title rcm-ispconfig-control-manage-domain
 ____
 
+# Dependency.
+while IFS= read -r line; do
+    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
+done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
+
+# Validation and bypass validation. Validation after title.
 if [ -z "$root_sure" ];then
     chapter Mengecek akses root.
     if [[ "$EUID" -ne 0 ]]; then
@@ -107,12 +161,7 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-# Dependency.
-while IFS= read -r line; do
-    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
-done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
-
-# Functions.
+# Functions. Functions after title. For main command.
 fileMustExists() {
     # global used:
     # global modified:
@@ -276,20 +325,61 @@ vercomp() {
     done
     return 0
 }
-remoteUserCredentialIspconfig() {
-    local ISPCONFIG_REMOTE_USER_PASSWORD ISPCONFIG_REMOTE_USER_NAME
-    local user="$1"
-    local path=/usr/local/share/ispconfig/credential/remote/$user
-    isFileExists "$path"
-    [ -n "$notfound" ] && fileMustExists "$path"
-    # Populate.
-    . "$path"
-    ispconfig_remote_user_name=$ISPCONFIG_REMOTE_USER_NAME
-    ispconfig_remote_user_password=$ISPCONFIG_REMOTE_USER_PASSWORD
+isExists() {
+    # global $domain, $tempfile
+    # global modified $domain_id
+    [ -n "$domain" ] || { error Variable domain is required; x; }
+    [ -n "$tempfile" ] || { error Variable tempfile is required; x; }
+
+    code rcm-php-ispconfig soap --empty-array-is-false mail_domain_get_by_domain '"'$domain'"'
+    rcm-php-ispconfig soap --empty-array-is-false mail_domain_get_by_domain "$domain" 2>&1 &> "$tempfile"
+    local exit_code=$?
+    if [ $exit_code -eq 0 ];then
+        domain_id=$(rcm-php-ispconfig echo [0][domain_id] < "$tempfile")
+        __; magenta domain_id=$domain_id; _.
+    else
+        while IFS= read line; do e "$line"; _.; done < "$tempfile"
+    fi
+    return $exit_code
+}
+create() {
+    # global $domain, $email, $tempfile
+    # global modified $client_id
+    [ -n "$domain" ] || { error Variable domain is required; x; }
+    [ -n "$tempfile" ] || { error Variable tempfile is required; x; }
+
+    ____; client_id=$(INDENT+="    " rcm-ispconfig-control-manage-client $isfast --username "$domain" --email "${MAILBOX_ADMIN}@${domain}" --root-sure --ispconfig-soap-exists-sure --get-client-id -- --limit-mailaliasdomain=0 --limit-mailaliasdomain=0 --limit-maildomain=1 --startmodule=mail)
+    code 'client_id="'$client_id'"'
+    [ -n "$client_id" ] || { client_id=0; code 'client_id="'$client_id'"'; }
+
+    ____; json=$(INDENT+="    " rcm-ispconfig generate-key --domain "$domain")
+    dkim_private=$(php -r "echo (json_decode(fgets(STDIN)))->dkim_private;" <<< "$json")
+    dkim_public=$(php -r "echo (json_decode(fgets(STDIN)))->dkim_public;" <<< "$json")
+    dns_record=$(php -r "echo (json_decode(fgets(STDIN)))->dns_record;" <<< "$json")
+    if [ -z "$dns_record" ];then
+        __; red DNS record not found.; x
+    fi
+    # Terpaksa menggunakan echo karena common function tidak ada yg bisa handle
+    # new line.
+    e; magenta 'dkim_private="'; echo -n "$dkim_private" >&2; magenta '"'; _.
+    e; magenta 'dkim_public="'; echo -n "$dkim_public" >&2; magenta '"'; _.
+    code rcm-php-ispconfig soap mail_domain_add '"'$client_id'"' --server-id='"'1'"' --domain='"'$domain'"' --active='"'y'"' --dkim=y --dkim-selector='"'$DKIM_SELECTOR'"' --dkim-private='"'\$dkim_private'"' --dkim-public='"'\$dkim_public'"' "$@"
+    rcm-php-ispconfig soap mail_domain_add "$client_id" --server-id="1" --domain="$domain" --active="y" --dkim=y --dkim-selector="$DKIM_SELECTOR" --dkim-private="$dkim_private" --dkim-public="$dkim_public" "$@" 2>&1 &> "$tempfile"
+    local exit_code=$?
+    if [ $exit_code -eq 0 ];then
+        domain_id=$(cat "$tempfile" | rcm-php-ispconfig echo)
+        __; magenta domain_id=$domain_id; _.
+    else
+        while IFS= read line; do e "$line"; _.; done < "$tempfile"
+    fi
+    return $exit_code
 }
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
+MAILBOX_ADMIN=${MAILBOX_ADMIN:=admin}
+code 'MAILBOX_ADMIN="'$MAILBOX_ADMIN'"'
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 code 'DKIM_SELECTOR="'$DKIM_SELECTOR'"'
 MAILBOX_WEB=${MAILBOX_WEB:=webmaster}
@@ -298,13 +388,13 @@ ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
 code 'ISPCONFIG_REMOTE_USER_ROOT="'$ISPCONFIG_REMOTE_USER_ROOT'"'
 ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
-code 'command="'$command'"'
 delay=.5; [ -n "$fast" ] && unset delay
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
 code 'domain="'$domain'"'
 code 'ispconfig_soap_exists_sure="'$ispconfig_soap_exists_sure'"'
+tempfile=
 vercomp `stat --version | head -1 | grep -o -E '\S+$'` 8.31
 if [[ $? -lt 2 ]];then
     stat_cached=' --cached=never'
@@ -313,265 +403,62 @@ else
 fi
 ____
 
-php=$(cat <<'EOF'
-$mode = $_SERVER['argv'][1];
-switch ($mode) {
-    case 'is_empty':
-    case 'get':
-        $stdin = '';
-        while (FALSE !== ($line = fgets(STDIN))) {
-           $stdin .= $line;
-        }
-        $result = @unserialize($stdin);
-        if ($result === false) {
-            echo('Unserialize failed: '. $stdin.PHP_EOL);
-            exit(1);
-        }
-        break;
-    case 'login':
-    case 'mail_domain_get_by_domain':
-    case 'mail_domain_add':
-        $options = unserialize($_SERVER['argv'][2]);
-        // Populate variable $username, $password.
-        $credentials = unserialize($_SERVER['argv'][3]);
-        extract($credentials);
-        break;
-}
-switch ($mode) {
-    case 'get':
-        $key = $_SERVER['argv'][2];
-        $result = array_shift($result);
-        if (array_key_exists($key, $result)) {
-            echo $result[$key];
-        }
-        break;
-    case 'is_empty':
-        empty($result) ? exit(0) : exit(1);
-        break;
-    case 'login':
-        $client = new SoapClient(null, $options);
-        try {
-            if($session_id = $client->login($username, $password)) {
-                echo 'Logged successfull. Session ID:'.$session_id.PHP_EOL;
-            }
-            if($client->logout($session_id)) {
-                echo "Logged out.".PHP_EOL;
-            }
-            exit(0);
-        } catch (SoapFault $e) {
-            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
-            exit(1);
-        }
-        break;
-    case 'mail_domain_get_by_domain':
-        // Populate variable $session_id, $domain.
-        $arguments = unserialize($_SERVER['argv'][4]);
-        extract($arguments);
-        $client = new SoapClient(null, $options);
-        try {
-            if($session_id = $client->login($username, $password)) {
-            }
-            //* Set the function parameters.
-            $record_record = $client->mail_domain_get_by_domain($session_id, $domain);
-            echo serialize($record_record);
-            if($client->logout($session_id)) {
-            }
-        } catch (SoapFault $e) {
-            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
-            exit(1);
-        }
-        break;
-    case 'mail_domain_add':
-        // Populate variable $session_id, $client_id, $params.
-        $arguments = unserialize($_SERVER['argv'][4]);
-        extract($arguments);
-        $client = new SoapClient(null, $options);
-        try {
-            if($session_id = $client->login($username, $password)) {
-            }
-            //* Set the function parameters.
-            $domain_id = $client->mail_domain_add($session_id, $client_id, $params);
-            echo "Domain ID: ".$domain_id.PHP_EOL;
-            if($client->logout($session_id)) {
-            }
-        } catch (SoapFault $e) {
-            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
-            exit(1);
-        }
-        break;
-    case 'ajax_get_json':
-        $dirname = $_SERVER['argv'][2];
-        $file = $_SERVER['argv'][3];
-        $domain = $_SERVER['argv'][4];
-        $dkim_selector = $_SERVER['argv'][5];
-        chdir($dirname);
-        $_GET['type'] = 'create_dkim';
-        $_GET['domain_id'] = $domain;
-        $_GET['dkim_selector'] = $dkim_selector;
-        $_GET['dkim_public'] = '';
-        include_once $file;
-        break;
-    default:
-        fwrite(STDERR, 'Unknown mode.'.PHP_EOL);
-        exit(1);
-        break;
-}
-EOF
-)
-
-chapter Populate variable.
-remoteUserCredentialIspconfig $ISPCONFIG_REMOTE_USER_ROOT
-if [[ -z "$ispconfig_remote_user_name" || -z "$ispconfig_remote_user_password" ]];then
-    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/remote/$ISPCONFIG_REMOTE_USER_ROOT'`'.; x
-else
-    code ispconfig_remote_user_name="$ispconfig_remote_user_name"
-    code ispconfig_remote_user_password="$ispconfig_remote_user_password"
-fi
-options="$(php -r "echo serialize([
-    'location' => '"http://${ISPCONFIG_FQDN_LOCALHOST}/remote/index.php"',
-    'uri' => '"http://${ISPCONFIG_FQDN_LOCALHOST}/remote/"',
-    'trace' => 1,
-    'exceptions' => 1,
-]);")"
-credentials="$(php -r "echo serialize([
-    'username' => '"$ispconfig_remote_user_name"',
-    'password' => '"$ispconfig_remote_user_password"',
-]);")"
-____
-
 if [ -z "$ispconfig_soap_exists_sure" ];then
     chapter Test koneksi SOAP.
-    if php -r "$php" login "$options" "$credentials";then
+    code rcm-php-ispconfig soap login
+    if [ -z "$tempfile" ];then
+        tempfile=$(mktemp -p /dev/shm -t rcm-ispconfig-control-manage-domain.XXXXXX)
+    fi
+    if rcm-php-ispconfig soap login 2> "$tempfile";then
+        while IFS= read line; do e "$line"; _.; done < "$tempfile"
         __ Login berhasil.
     else
+        rm "$tempfile"
         error Login gagal; x
     fi
     ____
 fi
 
-chapter Mengecek domain '`'$domain'`' di Module Mail ISPConfig.
-__ Execute SOAP '`'mail_domain_get_by_domain'`'.
-arguments="$(php -r "echo serialize([
-    'session_id' => null,
-    'domain' => '"$domain"',
-]);")"
-stdout=$(php -r "$php" mail_domain_get_by_domain "$options" "$credentials" "$arguments")
-__ Standard Output.
-code stdout="$stdout"
-if php -r "$php" is_empty <<< "$stdout";then
-    found=; notfound=1
-else
-    found=1; notfound=
+chapter Autocreate domain '`'$domain'`' di Module Mail ISPConfig.
+if [ -z "$tempfile" ];then
+    tempfile=$(mktemp -p /dev/shm -t rcm-ispconfig-control-manage-domain.XXXXXX)
 fi
-if [ -n "$found" ];then
+if isExists;then
     __ Domain '`'$domain'`' telah terdaftar di ISPConfig.
-    if [[ $command == isset ]];then
-        exit 0
-    fi
-    dkim=`php -r "$php" get dkim <<< "$stdout"`
-    if [[ $dkim == y ]];then
-        _dkim_selector=$(php -r "$php" get dkim_selector <<< "$stdout")
-        if [[ ! "$DKIM_SELECTOR" == "$_dkim_selector" ]];then
-            __; red Terdapat perbedaan antara dkim_selector versi database dengan user input.; _.
-            __; red Menggunakan value versi database.; _.
-            DKIM_SELECTOR="$_dkim_selector"
-            __; magenta DKIM_SELECTOR="$DKIM_SELECTOR"; _.
-        fi
-    fi
-    if [[ $command == get_dns_record ]];then
-        dkim_public=$(php -r "$php" get dkim_public <<< "$stdout")
-        dns_record=$(echo "$dkim_public" | sed -e "/-----BEGIN PUBLIC KEY-----/d" -e "/-----END PUBLIC KEY-----/d" | tr '\r' ' '  | tr '\n' ' ' | sed 's/\ //g')
-        echo "$dns_record"
-        exit 0
-    fi
+elif create "$@";then
+    success Domain '`'$domain'`' berhasil terdaftar di ISPConfig.
 else
-    __ Domain '`'$domain'`' belum terdaftar di ISPConfig.
-    if [[ $command == isset ]];then
-        exit 1
-    fi
+    error Domain '`'$domain'`' gagal terdaftar di ISPConfig.; x
 fi
 ____
 
-json=
-if [[ $command == add && -n "$notfound" ]];then
-    chapter Generate DKIM Public and Private Key
-    php_fpm_user=ispconfig
-    code 'php_fpm_user="'$php_fpm_user'"'
-    prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
-    code 'prefix="'$prefix'"'
-    tempfile=$(mktemp -p "$prefix/interface/web/mail" -t rcm-ispconfig-control-manage-domain.XXXXXX)
-    code 'tempfile="'$tempfile'"'
-    cp "${prefix}/interface/web/mail/ajax_get_json.php" "$tempfile"
-    chmod go-r "$tempfile"
-    chmod go-w "$tempfile"
-    chmod go-x "$tempfile"
-    sed -i "/\$app->auth->check_module_permissions('mail');/d" "$tempfile"
-    sed -i "s,if (\$dkim_strength==''),if (\$dkim_strength==0),g" "$tempfile"
-    dirname=$(dirname "$tempfile")
-    json=$(php -r "$php" ajax_get_json "$dirname" "$tempfile" "$domain" "$DKIM_SELECTOR")
-    __ Standard Output.
-    magenta "$json"; _.
-    __ Cleaning temporary file.
-    code rm "$tempfile"
-    rm "$tempfile"
-    ____
-fi
-
-if [[ $command == add && -n "$json" ]];then
-    dkim_private=$(php -r "echo (json_decode(fgets(STDIN)))->dkim_private;" <<< "$json")
-    dkim_public=$(php -r "echo (json_decode(fgets(STDIN)))->dkim_public;" <<< "$json")
-    dns_record=$(php -r "echo (json_decode(fgets(STDIN)))->dns_record;" <<< "$json")
-    if [ -z "$dns_record" ];then
-        __; red DNS record not found.; x
-    fi
-    chapter Mendaftarkan domain '`'$domain'`' di Module Mail ISPConfig.
-    __ Execute SOAP '`'mail_domain_add'`'.
-    arguments="$(php -r "echo serialize([
-        'session_id' => null,
-        'client_id' => 0,
-        'params' => [
-            'server_id' => '1',
-            'domain' => '${domain}',
-            'active' => 'y',
-            'dkim' => 'y',
-            'dkim_selector' => '${DKIM_SELECTOR}',
-            'dkim_private' => '$dkim_private',
-            'dkim_public' => '$dkim_public',
-        ],
-    ]);")"
-    php -r "$php" mail_domain_add "$options" "$credentials" "$arguments"
-    ____
-
-    chapter Mengecek domain '`'$domain'`' di Module Mail ISPConfig.
-    __ Execute SOAP '`'mail_domain_get_by_domain'`'.
-    arguments="$(php -r "echo serialize([
-        'session_id' => null,
-        'domain' => '"$domain"',
-    ]);")"
-    stdout=$(php -r "$php" mail_domain_get_by_domain "$options" "$credentials" "$arguments")
-    __ Standard Output.
-    code stdout="$stdout"
-    if php -r "$php" is_empty <<< "$stdout";then
-        __; red Domain gagal terdaftar.; x
-    else
-        __; green Domain berhasil terdaftar.; _.
-    fi
-    ____
-
-    chapter Membuat welcome mail.
-    source='/usr/local/share/ispconfig/mail/welcome_email_'$domain'.html'
-    mkdir -p '/usr/local/share/ispconfig/mail'
-    cat <<- EOF > "$source"
+chapter Membuat welcome mail.
+code mkdir -p '/usr/local/share/ispconfig/mail'
+mkdir -p '/usr/local/share/ispconfig/mail'
+source="/usr/local/share/ispconfig/mail/welcome_email_${domain}.html"
+code 'source="'$source'"'
+cat <<- EOF > "$source"
 From: Webmaster <$MAILBOX_WEB@$domain>
 Subject: Welcome to your new email account.
 
 <p>Welcome to your new email account. Your webmaster.</p>
 
 EOF
-    target="${prefix}/server/conf-custom/mail/welcome_email_${domain}.html"
-    link_symbolic "$source" "$target"
-    ____
+target="${prefix}/server/conf-custom/mail/welcome_email_${domain}.html"
+code 'target="'$target'"'
+____
+
+link_symbolic "$source" "$target" - absolute
+____
+
+# Bedanya command get-domain-id dengan --get-domain-id
+# Command get-domain-id jika tidak exists, maka null.
+# Jika option --get-domain-id, maka jika tidak exists, akan dibuat dulu.
+if [ -n "$get_domain_id" ];then
+    echo "$domain_id"
 fi
+
+[ -n "$tempfile" ] && rm "$tempfile"
 
 exit 0
 
@@ -589,6 +476,7 @@ exit 0
 # --help
 # --root-sure
 # --ispconfig-soap-exists-sure
+# --get-domain-id
 # )
 # VALUE=(
 # --domain
