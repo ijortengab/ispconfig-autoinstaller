@@ -1,7 +1,11 @@
 #!/usr/bin/php
 <?php
-define('ISPCONFIG_REMOTE_USER_ROOT', 'root');
-define('ISPCONFIG_FQDN_LOCALHOST', 'ispconfig.localhost');
+$ispconfig_remote_user_root = getenv('ISPCONFIG_REMOTE_USER_ROOT');
+$ispconfig_remote_user_root or $ispconfig_remote_user_root = 'root';
+define('ISPCONFIG_REMOTE_USER_ROOT', $ispconfig_remote_user_root);
+$ispconfig_fqdn_localhost = getenv('ISPCONFIG_FQDN_LOCALHOST');
+$ispconfig_fqdn_localhost or $ispconfig_fqdn_localhost = 'ispconfig.localhost';
+define('ISPCONFIG_FQDN_LOCALHOST', $ispconfig_fqdn_localhost);
 // The builtin function die() is not write error to stderr, we create
 // alternative function named _die().
 function _die($string='', $code = 1) {
