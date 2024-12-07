@@ -444,6 +444,8 @@ chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
+ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
+code 'ROUNDCUBE_FQDN_LOCALHOST="'$ROUNDCUBE_FQDN_LOCALHOST'"'
 SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
 code 'SUBDOMAIN_ISPCONFIG="'$SUBDOMAIN_ISPCONFIG'"'
 SUBDOMAIN_PHPMYADMIN=${SUBDOMAIN_PHPMYADMIN:=db}
@@ -558,13 +560,6 @@ _ Begin to Validate DNS Record.; _.
 sleepExtended 3
 ____
 
-rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
-    --domain="$domain" \
-    --type=mx \
-    --hostname=@ \
-    --mail-provider="$current_fqdn" \
-    ; [ ! $? -eq 0 ] && x
-
 for each in "${fqdn_array[@]}";do
     INDENT+="    " \
     rcm-dig-watch-domain-exists $isfast --root-sure \
@@ -656,7 +651,6 @@ ____
 
 INDENT+="    " \
 rcm-ispconfig-control-manage-domain $isfast --root-sure \
-    add \
     --domain="$domain" \
     && INDENT+="    " \
 rcm-ispconfig-control-manage-email-mailbox $isfast --root-sure --ispconfig-domain-exists-sure \
@@ -700,6 +694,146 @@ chapter Take a break.
 _ Everything is OK, "let's" dump variables.; _.
 sleepExtended 3
 ____
+
+php=$(cat <<'EOF'
+$mode = $_SERVER['argv'][1];
+switch ($mode) {
+    case 'is_different':
+    case 'save':
+        # Populate variable $is_different.
+        $file = $_SERVER['argv'][2];
+        $reference = unserialize($_SERVER['argv'][3]);
+        include($file);
+        $config = isset($config) ? $config : [];
+        $is_different = !empty(array_diff_assoc(array_map('serialize',$reference), array_map('serialize',$config)));
+        break;
+}
+switch ($mode) {
+    case 'is_different':
+        $is_different ? exit(0) : exit(1);
+        break;
+    case 'save':
+        if (!$is_different) {
+            exit(0);
+        }
+        $contents = file_get_contents($file);
+        $need_edit = array_diff_assoc($reference, $config);
+        $new_lines = [];
+        foreach ($need_edit as $key => $value) {
+            $new_line = "__PARAMETER__[__KEY__] = __VALUE__; # managed by RCM";
+            // Jika indexed array dan hanya satu , maka buat one line.
+            if (is_array($value) && array_key_exists(0, $value) && count($value) === 1) {
+                $new_line = str_replace(['__PARAMETER__','__KEY__','__VALUE__'],['$config', var_export($key, true), "['".$value[0]."']"], $new_line);
+            }
+            else {
+                $new_line = str_replace(['__PARAMETER__','__KEY__','__VALUE__'],['$config', var_export($key, true), var_export($value, true)], $new_line);
+            }
+            $is_one_line = preg_match('/\n/', $new_line) ? false : true;
+            $find_existing = "__PARAMETER__[__KEY__] = __VALUE__; # managed by RCM";
+            $find_existing = str_replace(['__PARAMETER__','__KEY__'],['$config', var_export($key, true)], $find_existing);
+            $find_existing = preg_quote($find_existing);
+            $find_existing = str_replace('__VALUE__', '.*', $find_existing);
+            $find_existing = '/\s*'.$find_existing.'/';
+            if ($is_one_line && preg_match_all($find_existing, $contents, $matches, PREG_PATTERN_ORDER)) {
+                $contents = str_replace($matches[0], '', $contents);
+            }
+            $new_lines[] = $new_line;
+        }
+        if (substr($contents, -1) != "\n") {
+            $contents .= "\n";
+        }
+        $contents .= implode("\n", $new_lines);
+        $contents .= "\n";
+        file_put_contents($file, $contents);
+        break;
+}
+EOF
+)
+
+if [ -n "$roundcube_url_host" ];then
+    chapter Roundcube Virtual Host.
+    code 'url_roundcube="'$url_roundcube'"'
+    code 'roundcube_url_host="'$roundcube_url_host'"'
+    ____
+
+    chapter Prepare arguments.
+    nginx_user=
+    conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
+    if [ -f "$conf_nginx" ];then
+        nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
+    fi
+    code 'nginx_user="'$nginx_user'"'
+    if [ -z "$nginx_user" ];then
+        error "Variable \$nginx_user failed to populate."; x
+    fi
+    nginx_user_home=$(getent passwd "$nginx_user" | cut -d: -f6 )
+    php_fpm_user="$nginx_user"
+    code 'php_fpm_user="'$php_fpm_user'"'
+    prefix="$nginx_user_home"
+
+    project_container="$ROUNDCUBE_FQDN_LOCALHOST"
+    code 'project_container="'$project_container'"'
+    root="$prefix/${project_container}/web"
+    root_source=$(realpath "$root")
+    if [ $(basename "$root_source") == "public_html" ];then
+        root_source=$(dirname "$root_source")
+    else
+        error "Direktori public_html tidak ditemukan"; x
+    fi
+    php_project_name=www
+    code 'php_project_name="'$php_project_name'"'
+    code root="$root"
+    code root_source="$root_source"
+    ____
+
+    # https://github.com/roundcube/roundcubemail/blob/master/config/defaults.inc.php
+    # https://github.com/roundcube/roundcubemail/wiki/Configuration:-Multi-Domain-Setup
+    chapter Mengecek file konfigurasi RoundCube.
+    filename="${roundcube_url_host}.inc.php"
+    path="${root_source}/config/${roundcube_url_host}.inc.php"
+    isFileExists "$path"
+    ____
+
+    if [ -n "$notfound" ];then
+        chapter Membuat RoundCube config file: '`'$filename'`'.
+        code sudo -u '"'$php_fpm_user'"' touch '"'$path'"'
+        sudo -u "$php_fpm_user" touch "$path"
+        cat <<'EOF' > "$path"
+<?php
+
+// Website: __URL_ROUNDCUBE__
+$config['username_domain'] = '__DOMAIN__'; # managed by RCM
+EOF
+        fileMustExists "$path"
+        sed -i "s|__URL_ROUNDCUBE__|${url_roundcube}|g" "$path"
+        sed -i "s|__DOMAIN__|${domain}|g" "$path"
+        ____
+    fi
+    reference="$(php -r "echo serialize([
+        'username_domain' => '${domain}',
+    ]);")"
+    is_different=
+    if php -r "$php" is_different "$path" "$reference";then
+        is_different=1
+        __ Diperlukan modifikasi file '`'$filename'`'.
+    else
+        __ File '`'$filename'`' tidak ada perubahan.
+    fi
+    ____
+
+    if [ -n "$is_different" ];then
+        chapter Memodifikasi file '`'$filename'`'.
+        __ Backup file "$path"
+        backupFile copy "$path"
+        php -r "$php" save "$path" "$reference"
+        if php -r "$php" is_different "$path" "$reference";then
+            __; red Modifikasi file '`'$filename'`' gagal.; x
+        else
+            __; green Modifikasi file '`'$filename'`' berhasil.; _.
+        fi
+        ____
+    fi
+fi
 
 chapter Saving URL information.
 code mkdir -p /usr/local/share/ispconfig/domain/$domain
