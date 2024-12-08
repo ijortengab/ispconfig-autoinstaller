@@ -46,7 +46,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.9.6'
+    echo '0.9.7'
 }
 printHelp() {
     title RCM ISPConfig Setup Wrapper

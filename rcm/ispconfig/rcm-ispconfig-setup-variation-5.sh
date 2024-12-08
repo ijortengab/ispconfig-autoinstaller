@@ -74,7 +74,7 @@ SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
 
 # Functions.
 printVersion() {
-    echo '0.9.6'
+    echo '0.9.7'
 }
 printHelp() {
     title RCM ISPConfig Setup
