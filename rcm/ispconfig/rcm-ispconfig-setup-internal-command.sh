@@ -71,8 +71,7 @@ Environment Variables:
         Default to ispconfig.localhost
 
 Dependency:
-   mysql
-   pwgen
+   rcm-php-ispconfig
    php
 EOF
 }
@@ -85,6 +84,11 @@ EOF
 title rcm-ispconfig-setup-internal-command
 ____
 
+# Dependency.
+while IFS= read -r line; do
+    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
+done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
+
 if [ -z "$root_sure" ];then
     chapter Mengecek akses root.
     if [[ "$EUID" -ne 0 ]]; then
@@ -94,11 +98,6 @@ if [ -z "$root_sure" ];then
     fi
     ____
 fi
-
-# Dependency.
-while IFS= read -r line; do
-    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
-done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
 resolve_relative_path() {
@@ -277,79 +276,6 @@ isFileExists() {
         notfound=1
     fi
 }
-getRemoteUserIdIspconfigByRemoteUsername() {
-    # Get the remote_userid from table remote_user in ispconfig database.
-    #
-    # Globals:
-    #   ispconfig_db_user, ispconfig_db_user_password,
-    #   ispconfig_db_user_host, ispconfig_db_name
-    #
-    # Arguments:
-    #   $1: Filter by remote_username.
-    #
-    # Output:
-    #   Write remote_userid to stdout.
-    local remote_username="$1"
-    local sql="SELECT remote_userid FROM remote_user WHERE remote_username = '$remote_username';"
-    local u="$ispconfig_db_user"
-    local p="$ispconfig_db_user_password"
-    local remote_userid=$(mysql \
-        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
-        -h "$ispconfig_db_user_host" "$ispconfig_db_name" -r -N -s -e "$sql"
-    )
-    echo "$remote_userid"
-}
-insertRemoteUsernameIspconfig() {
-    local remote_username="$1"
-    local _remote_password="$2"
-    local _remote_functions="$3"
-    CONTENT=$(cat <<- EOF
-require '${ispconfig_install_dir}/interface/lib/classes/auth.inc.php';
-echo (new auth)->crypt_password('$_remote_password');
-EOF
-    )
-    local remote_password=$(php -r "$CONTENT")
-    local remote_functions=$(tr '\n' ';' <<< "$_remote_functions")
-    local sql="INSERT INTO remote_user
-(sys_userid, sys_groupid, sys_perm_user, sys_perm_group, sys_perm_other, remote_username, remote_password, remote_access, remote_ips, remote_functions)
-VALUES
-(1, 1, 'riud', 'riud', '', '$remote_username', '$remote_password', 'y', '127.0.0.1', '$remote_functions');"
-    local u="$ispconfig_db_user"
-    local p="$ispconfig_db_user_password"
-    mysql --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") \
-        -h "$ispconfig_db_user_host" "$ispconfig_db_name" -e "$sql"
-    remote_userid=$(getRemoteUserIdIspconfigByRemoteUsername "$remote_username")
-    if [ -n "$remote_userid" ];then
-        return 0
-    fi
-    return 1
-}
-isRemoteUsernameIspconfigExist() {
-    # Insert the remote_username to table remote_user in ispconfig database.
-    #
-    # Globals:
-    #   Used: ispconfig_install_dir
-    #         ispconfig_db_user_host
-    #         ispconfig_db_user
-    #         ispconfig_db_name
-    #         ispconfig_db_user_password
-    #   Modified: remote_userid
-    #
-    # Arguments:
-    #   $1: remote_username
-    #   $2: remote_password
-    #   $3: remote_functions
-    #
-    # Return:
-    #   0 if exists.
-    #   1 if not exists.
-    local remote_username="$1"
-    remote_userid=$(getRemoteUserIdIspconfigByRemoteUsername "$remote_username")
-    if [ -n "$remote_userid" ];then
-        return 0
-    fi
-    return 1
-}
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
@@ -404,221 +330,18 @@ if [ -n "$notfound" ];then
     cat << 'EOF' > "$fullpath"
 #!/usr/bin/php
 <?php
-define('ISPCONFIG_REMOTE_USER_ROOT', '__ISPCONFIG_REMOTE_USER_ROOT__');
-define('ISPCONFIG_FQDN_LOCALHOST', '__ISPCONFIG_FQDN_LOCALHOST__');
-define('NEW_VERSION', '__NEW_VERSION__');
-$argc > 1 or die('Command required.'.PHP_EOL);
-if (in_array('--version', $argv)) {
-    echo NEW_VERSION.PHP_EOL; exit;
+array_shift($argv);
+// Jika tidak di escape, maka:
+// `ispconfig.php '; touch a.txt'`
+// akan terbentuk file a.txt
+$values = array();
+foreach ($argv as $value) {
+    $values[] = escapeshellarg($value);
 }
-
-// Run Command.
-$command = $argv[1];
-switch ($command) {
-    case 'mail_domain':
-        $output = shell_exec('id -u ispconfig');
-        $eid = rtrim($output);
-        $user = posix_getpwuid($eid);
-        $home = $user['dir'];
-        chdir($home.'/interface/web');
-        require_once '../lib/config.inc.php';
-        require_once '../lib/app.inc.php';
-        // The variable $app is ready.
-        break;
-    case 'login':
-    case 'mail_user_add':
-    case 'mail_user_get':
-    case 'mail_domain_get_by_domain':
-        $path = '/usr/local/share/ispconfig/credential/remote/'.ISPCONFIG_REMOTE_USER_ROOT;
-        if (!file_exists($path)) {
-            fwrite(STDERR, 'File not found: '.$path.PHP_EOL);
-            exit(1);
-        }
-        preg_match_all('/(.*)=(.*)/', file_get_contents($path), $matches);
-        list($username, $password) = $matches[2];
-        $options = [
-            'location' => 'http://'.ISPCONFIG_FQDN_LOCALHOST.'/remote/index.php',
-            'uri' => 'http://'.ISPCONFIG_FQDN_LOCALHOST.'/remote/',
-            'trace' => 1,
-            'exceptions' => 1,
-        ];
-        break;
-}
-switch ($command) {
-    case 'mail_domain':
-        $results = $app->db->queryAllRecords("SELECT domain FROM mail_domain");
-        foreach ($results as $result) {
-            echo $result['domain'].PHP_EOL;
-        }
-        break;
-
-    case 'login':
-        $client = new SoapClient(null, $options);
-        try {
-            if($session_id = $client->login($username, $password)) {
-                echo 'Logged successfull. Session ID: '.$session_id.PHP_EOL;
-            }
-            if($client->logout($session_id)) {
-                echo 'Logged out.'.PHP_EOL;
-            }
-        } catch (SoapFault $e) {
-            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
-            exit(1);
-        }
-        break;
-    case 'mail_domain_get_by_domain':
-        $client = new SoapClient(null, $options);
-        try {
-            if($session_id = $client->login($username, $password)) {
-            }
-            // Copy arguments.
-            $arguments = $argv;
-            array_shift($arguments); // Remove full path of script.
-            array_shift($arguments); // Remove commands.
-            $argument = array_shift($arguments); // Harusnya value dari domain.
-            if (!$argument) {
-                throw new RuntimeException('Argument <email> is required.');
-            }
-            $record_record = $client->mail_domain_get_by_domain($session_id, $argument);
-            print_r($record_record);
-            if($client->logout($session_id)) {
-            }
-        } catch (SoapFault $e) {
-            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
-            exit(1);
-        } catch (Exception $e) {
-            fwrite(STDERR, 'Error: '.$e->getMessage().PHP_EOL);
-            exit(1);
-        }
-        break;
-    case 'mail_user_get':
-        $client = new SoapClient(null, $options);
-        try {
-            if($session_id = $client->login($username, $password)) {
-            }
-            // Copy arguments.
-            $arguments = $argv;
-            array_shift($arguments); // Remove full path of script.
-            array_shift($arguments); // Remove commands.
-            $params = [];
-            while ($each = array_shift($arguments)) {
-                preg_match('/^--(.*)=(.*)$/', $each, $matches_2);
-                if (count($matches_2) == 3) {
-                    list( , $key, $value) = $matches_2;
-                    $params[$key] = $value;
-                }
-            }
-            if (!array_key_exists('email', $params)) {
-                throw new RuntimeException('Argument --email=* is required.');
-            }
-            $record_record = $client->mail_user_get($session_id, $params);
-            print_r($record_record);
-            if($client->logout($session_id)) {
-            }
-        } catch (SoapFault $e) {
-            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
-            exit(1);
-        } catch (Exception $e) {
-            fwrite(STDERR, 'Error: '.$e->getMessage().PHP_EOL);
-            exit(1);
-        }
-        break;
-    case 'mail_user_add':
-        $client = new SoapClient(null, $options);
-        try {
-            if($session_id = $client->login($username, $password)) {
-            }
-            // Copy arguments.
-            $arguments = $argv;
-            array_shift($arguments); // Remove full path of script.
-            array_shift($arguments); // Remove commands.
-            $argument = array_shift($arguments); // Harusnya value dari client_id.
-            if (is_numeric($argument)) {
-                $client_id = (int) $argument;
-            }
-            else {
-                $client_id = 0;
-                array_unshift($arguments, $argument);
-            }
-            $params = [];
-            while ($each = array_shift($arguments)) {
-                preg_match('/^--(.*)=(.*)$/', $each, $matches_2);
-                if (count($matches_2) == 3) {
-                    list( , $key, $value) = $matches_2;
-                    $params[$key] = $value;
-                }
-            }
-            if (!array_key_exists('email', $params)) {
-                throw new RuntimeException('Argument --email=* is required.');
-            }
-            if (!array_key_exists('password', $params)) {
-                throw new RuntimeException('Argument --password=* is required.');
-            }
-            if (!array_key_exists('login', $params)) {
-                $params['login'] = $params['email'];
-            }
-            preg_match('/^(.*)@(.*)$/', $params['email'], $matches_3);
-            if (!count($matches_3) == 3) {
-                throw new InvalidArgumentException('Format --email=* is not valid.');
-            }
-            list(, $user, $host) = $matches_3;
-            $default = [
-                'server_id' => '1',
-                'name' => $user,
-                'uid' => '5000',
-                'gid' => '5000',
-                'maildir' => "/var/vmail/$host/$user",
-                'maildir_format' => 'maildir',
-                'quota' => '0',
-                'cc' => '',
-                'forward_in_lda' => 'y',
-                'sender_cc' => '',
-                'homedir' => '/var/vmail',
-                'autoresponder' => 'n',
-                'autoresponder_start_date' => NULL,
-                'autoresponder_end_date' => NULL,
-                'autoresponder_subject' => '',
-                'autoresponder_text' => '',
-                'move_junk' => 'Y',
-                'purge_trash_days' => 0,
-                'purge_junk_days' => 0,
-                'custom_mailfilter' => NULL,
-                'postfix' => 'y',
-                'greylisting' => 'n',
-                'access' => 'y',
-                'disableimap' => 'n',
-                'disablepop3' => 'n',
-                'disabledeliver' => 'n',
-                'disablesmtp' => 'n',
-                'disablesieve' => 'n',
-                'disablesieve-filter' => 'n',
-                'disablelda' => 'n',
-                'disablelmtp' => 'n',
-                'disabledoveadm' => 'n',
-                'disablequota-status' => 'n',
-                'disableindexer-worker' => 'n',
-                'last_quota_notification' => NULL,
-                'backup_interval' => 'none',
-                'backup_copies' => '1',
-            ];
-            $params += $default;
-            $record_record = $client->mail_user_add($session_id, $client_id, $params);
-            print_r($record_record);
-            if($client->logout($session_id)) {
-            }
-        } catch (SoapFault $e) {
-            fwrite(STDERR, 'SOAP Error: '.$e->getMessage().PHP_EOL);
-            exit(1);
-        } catch (Exception $e) {
-            fwrite(STDERR, 'Error: '.$e->getMessage().PHP_EOL);
-            exit(1);
-        }
-        break;
-}
+$exit_code = null;
+passthru('rcm-php-ispconfig soap ' . implode(' ', $values), $exit_code);
+exit($exit_code);
 EOF
-    sed -i "s|__ISPCONFIG_REMOTE_USER_ROOT__|${ISPCONFIG_REMOTE_USER_ROOT}|g" "$fullpath"
-    sed -i "s|__ISPCONFIG_FQDN_LOCALHOST__|${ISPCONFIG_FQDN_LOCALHOST}|g" "$fullpath"
-    sed -i "s|__NEW_VERSION__|${NEW_VERSION}|g" "$fullpath"
     fileMustExists "$fullpath"
     ____
 fi
@@ -653,7 +376,7 @@ _ispconfig_php() {
     prev=${COMP_WORDS[COMP_CWORD-1]}
     case ${COMP_CWORD} in
         1)
-            COMPREPLY=($(compgen -W "login mail_domain mail_domain_get_by_domain mail_user_get mail_user_add" -- ${cur}))
+            COMPREPLY=($(compgen -W "mail_domain client login mail_alias_add mail_alias_get mail_user_add mail_user_get mail_domain_add mail_domain_get_by_domain client_get_by_username client_add" -- ${cur}))
             ;;
         *)
             command=${COMP_WORDS[1]}
