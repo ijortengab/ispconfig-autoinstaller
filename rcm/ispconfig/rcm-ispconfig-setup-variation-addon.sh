@@ -277,6 +277,7 @@ command-suggest-url() {
             local with_phpmyadmin=$2 url_ispconfig=$3 domain=$4
             [ $with_phpmyadmin == 0 ] && with_phpmyadmin=
             [ $url_ispconfig == - ] && url_ispconfig=
+            [ -z "$url_ispconfig" ] && url_ispconfig="$domain"
             # Set to skip, return exit code non zero.
             [ -z "$with_phpmyadmin" ] && exit 1
             siblingHost "$url_ispconfig" $SUBDOMAIN_PHPMYADMIN
@@ -289,6 +290,7 @@ command-suggest-url() {
             local with_roundcube=$2 url_ispconfig=$3 domain=$4
             [ $with_roundcube == 0 ] && with_roundcube=
             [ $url_ispconfig == - ] && url_ispconfig=
+            [ -z "$url_ispconfig" ] && url_ispconfig="$domain"
             # Set to skip, return exit code non zero.
             [ -z "$with_roundcube" ] && exit 1
             siblingHost "$url_ispconfig" $SUBDOMAIN_ROUNDCUBE
