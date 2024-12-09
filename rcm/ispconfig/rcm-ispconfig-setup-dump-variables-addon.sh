@@ -176,16 +176,17 @@ databaseCredentialIspconfig() {
     db_user_password=$(php -r "include '$path';echo DB_PASSWORD;")
 }
 websiteCredentialIspconfig() {
-    local ISPCONFIG_WEB_USER_PASSWORD
-    path=/usr/local/share/ispconfig/credential/website
-    [ -f "$path" ] || fileMustExists "$path"
-    . "$path"
-    ispconfig_web_user_password=$ISPCONFIG_WEB_USER_PASSWORD
+    # global $username
+    # global modified $password
+    [ -n "$username" ] || { error Variable username is required; x; }
+    local path="/usr/local/share/ispconfig/credential/client/${username}"
+    password=$(<"$path")
 }
 
 # Require, validate, and populate value.
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
 SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
 code 'SUBDOMAIN_ISPCONFIG="'$SUBDOMAIN_ISPCONFIG'"'
 SUBDOMAIN_PHPMYADMIN=${SUBDOMAIN_PHPMYADMIN:=db}
@@ -232,6 +233,13 @@ chapter Website available.
 _ ' - ISPConfig  :' "$URL_ISPCONFIG"; _.
 _ ' - PHPMyAdmin :' "$URL_PHPMYADMIN"; _.
 _ ' - Roundcube  :' "$URL_ROUNDCUBE"; _.
+____
+
+chapter ISPConfig Credentials.
+username="$domain"
+websiteCredentialIspconfig
+_ ' - 'username: "$username"; _.
+_ '   'password: "$password"; _.
 ____
 
 chapter Roundcube Credentials.
@@ -293,20 +301,20 @@ fi
 
 chapter Manual Action
 _ Command to create a new mailbox. Example:; _.
-__; magenta ispconfig.php mail_user_add --email=support@${domain} --password=$(pwgen -1 12); _.
-_ Command to implement '`'ispconfig.php'`' command autocompletion immediately:; _.
-__; magenta source /etc/profile.d/ispconfig-php-completion.sh; _.
+__; magenta soap-ispconfig mail_user_add --email=support@${domain} --password=$(pwgen -1 12); _.
+_ Command to implement '`'soap-ispconfig'`' command autocompletion immediately:; _.
+__; magenta source /etc/profile.d/soap-ispconfig-completion.sh; _.
 if [ -n "$ip_address" ];then
     _ Command to check PTR Record:; _.
     __; magenta dig -x "$ip_address" +short; _.
 fi
 _ If you want to see the credentials again, please execute this command:; _.
 [[ -n "$ip_address" ]] && is_ip_address=' --ip-address='"$ip_address" || is_ip_address=
-__; magenta rcm-ispconfig-setup-dump-variables${isfast} --domain="$domain" --hostname="$hostname"${is_ip_address}; _.
-_ It is recommended for you to make sure DNS TXT Record about Mail Server '('SPF, DKIM, DMARC')' has exists,; _.
+__; magenta rcm-ispconfig-setup-dump-variables-addon${isfast} --domain="$domain"; _.
+_ It is recommended for you to make sure DNS TXT Record about Mail Server '('MX, SPF, DKIM, DMARC')' has exists,; _.
 _ '    'please execute this command:; _.
-__; magenta rcm install ispconfig-post-setup --source ispconfig; _.
-__; magenta rcm ispconfig-post-setup${isfast} -- --domain="$domain"; _.
+__; magenta rcm${isfast} install ispconfig-post-setup --source ispconfig; _.
+__; magenta rcm${isfast} ispconfig-post-setup -- --domain="$domain"; _.
 ____
 
 if [[ "$additional_info" == digitalocean ]];then
