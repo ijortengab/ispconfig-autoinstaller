@@ -232,12 +232,16 @@ siblingHost() {
     fi
 }
 urlAlternative() {
-    local url=$1 path=$2
+    local url=$1 port=$2 path=$3
     local PHP_URL_SCHEME PHP_URL_USER PHP_URL_PASS PHP_URL_HOST PHP_URL_PORT PHP_URL_PATH
-    local scheme port
+    local scheme
+    if [ "$port" == - ];then
+        port=
+    fi
+    [ -z "$port" ] && port=8080
     Rcm_parse_url $url
     [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
-    [ -n "$PHP_URL_PORT" ] && port="$PHP_URL_PORT" || port=8080
+    [ -n "$PHP_URL_PORT" ] && port="$PHP_URL_PORT"
     local hostname=$(echo "$PHP_URL_HOST" | sed -E 's|^([^\.]+)\..*|\1|g')
     local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
     if [ "$hostname" == "$SUBDOMAIN_ISPCONFIG" ];then
@@ -269,8 +273,8 @@ command-suggest-url() {
             # Set to skip, return exit code non zero.
             [ -z "$with_phpmyadmin" ] && exit 1
             siblingHost "$url_ispconfig" $SUBDOMAIN_PHPMYADMIN
-            urlAlternative "$url_ispconfig" /phpmyadmin
-            urlAlternative "$url_ispconfig" /$SUBDOMAIN_PHPMYADMIN
+            urlAlternative "$url_ispconfig" 8081 /phpmyadmin
+            urlAlternative "$url_ispconfig" 8081 /$SUBDOMAIN_PHPMYADMIN
             echo "${domain}/phpmyadmin"
             echo "${domain}/${SUBDOMAIN_PHPMYADMIN}"
             ;;
@@ -281,8 +285,8 @@ command-suggest-url() {
             # Set to skip, return exit code non zero.
             [ -z "$with_roundcube" ] && exit 1
             siblingHost "$url_ispconfig" $SUBDOMAIN_ROUNDCUBE
-            urlAlternative "$url_ispconfig" /roundcube
-            urlAlternative "$url_ispconfig" /$SUBDOMAIN_ROUNDCUBE
+            urlAlternative "$url_ispconfig" 8081 /roundcube
+            urlAlternative "$url_ispconfig" 8081 /$SUBDOMAIN_ROUNDCUBE
             echo "${domain}/roundcube"
             echo "${domain}/${SUBDOMAIN_ROUNDCUBE}"
             ;;
