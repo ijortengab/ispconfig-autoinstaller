@@ -154,6 +154,8 @@ Dependency:
    rcm-ispconfig-setup-internal-command:`printVersion`
    rcm-dig-is-name-exists
    rcm-dig-is-record-exists
+   rcm-dig-watch-domain-exists
+   rcm-dig-has-address
 
 Download:
    [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php.sh)
