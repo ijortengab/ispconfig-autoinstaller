@@ -255,8 +255,8 @@ command-mode-available() {
 }
 wordWrapCommand() {
     # global words_array
-    local inline_label="$1"
-    local parts current_line first_line
+    local inline_description="$1"
+    local current_line first_line
     declare -i min; min=80
     declare -i max; max=100
     declare -i i; i=0
@@ -272,9 +272,9 @@ wordWrapCommand() {
                 e; magenta "    $each";
             else
                 first_line=
-                if [ -n "$inline_label" ];then
-                    e; _, "${inline_label} "; magenta "$each"
-                    current_line="${inline_label} ${each}"
+                if [ -n "$inline_description" ];then
+                    e; _, "${inline_description} "; magenta "$each"
+                    current_line="${inline_description} ${each}"
                 else
                     e; magenta "$each"
                     current_line="$each"
@@ -302,6 +302,9 @@ wordWrapCommand() {
             else
                 magenta ' \'; _.; e; magenta "    $each"
                 current_line="    ${each}"
+                if [ -n "$last" ];then
+                    _.
+                fi
             fi
         fi
     done
