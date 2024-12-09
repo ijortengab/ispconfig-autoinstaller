@@ -167,7 +167,6 @@ ____
 
 if [ -f /usr/local/share/ispconfig/website ];then
     . /usr/local/share/ispconfig/website
-
 fi
 [ -n "$URL_ISPCONFIG" ] || URL_ISPCONFIG=http://ispconfig.localhost/
 if [ -f /usr/local/share/phpmyadmin/website ];then
@@ -181,8 +180,11 @@ fi
 
 chapter Website available.
 _ ' - ISPConfig  :' "$URL_ISPCONFIG"; _.
+[ "$URL_ISPCONFIG" == 'http://ispconfig.localhost/' ] || _ '              :' http://ispconfig.localhost/; _.
 _ ' - PHPMyAdmin :' "$URL_PHPMYADMIN"; _.
+[ "$URL_PHPMYADMIN" == 'http://phpmyadmin.localhost/' ] || _ '              :' http://phpmyadmin.localhost/; _.
 _ ' - Roundcube  :' "$URL_ROUNDCUBE"; _.
+[ "$URL_ROUNDCUBE" == 'http://roundcube.localhost/' ] || _ '              :' http://roundcube.localhost/; _.
 ____
 
 chapter PHPMyAdmin Credentials.
