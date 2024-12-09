@@ -84,6 +84,7 @@ Environment Variables:
 
 Dependency:
    rcm-nginx-virtual-host-autocreate-php
+   rcm-php-fpm-setup-project-config
    curl
 EOF
 }
