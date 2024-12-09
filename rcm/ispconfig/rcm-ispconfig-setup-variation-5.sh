@@ -149,7 +149,6 @@ Dependency:
    rcm-dig-watch-domain-exists
    rcm-ispconfig-autoinstaller-nginx:`printVersion`
    rcm-ispconfig-setup-remote-user-root:`printVersion`
-   rcm-ispconfig-setup-internal-command:`printVersion`
    rcm-roundcube-setup-ispconfig-integration:`printVersion`
    rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:`printVersion`
    rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root:`printVersion`
@@ -158,7 +157,6 @@ Dependency:
 Download:
    [rcm-ispconfig-autoinstaller-nginx](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-autoinstaller-nginx.sh)
    [rcm-ispconfig-setup-remote-user-root](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-remote-user-root.sh)
-   [rcm-ispconfig-setup-internal-command](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-internal-command.sh)
    [rcm-roundcube-setup-ispconfig-integration](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/roundcube/rcm-roundcube-setup-ispconfig-integration.sh)
    [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php.sh)
    [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root.sh)
@@ -689,8 +687,6 @@ rcm-ispconfig-autoinstaller-nginx $isfast --root-sure \
     --php-version="$php_version" \
     && INDENT+="    " \
 rcm-ispconfig-setup-remote-user-root $isfast --root-sure \
-    && INDENT+="    " \
-rcm-ispconfig-setup-internal-command $isfast --root-sure \
     && INDENT+="    " \
 rcm-roundcube-setup-ispconfig-integration $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
