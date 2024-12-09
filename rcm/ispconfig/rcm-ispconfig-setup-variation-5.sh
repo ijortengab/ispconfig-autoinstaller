@@ -21,18 +21,14 @@ while [[ $# -gt 0 ]]; do
         --url-phpmyadmin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_phpmyadmin="$2"; shift; fi; shift ;;
         --url-roundcube=*) url_roundcube="${1#*=}"; shift ;;
         --url-roundcube) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_roundcube="$2"; shift; fi; shift ;;
-        --with-phpmyadmin=*) install_phpmyadmin="${1#*=}"; shift ;;
-        --with-phpmyadmin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_phpmyadmin="$2"; shift; else install_phpmyadmin=1; fi; shift ;;
         --without-phpmyadmin=*) install_phpmyadmin="${1#*=}"; shift ;;
         --without-phpmyadmin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_phpmyadmin="$2"; shift; else install_phpmyadmin=0; fi; shift ;;
-        --with-roundcube=*) install_roundcube="${1#*=}"; shift ;;
-        --with-roundcube) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_roundcube="$2"; shift; else install_roundcube=1; fi; shift ;;
+        --with-phpmyadmin=*) install_phpmyadmin="${1#*=}"; shift ;;
+        --with-phpmyadmin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_phpmyadmin="$2"; shift; else install_phpmyadmin=1; fi; shift ;;
         --without-roundcube=*) install_roundcube="${1#*=}"; shift ;;
         --without-roundcube) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_roundcube="$2"; shift; else install_roundcube=0; fi; shift ;;
-        --with-update-system) update_system=1; shift ;;
-        --without-update-system) update_system=0; shift ;;
-        --with-upgrade-system) upgrade_system=1; shift ;;
-        --without-upgrade-system) upgrade_system=0; shift ;;
+        --with-roundcube=*) install_roundcube="${1#*=}"; shift ;;
+        --with-roundcube) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_roundcube="$2"; shift; else install_roundcube=1; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -110,10 +106,6 @@ Options:
         Value available from command: rcm-ispconfig-setup-variation-5(suggest-url roundcube [--with-roundcube] [--url-ispconfig] [--fqdn]), or other.
    --timezone
         Set the timezone of this machine. Available values: Asia/Jakarta, or other.
-   --without-update-system ^
-        Skip execute update system. Default to --with-update-system.
-   --without-upgrade-system ^
-        Skip execute upgrade system. Default to --with-upgrade-system.
 
 Global Options:
    --fast
@@ -463,8 +455,6 @@ ArraySearch() {
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-[[ "$update_system" == "0" ]] && is_without_update_system=' --without-update-system' || is_without_update_system=''
-[[ "$upgrade_system" == "0" ]] && is_without_upgrade_system=' --without-upgrade-system' || is_without_upgrade_system=''
 code 'SUBDOMAIN_ISPCONFIG="'$SUBDOMAIN_ISPCONFIG'"'
 code 'SUBDOMAIN_PHPMYADMIN="'$SUBDOMAIN_PHPMYADMIN'"'
 code 'SUBDOMAIN_ROUNDCUBE="'$SUBDOMAIN_ROUNDCUBE'"'
@@ -494,8 +484,6 @@ code install_phpmyadmin="$install_phpmyadmin"
 code url_phpmyadmin="$url_phpmyadmin"
 code install_roundcube="$install_roundcube"
 code url_roundcube="$url_roundcube"
-code update_system="$update_system"
-code upgrade_system="$upgrade_system"
 Rcm_parse_url "$fqdn"
 for each in PHP_URL_SCHEME PHP_URL_PORT PHP_URL_USER PHP_URL_PASS PHP_URL_PATH PHP_URL_QUERY PHP_URL_FRAGMENT; do
     value=${!each}
@@ -653,8 +641,8 @@ fi
 INDENT+="    " \
 rcm-debian-12-setup-basic $isfast --root-sure \
     --timezone="$timezone" \
-    $is_without_update_system \
-    $is_without_upgrade_system \
+    --without-update-system \
+    --without-upgrade-system \
     && INDENT+="    " \
 rcm-mariadb-autoinstaller $isfast --root-sure \
     && INDENT+="    " \
@@ -801,10 +789,6 @@ exit 0
     # 'long:--without-phpmyadmin,parameter:install_phpmyadmin,type:flag_value,flag_option:reverse'
     # 'long:--with-roundcube,parameter:install_roundcube,type:flag_value'
     # 'long:--without-roundcube,parameter:install_roundcube,type:flag_value,flag_option:reverse'
-    # 'long:--with-update-system,parameter:update_system'
-    # 'long:--without-update-system,parameter:update_system,flag_option:reverse'
-    # 'long:--with-upgrade-system,parameter:upgrade_system'
-    # 'long:--without-upgrade-system,parameter:upgrade_system,flag_option:reverse'
 # )
 # EOF
 # clear
