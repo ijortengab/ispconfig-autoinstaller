@@ -239,13 +239,12 @@ urlAlternative() {
     local url=$1 port=$2 path=$3
     local PHP_URL_SCHEME PHP_URL_USER PHP_URL_PASS PHP_URL_HOST PHP_URL_PORT PHP_URL_PATH
     local scheme
+    Rcm_parse_url $url
     if [ "$port" == - ];then
-        port=
+        port="$PHP_URL_PORT"
     fi
     [ -z "$port" ] && port=8080
-    Rcm_parse_url $url
     [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
-    [ -n "$PHP_URL_PORT" ] && port="$PHP_URL_PORT"
     local hostname=$(echo "$PHP_URL_HOST" | sed -E 's|^([^\.]+)\..*|\1|g')
     local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
     if [ "$hostname" == "$SUBDOMAIN_ISPCONFIG" ];then
