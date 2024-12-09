@@ -152,6 +152,8 @@ Dependency:
    rcm-ispconfig-control-manage-email-alias:`printVersion`
    rcm-ispconfig-setup-dump-variables-addon:`printVersion`
    rcm-ispconfig-setup-internal-command:`printVersion`
+   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root:`printVersion`
+   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:`printVersion`
    rcm-dig-is-name-exists
    rcm-dig-is-record-exists
    rcm-dig-watch-domain-exists
@@ -164,6 +166,8 @@ Download:
    [rcm-ispconfig-control-manage-email-alias](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-email-alias.sh)
    [rcm-ispconfig-setup-dump-variables-addon](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-dump-variables-addon.sh)
    [rcm-ispconfig-setup-internal-command](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-internal-command.sh)
+   [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php.sh)
+   [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root.sh)
 EOF
 }
 
