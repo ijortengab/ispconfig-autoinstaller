@@ -291,20 +291,21 @@ code 'NEW_VERSION="'$NEW_VERSION'"'
 mktemp=
 ____
 
-chapter Mengecek '`'ispconfig.php'`' command.
-fullpath=/usr/local/share/ispconfig/bin/ispconfig.php
+chapter Mengecek '`'soap-ispconfig'`' command.
+fullpath=/usr/local/share/ispconfig/bin/soap-ispconfig
 dirname=/usr/local/share/ispconfig/bin
 isFileExists "$fullpath"
 ____
 
 update=
 if [ -n "$found" ];then
-    chapter Mengecek versi '`'ispconfig.php'`' command.
-    code ispconfig.php --version
+    chapter Mengecek versi '`'soap-ispconfig'`' command.
+    code soap-ispconfig --version
     if [ -z "$mktemp" ];then
         mktemp=$(mktemp -p /dev/shm)
     fi
-    "$fullpath" --version | tee $mktemp
+    "$fullpath" --version 2>&1 &> $mktemp
+    while IFS= read line; do e "$line"; _.; done < $mktemp
     old_version=$(head -1 $mktemp)
     if [[ "$old_version" =~ [^0-9\.]+ ]];then
         old_version=0
@@ -322,7 +323,7 @@ if [ -n "$found" ];then
 fi
 
 if [ -n "$notfound" ];then
-    chapter Create Drupal Command '`'ispconfig.php'`'.
+    chapter Create ISPConfig Command '`'soap-ispconfig'`'.
     mkdir -p "$dirname"
     touch "$fullpath"
     chmod a+x "$fullpath"
@@ -331,7 +332,7 @@ if [ -n "$notfound" ];then
 <?php
 array_shift($argv);
 // Jika tidak di escape, maka:
-// `ispconfig.php '; touch a.txt'`
+// `soap-ispconfig '; touch a.txt'`
 // akan terbentuk file a.txt
 $values = array();
 foreach ($argv as $value) {
@@ -345,10 +346,10 @@ EOF
     ____
 fi
 
-link_symbolic "$fullpath" "$BINARY_DIRECTORY/ispconfig.php"
+link_symbolic "$fullpath" "$BINARY_DIRECTORY/soap-ispconfig"
 
-chapter Mengecek '`'ispconfig.php'`' autocompletion.
-fullpath=/etc/profile.d/ispconfig-php-completion.sh
+chapter Mengecek '`'soap-ispconfig'`' autocompletion.
+fullpath=/etc/profile.d/soap-ispconfig-completion.sh
 dirname=/etc/profile.d
 isFileExists "$fullpath"
 if [ -n "$found" ];then
@@ -363,13 +364,13 @@ fi
 ____
 
 if [ -n "$notfound" ];then
-    chapter Create ISPConfig Command '`'ispconfig.php'`' autocompletion.
+    chapter Create ISPConfig Command '`'soap-ispconfig'`' autocompletion.
     mkdir -p "$dirname"
     touch "$fullpath"
     chmod a+x "$fullpath"
     cat << 'EOF' > "$fullpath"
 #!/bin/bash
-_ispconfig_php() {
+_soap_ispconfig() {
     local cur prev
     cur=${COMP_WORDS[COMP_CWORD]}
     prev=${COMP_WORDS[COMP_CWORD-1]}
@@ -398,7 +399,7 @@ _ispconfig_php() {
             ;;
     esac
 }
-complete -F _ispconfig_php ispconfig.php
+complete -F _soap_ispconfig soap-ispconfig
 EOF
     fileMustExists "$fullpath"
     ____
