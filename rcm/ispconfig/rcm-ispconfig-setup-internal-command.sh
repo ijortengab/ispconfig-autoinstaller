@@ -71,7 +71,6 @@ Environment Variables:
         Default to ispconfig.localhost
 
 Dependency:
-   rcm-php-ispconfig
    php
 EOF
 }
