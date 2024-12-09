@@ -21,14 +21,6 @@ while [[ $# -gt 0 ]]; do
         --url-phpmyadmin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_phpmyadmin="$2"; shift; fi; shift ;;
         --url-roundcube=*) url_roundcube="${1#*=}"; shift ;;
         --url-roundcube) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_roundcube="$2"; shift; fi; shift ;;
-        --without-phpmyadmin=*) install_phpmyadmin="${1#*=}"; shift ;;
-        --without-phpmyadmin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_phpmyadmin="$2"; shift; else install_phpmyadmin=0; fi; shift ;;
-        --with-phpmyadmin=*) install_phpmyadmin="${1#*=}"; shift ;;
-        --with-phpmyadmin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_phpmyadmin="$2"; shift; else install_phpmyadmin=1; fi; shift ;;
-        --without-roundcube=*) install_roundcube="${1#*=}"; shift ;;
-        --without-roundcube) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_roundcube="$2"; shift; else install_roundcube=0; fi; shift ;;
-        --with-roundcube=*) install_roundcube="${1#*=}"; shift ;;
-        --with-roundcube) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_roundcube="$2"; shift; else install_roundcube=1; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -86,24 +78,18 @@ Options:
    --ip-address *
         Set the IP Address. Used to verify A record in DNS.
         Value available from command: rcm-ispconfig-setup-variation-5(get-ipv4).
-   --url-ispconfig *
-        The address to set up ISPConfig, domain or URL, for example: \`cp.example.org\` or \`https://example.org:8080/\`.
-        By default, ISPConfig automatically has address at http://ispconfig.localhost/.
-        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url ispconfig [--fqdn]), or other.
-   --with-phpmyadmin ^
+   --url-ispconfig
+        Add ISPConfig public domain.
+        ISPConfig automatically has address at http://ispconfig.localhost/.
+        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url ispconfig [--fqdn]).
+   --url-phpmyadmin
         Add PHPMyAdmin public domain.
-        If skipped, the option --without-phpmyadmin is used.
-        By default, PHPMyAdmin automatically has address at http://phpmyadmin.localhost/.
-   --url-phpmyadmin *
-        The address to set up PHPMyAdmin, domain or URL, for example: \`db.example.org\` or \`https://example.org:8081/phpmyadmin/\`.
-        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url phpmyadmin [--with-phpmyadmin] [--url-ispconfig] [--fqdn]), or other.
-   --with-roundcube ^
+        PHPMyAdmin automatically has address at http://phpmyadmin.localhost/.
+        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url phpmyadmin [--fqdn] [--url-ispconfig]).
+   --url-roundcube
         Add Roundcube public domain.
-        If skipped, the option --without-roundcube is used.
-        By default, Roundcube automatically has address at http://roundcube.localhost/.
-   --url-roundcube *
-        The address to set up Roundcube, domain or URL, for example: \`mail.example.org\` or \`https://example.org:8081/roundcube/\`.
-        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url roundcube [--with-roundcube] [--url-ispconfig] [--fqdn]), or other.
+        Roundcube automatically has address at http://roundcube.localhost/.
+        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url roundcube [--fqdn] [--url-ispconfig]).
    --timezone
         Set the timezone of this machine. Available values: Asia/Jakarta, or other.
 
@@ -161,6 +147,48 @@ EOF
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Functions.
+ArrayDiff() {
+    # Computes the difference of arrays.
+    #
+    # Globals:
+    #   Modified: _return
+    #
+    # Arguments:
+    #   1 = Parameter of the array to compare from.
+    #   2 = Parameter of the array to compare against.
+    #
+    # Returns:
+    #   None
+    #
+    # Example:
+    #   ```
+    #   my=("cherry" "manggo" "blackberry" "manggo" "blackberry")
+    #   yours=("cherry" "blackberry")
+    #   ArrayDiff my[@] yours[@]
+    #   # Get result in variable `$_return`.
+    #   # _return=("manggo" "manggo")
+    #   ```
+    local e
+    local source=("${!1}")
+    local reference=("${!2}")
+    _return=()
+    # inArray is alternative of ArraySearch.
+    inArray () {
+        local e match="$1"
+        shift
+        for e; do [[ "$e" == "$match" ]] && return 0; done
+        return 1
+    }
+    if [[ "${#reference[@]}" -gt 0 ]];then
+        for e in "${source[@]}";do
+            if ! inArray "$e" "${reference[@]}";then
+                _return+=("$e")
+            fi
+        done
+    else
+        _return=("${source[@]}")
+    fi
+}
 Rcm_parse_url() {
     # Reset
     PHP_URL_SCHEME=
@@ -250,56 +278,51 @@ command-suggest-url() {
             _; _.
             ___; yellow Attention; _, . ISPConfig cannot install inside subpath.; _.
             local fqdn=$2
-            Rcm_parse_url $fqdn
-            local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
-            siblingHost "$domain" $SUBDOMAIN_ISPCONFIG
-            urlAlternative "$domain"
-            echo "https://${PHP_URL_HOST}:8080"
+            # Rcm_parse_url $fqdn
+            # local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
+            # siblingHost "$domain" $SUBDOMAIN_ISPCONFIG
+            urlAlternative "$fqdn" 8080
+            urlAlternative "$fqdn" 8081
+            urlAlternative "$fqdn" 8443
+            # echo "https://${PHP_URL_HOST}:8080"
             ;;
         phpmyadmin)
-            local with_phpmyadmin=$2 url_ispconfig=$3 fqdn=$4
-            [ $with_phpmyadmin == 0 ] && with_phpmyadmin=
+            local fqdn=$2 url_ispconfig=$3
             [ $url_ispconfig == - ] && url_ispconfig=
             # Set to skip, return exit code non zero.
-            [ -z "$with_phpmyadmin" ] && exit 1
-            siblingHost "$url_ispconfig" $SUBDOMAIN_PHPMYADMIN
-            urlAlternative "$url_ispconfig" - /phpmyadmin
-            urlAlternative "$url_ispconfig" - /$SUBDOMAIN_PHPMYADMIN
-            urlAlternative "$url_ispconfig" 8081 /phpmyadmin
-            urlAlternative "$url_ispconfig" 8081 /$SUBDOMAIN_PHPMYADMIN
-            # Jika url ispconfig adalah fqdn, maka
-            Rcm_parse_url "$url_ispconfig"
-            if [ "$PHP_URL_HOST" == "$fqdn" ];then
-                local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
-                siblingHost "$domain" $SUBDOMAIN_PHPMYADMIN
-                urlAlternative "$domain" - /phpmyadmin
-                urlAlternative "$domain" - /$SUBDOMAIN_PHPMYADMIN
-                urlAlternative "$domain" 8081 /phpmyadmin
-                urlAlternative "$domain" 8081 /$SUBDOMAIN_PHPMYADMIN
+            local array=()
+            for each in 8080 8081 8443; do
+                array+=($(urlAlternative "$fqdn" "$each"))
+                array+=($(urlAlternative "$fqdn" "$each" /phpmyadmin))
+                array+=($(urlAlternative "$fqdn" "$each" "/${SUBDOMAIN_PHPMYADMIN}"))
+            done
+            if [ -n "$url_ispconfig" ];then
+                local _array=("$url_ispconfig")
+                ArrayDiff array[@] _array[@]
+                array=("${_return[@]}")
             fi
+            for each in "${array[@]}"; do
+                echo "$each"
+            done
             ;;
         roundcube)
-            local with_roundcube=$2 url_ispconfig=$3 fqdn=$4
-            [ $with_roundcube == 0 ] && with_roundcube=
+            local fqdn=$2 url_ispconfig=$3
             [ $url_ispconfig == - ] && url_ispconfig=
             # Set to skip, return exit code non zero.
-            [ -z "$with_roundcube" ] && exit 1
-            siblingHost "$url_ispconfig" $SUBDOMAIN_ROUNDCUBE
-            urlAlternative "$url_ispconfig" - /roundcube
-            urlAlternative "$url_ispconfig" - /$SUBDOMAIN_ROUNDCUBE
-            urlAlternative "$url_ispconfig" 8081 /roundcube
-            urlAlternative "$url_ispconfig" 8081 /$SUBDOMAIN_ROUNDCUBE
-            # Jika url ispconfig adalah fqdn, maka
-            Rcm_parse_url "$url_ispconfig"
-            if [ "$PHP_URL_HOST" == "$fqdn" ];then
-                local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
-                siblingHost "$domain" $SUBDOMAIN_ROUNDCUBE
-                urlAlternative "$domain" - /roundcube
-                urlAlternative "$domain" - /$SUBDOMAIN_ROUNDCUBE
-                urlAlternative "$domain" 8081 /roundcube
-                urlAlternative "$domain" 8081 /$SUBDOMAIN_ROUNDCUBE
+            local array=()
+            for each in 8080 8081 8443; do
+                array+=($(urlAlternative "$fqdn" "$each"))
+                array+=($(urlAlternative "$fqdn" "$each" /roundcube))
+                array+=($(urlAlternative "$fqdn" "$each" "/${SUBDOMAIN_ROUNDCUBE}"))
+            done
+            if [ -n "$url_ispconfig" ];then
+                local _array=("$url_ispconfig")
+                ArrayDiff array[@] _array[@]
+                array=("${_return[@]}")
             fi
-            ;;
+            for each in "${array[@]}"; do
+                echo "$each"
+            done
     esac
 }
 command-get-ipv4() {
@@ -465,25 +488,7 @@ fi
 if [ -z "$ip_address" ];then
     error "Argument --ip-address required."; x
 fi
-if [ -z "$url_ispconfig" ];then
-    error "Argument --url-ispconfig required."; x
-fi
-if [ "$install_phpmyadmin" == 1 ];then
-    if [ -z "$url_phpmyadmin" ];then
-        error "Argument --url-phpmyadmin required."; x
-    fi
-fi
-if [ "$install_roundcube" == 1 ];then
-    if [ -z "$url_roundcube" ];then
-        error "Argument --url-roundcube required."; x
-    fi
-fi
 code fqdn="$fqdn"
-code url_ispconfig="$url_ispconfig"
-code install_phpmyadmin="$install_phpmyadmin"
-code url_phpmyadmin="$url_phpmyadmin"
-code install_roundcube="$install_roundcube"
-code url_roundcube="$url_roundcube"
 Rcm_parse_url "$fqdn"
 for each in PHP_URL_SCHEME PHP_URL_PORT PHP_URL_USER PHP_URL_PASS PHP_URL_PATH PHP_URL_QUERY PHP_URL_FRAGMENT; do
     value=${!each}
@@ -493,68 +498,83 @@ for each in PHP_URL_SCHEME PHP_URL_PORT PHP_URL_USER PHP_URL_PASS PHP_URL_PATH P
 done
 hostname=$(echo "$PHP_URL_HOST" | sed -E 's|^([^\.]+)\..*|\1|g')
 code hostname="$hostname"
-fqdn_array_raw=()
-fqdn_path_array_raw=()
-Rcm_parse_url "$url_ispconfig"
-if [ -z "$PHP_URL_HOST" ];then
-    error Argument --url-ispconfig is not valid: '`'"$url_ispconfig"'`'.; x
-elif [ -n "$PHP_URL_PATH" ];then
-    error Argument --url-ispconfig is cannot have subpath: '`'"$url_ispconfig"'`'.; x
-else
-    [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
-    [ -n "$PHP_URL_PORT" ] && port="$PHP_URL_PORT" || port=443
-    [ -n "$PHP_URL_PATH" ] && fqdn_path_array_raw+=("$PHP_URL_HOST")
-    ispconfig_url_scheme="$scheme"
-    ispconfig_url_host="$PHP_URL_HOST"
-    ispconfig_url_port="$port"
-    ispconfig_url_path="$PHP_URL_PATH"
-    fqdn_array_raw+=("$PHP_URL_HOST")
-    # Modify variable url_ispconfig.
-    [ -n "$PHP_URL_SCHEME" ] || url_ispconfig="${scheme}://${url_ispconfig}"
-    code url_ispconfig="$url_ispconfig"
-fi
-if [ "$install_phpmyadmin" == 1 ];then
-    Rcm_parse_url "$url_phpmyadmin"
+fqdn_array=()
+fqdn_path_array=()
+code url_ispconfig="$url_ispconfig"
+if [ -n "$url_ispconfig" ];then
+    Rcm_parse_url "$url_ispconfig"
     if [ -z "$PHP_URL_HOST" ];then
-        error Argument --url-phpmyadmin is not valid: '`'"$url_phpmyadmin"'`'.; x
+        error Argument --url-ispconfig is not valid: '`'"$url_ispconfig"'`'.; x
+    elif [ -n "$PHP_URL_PATH" ];then
+        error Argument --url-ispconfig is cannot have subpath: '`'"$url_ispconfig"'`'.; x
+    elif [ ! "$PHP_URL_HOST" == "$fqdn" ];then
+        error Argument --url-ispconfig is not part of FQDN: '`'"$url_ispconfig"'`'.; x
     else
         [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
         [ -n "$PHP_URL_PORT" ] && port="$PHP_URL_PORT" || port=443
-        [ -n "$PHP_URL_PATH" ] && fqdn_path_array_raw+=("$PHP_URL_HOST")
+        [ -n "$PHP_URL_PATH" ] && fqdn_path_array+=("$PHP_URL_HOST")
+        ispconfig_url_scheme="$scheme"
+        ispconfig_url_host="$PHP_URL_HOST"
+        ispconfig_url_port="$port"
+        ispconfig_url_path="$PHP_URL_PATH"
+        fqdn_array+=("$PHP_URL_HOST")
+        # Modify variable url_ispconfig.
+        [ -n "$PHP_URL_SCHEME" ] || url_ispconfig="${scheme}://${url_ispconfig}"
+        code url_ispconfig="$url_ispconfig"
+    fi
+fi
+code url_phpmyadmin="$url_phpmyadmin"
+if [ -n "$url_phpmyadmin" ];then
+    Rcm_parse_url "$url_phpmyadmin"
+    if [ -z "$PHP_URL_HOST" ];then
+        error Argument --url-phpmyadmin is not valid: '`'"$url_phpmyadmin"'`'.; x
+    elif [ ! "$PHP_URL_HOST" == "$fqdn" ];then
+        error Argument --url-phpmyadmin is not part of FQDN: '`'"$url_phpmyadmin"'`'.; x
+    else
+        [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
+        [ -n "$PHP_URL_PORT" ] && port="$PHP_URL_PORT" || port=443
+        [ -n "$PHP_URL_PATH" ] && fqdn_path_array+=("$PHP_URL_HOST")
         phpmyadmin_url_scheme="$scheme"
         phpmyadmin_url_host="$PHP_URL_HOST"
         phpmyadmin_url_port="$port"
         phpmyadmin_url_path="$PHP_URL_PATH"
-        fqdn_array_raw+=("$PHP_URL_HOST")
+        fqdn_array+=("$PHP_URL_HOST")
         # Modify variable url_phpmyadmin.
         [ -n "$PHP_URL_SCHEME" ] || url_phpmyadmin="${scheme}://${url_phpmyadmin}"
         code url_phpmyadmin="$url_phpmyadmin"
     fi
 fi
-if [ "$install_roundcube" == 1 ];then
+code url_roundcube="$url_roundcube"
+if [ -n "$url_roundcube" ];then
     Rcm_parse_url "$url_roundcube"
     if [ -z "$PHP_URL_HOST" ];then
         error Argument --url-roundcube is not valid: '`'"$url_roundcube"'`'.; x
+    elif [ ! "$PHP_URL_HOST" == "$fqdn" ];then
+        error Argument --url-roundcube is not part of FQDN: '`'"$url_roundcube"'`'.; x
     else
         [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
         [ -n "$PHP_URL_PORT" ] && port="$PHP_URL_PORT" || port=443
-        [ -n "$PHP_URL_PATH" ] && fqdn_path_array_raw+=("$PHP_URL_HOST")
+        [ -n "$PHP_URL_PATH" ] && fqdn_path_array+=("$PHP_URL_HOST")
         roundcube_url_scheme="$scheme"
         roundcube_url_host="$PHP_URL_HOST"
         roundcube_url_port="$port"
         roundcube_url_path="$PHP_URL_PATH"
-        fqdn_array_raw+=("$PHP_URL_HOST")
+        fqdn_array+=("$PHP_URL_HOST")
         # Modify variable url_roundcube.
         [ -n "$PHP_URL_SCHEME" ] || url_roundcube="${scheme}://${url_roundcube}"
         code url_roundcube="$url_roundcube"
     fi
 fi
-ArrayUnique fqdn_array_raw[@]
+code 'fqdn_array=('"${fqdn_array[@]}"')'
+ArrayUnique fqdn_array[@]
 fqdn_array=("${_return[@]}")
 unset _return
-ArrayUnique fqdn_path_array_raw[@]
+code 'fqdn_array=('"${fqdn_array[@]}"')'
+code 'fqdn_path_array=('"${fqdn_path_array[@]}"')'
+ArrayUnique fqdn_path_array[@]
 fqdn_path_array=("${_return[@]}")
 unset _return
+code 'fqdn_path_array=('"${fqdn_path_array[@]}"')'
 php_version=8.3
 code php_version="$php_version"
 phpmyadmin_version=5.2.1
@@ -567,8 +587,6 @@ code ip_address="$ip_address"
 if ! grep -q -m 1 -oE '^[0-9]{1,3}(\.[0-9]{1,3}){3}$' <<< "$ip_address";then
     error IP Address version 4 format is not valid; x
 fi
-code 'fqdn_array=('"${fqdn_array[@]}"')'
-code 'fqdn_path_array=('"${fqdn_path_array[@]}"')'
 ____
 
 INDENT+="    " \
@@ -724,13 +742,15 @@ sleepExtended 3
 ____
 
 chapter Saving URL information.
-code mkdir -p /usr/local/share/ispconfig/
-mkdir -p /usr/local/share/ispconfig/
-cat << EOF > /usr/local/share/ispconfig/website
-URL_ISPCONFIG=$url_ispconfig
+if [ -n "$url_ispconfig" ];then
+    code mkdir -p /usr/local/share/ispconfig/
+    mkdir -p /usr/local/share/ispconfig/
+    cat << EOF > /usr/local/share/ispconfig/website
+    URL_ISPCONFIG=$url_ispconfig
 EOF
-fileMustExists /usr/local/share/ispconfig/website
-if [ "$install_phpmyadmin" == 1 ];then
+    fileMustExists /usr/local/share/ispconfig/website
+fi
+if [ -n "$url_phpmyadmin" ];then
     code mkdir -p /usr/local/share/phpmyadmin/
     mkdir -p /usr/local/share/phpmyadmin/
     cat << EOF > /usr/local/share/phpmyadmin/website
@@ -738,7 +758,7 @@ URL_PHPMYADMIN=$url_phpmyadmin
 EOF
     fileMustExists /usr/local/share/phpmyadmin/website
 fi
-if [ "$install_roundcube" == 1 ];then
+if [ -n "$url_roundcube" ];then
     code mkdir -p /usr/local/share/roundcube/
     mkdir -p /usr/local/share/roundcube/
     cat << EOF > /usr/local/share/roundcube/website
@@ -785,10 +805,6 @@ exit 0
 # FLAG_VALUE=(
 # )
 # CSV=(
-    # 'long:--with-phpmyadmin,parameter:install_phpmyadmin,type:flag_value'
-    # 'long:--without-phpmyadmin,parameter:install_phpmyadmin,type:flag_value,flag_option:reverse'
-    # 'long:--with-roundcube,parameter:install_roundcube,type:flag_value'
-    # 'long:--without-roundcube,parameter:install_roundcube,type:flag_value,flag_option:reverse'
 # )
 # EOF
 # clear
