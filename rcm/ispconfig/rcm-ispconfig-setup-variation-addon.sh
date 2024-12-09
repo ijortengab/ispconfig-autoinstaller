@@ -151,6 +151,7 @@ Dependency:
    rcm-ispconfig-control-manage-email-mailbox:`printVersion`
    rcm-ispconfig-control-manage-email-alias:`printVersion`
    rcm-ispconfig-setup-dump-variables-addon:`printVersion`
+   rcm-ispconfig-setup-internal-command:`printVersion`
    rcm-dig-is-name-exists
    rcm-dig-is-record-exists
 
@@ -160,6 +161,7 @@ Download:
    [rcm-ispconfig-control-manage-email-mailbox](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-email-mailbox.sh)
    [rcm-ispconfig-control-manage-email-alias](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-email-alias.sh)
    [rcm-ispconfig-setup-dump-variables-addon](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-dump-variables-addon.sh)
+   [rcm-ispconfig-setup-internal-command](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-internal-command.sh)
 EOF
 }
 
@@ -654,6 +656,8 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
+rcm-ispconfig-setup-internal-command $isfast --root-sure \
+    && INDENT+="    " \
 rcm-ispconfig-control-manage-domain $isfast --root-sure \
     --domain="$domain" \
     && INDENT+="    " \
