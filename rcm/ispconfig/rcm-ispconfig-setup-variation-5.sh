@@ -99,14 +99,14 @@ Options:
         If skipped, the option --without-phpmyadmin is used.
         By default, PHPMyAdmin automatically has address at http://phpmyadmin.localhost/.
    --url-phpmyadmin *
-        The address to set up PHPMyAdmin, domain or URL, for example: \`db.example.org\` or \`https://example.org:8080/phpmyadmin/\`.
+        The address to set up PHPMyAdmin, domain or URL, for example: \`db.example.org\` or \`https://example.org:8081/phpmyadmin/\`.
         Value available from command: rcm-ispconfig-setup-variation-5(suggest-url phpmyadmin [--with-phpmyadmin] [--url-ispconfig] [--fqdn]), or other.
    --with-roundcube ^
         Add Roundcube public domain.
         If skipped, the option --without-roundcube is used.
         By default, Roundcube automatically has address at http://roundcube.localhost/.
    --url-roundcube *
-        The address to set up Roundcube, domain or URL, for example: \`mail.example.org\` or \`https://example.org:8080/roundcube/\`.
+        The address to set up Roundcube, domain or URL, for example: \`mail.example.org\` or \`https://example.org:8081/roundcube/\`.
         Value available from command: rcm-ispconfig-setup-variation-5(suggest-url roundcube [--with-roundcube] [--url-ispconfig] [--fqdn]), or other.
    --timezone
         Set the timezone of this machine. Available values: Asia/Jakarta, or other.
@@ -235,12 +235,15 @@ siblingHost() {
     fi
 }
 urlAlternative() {
-    local url=$1 path=$2
+    local url=$1 port=$2 path=$3
     local PHP_URL_SCHEME PHP_URL_USER PHP_URL_PASS PHP_URL_HOST PHP_URL_PORT PHP_URL_PATH
-    local scheme port
+    local scheme
     Rcm_parse_url $url
+    if [ "$port" == - ];then
+        port="$PHP_URL_PORT"
+    fi
+    [ -z "$port" ] && port=8080
     [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
-    [ -n "$PHP_URL_PORT" ] && port="$PHP_URL_PORT" || port=8080
     local hostname=$(echo "$PHP_URL_HOST" | sed -E 's|^([^\.]+)\..*|\1|g')
     local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
     if [ "$hostname" == "$SUBDOMAIN_ISPCONFIG" ];then
@@ -270,15 +273,19 @@ command-suggest-url() {
             # Set to skip, return exit code non zero.
             [ -z "$with_phpmyadmin" ] && exit 1
             siblingHost "$url_ispconfig" $SUBDOMAIN_PHPMYADMIN
-            urlAlternative "$url_ispconfig" /phpmyadmin
-            urlAlternative "$url_ispconfig" /$SUBDOMAIN_PHPMYADMIN
+            urlAlternative "$url_ispconfig" - /phpmyadmin
+            urlAlternative "$url_ispconfig" - /$SUBDOMAIN_PHPMYADMIN
+            urlAlternative "$url_ispconfig" 8081 /phpmyadmin
+            urlAlternative "$url_ispconfig" 8081 /$SUBDOMAIN_PHPMYADMIN
             # Jika url ispconfig adalah fqdn, maka
             Rcm_parse_url "$url_ispconfig"
             if [ "$PHP_URL_HOST" == "$fqdn" ];then
                 local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
                 siblingHost "$domain" $SUBDOMAIN_PHPMYADMIN
-                urlAlternative "$domain" /phpmyadmin
-                urlAlternative "$domain" /$SUBDOMAIN_PHPMYADMIN
+                urlAlternative "$domain" - /phpmyadmin
+                urlAlternative "$domain" - /$SUBDOMAIN_PHPMYADMIN
+                urlAlternative "$domain" 8081 /phpmyadmin
+                urlAlternative "$domain" 8081 /$SUBDOMAIN_PHPMYADMIN
             fi
             ;;
         roundcube)
@@ -288,15 +295,19 @@ command-suggest-url() {
             # Set to skip, return exit code non zero.
             [ -z "$with_roundcube" ] && exit 1
             siblingHost "$url_ispconfig" $SUBDOMAIN_ROUNDCUBE
-            urlAlternative "$url_ispconfig" /roundcube
-            urlAlternative "$url_ispconfig" /$SUBDOMAIN_ROUNDCUBE
+            urlAlternative "$url_ispconfig" - /roundcube
+            urlAlternative "$url_ispconfig" - /$SUBDOMAIN_ROUNDCUBE
+            urlAlternative "$url_ispconfig" 8081 /roundcube
+            urlAlternative "$url_ispconfig" 8081 /$SUBDOMAIN_ROUNDCUBE
             # Jika url ispconfig adalah fqdn, maka
             Rcm_parse_url "$url_ispconfig"
             if [ "$PHP_URL_HOST" == "$fqdn" ];then
                 local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
                 siblingHost "$domain" $SUBDOMAIN_ROUNDCUBE
-                urlAlternative "$domain" /roundcube
-                urlAlternative "$domain" /$SUBDOMAIN_ROUNDCUBE
+                urlAlternative "$domain" - /roundcube
+                urlAlternative "$domain" - /$SUBDOMAIN_ROUNDCUBE
+                urlAlternative "$domain" 8081 /roundcube
+                urlAlternative "$domain" 8081 /$SUBDOMAIN_ROUNDCUBE
             fi
             ;;
     esac
