@@ -701,6 +701,10 @@ rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-
 chapter Send Welcome email.
 code postqueue -f
 postqueue -f
+command -v run-getmail.sh >/dev/null && {
+    code run-getmail.sh
+    run-getmail.sh
+}
 ____
 
 chapter Take a break.
