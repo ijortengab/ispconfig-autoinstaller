@@ -145,18 +145,15 @@ ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 code 'ROUNDCUBE_FQDN_LOCALHOST="'$ROUNDCUBE_FQDN_LOCALHOST'"'
 PHPMYADMIN_FQDN_LOCALHOST=${PHPMYADMIN_FQDN_LOCALHOST:=phpmyadmin.localhost}
 code 'PHPMYADMIN_FQDN_LOCALHOST="'$PHPMYADMIN_FQDN_LOCALHOST'"'
-case "$project" in
-    ispconfig|phpmyadmin|roundcube) ;;
-    *) project=
-esac
-until [[ -n "$project" ]];do
-    _ Available value:' '; yellow ispconfig, phpmyadmin, roundcube.; _.
-    _; read -p "Argument --project required: " project
+if [ -n "$project" ];then
     case "$project" in
         ispconfig|phpmyadmin|roundcube) ;;
-        *) project=
+        *) error "Argument --project not valid."; x ;;
     esac
-done
+fi
+if [ -z "$project" ];then
+    error "Argument --project required."; x
+fi
 if [ -z "$url_scheme" ];then
     error "Argument --url-scheme required."; x
 fi
