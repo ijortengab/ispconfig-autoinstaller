@@ -310,11 +310,12 @@ if [ -z "$url_port" ];then
 fi
 if [ -n "$url_path" ];then
     # Trim leading and trailing slash.
-    url_path_clean=$(echo "$url_path" | sed -E 's|(^/\|/$)+||g')
-    # Must leading with slash and no trailing slash.
+    url_path_clean=$(echo "$url_path" | sed -E 's|(^/+\|/+$)||g')
+    url_path_clean_trailing=$(echo "$url_path" | sed -E 's|/+$||g')
+    # Must leading with slash.
     # Karena akan digunakan pada nginx configuration.
     _url_path_correct="/${url_path_clean}"
-    if [ ! "$url_path" == "$_url_path_correct" ];then
+    if [ ! "$url_path_clean_trailing" == "$_url_path_correct" ];then
         error "Argument --url-path not valid."; x
     fi
 fi
@@ -398,6 +399,7 @@ code 'nginx_web_root="'$nginx_web_root'"'
 nginx_config_dir="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx.conf.d"
 nginx_config_file="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx.conf"
 code 'nginx_config_dir="'$nginx_config_dir'"'
+code 'nginx_config_file="'$nginx_config_file'"'
 ____
 
 chapter Mengecek direktori web root '`'$nginx_web_root'`'.
@@ -414,7 +416,8 @@ if [ -n "$notfound" ];then
     ____
 fi
 
-target="${nginx_web_root}${url_path}"
+target="${nginx_web_root}/${url_path_clean}"
+code 'target="'$target'"'
 chapter Memeriksa direktori target '`'$target'`'
 create=
 if [[ "$target" == "$nginx_web_root" ]];then
@@ -459,7 +462,7 @@ slave_root=
 slave_filename="$url_path_clean"
 slave_dirname="$nginx_config_dir"
 slave_fastcgi_pass="$fastcgi_pass"
-slave_url_path="$url_path"
+slave_url_path="$url_path_clean_trailing"
 slave_url_path_clean="$url_path_clean"
 if [ -z "$url_path" ];then
     slave_filename="$(basename "$nginx_config_file")"
