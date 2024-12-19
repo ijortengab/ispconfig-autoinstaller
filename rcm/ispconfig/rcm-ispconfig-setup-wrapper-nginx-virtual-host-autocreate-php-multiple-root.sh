@@ -222,8 +222,13 @@ link_symbolic_dir() {
     if [ -n "$create" ];then
         __ Membuat symbolic link: '`'$target'`'.
         local target_parent=$(dirname "$target")
-        code mkdir -p "$target_parent"
-        mkdir -p "$target_parent"
+        if [ -n "$sudo" ];then
+            code sudo -u '"'$sudo'"' mkdir -p '"'$target_parent'"'
+            sudo -u "$sudo" mkdir -p "$target_parent"
+        else
+            code mkdir -p "$target_parent"
+            mkdir -p "$target_parent"
+        fi
         if [ -z "$source_mode" ];then
             source=$(realpath -s --relative-to="$target_parent" "$source")
         fi
