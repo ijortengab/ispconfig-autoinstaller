@@ -285,6 +285,39 @@ isFileExists() {
         notfound=1
     fi
 }
+ArrayPop() {
+    local index
+    local source=("${!1}")
+    # declare -i last_index
+    local last_index=${#source[@]}
+    last_index=$((last_index - 1))
+    _return=()
+    for (( index=0; index < "$last_index" ; index++ )); do
+        _return+=("${source[$index]}")
+    done
+    return="${source[-1]}"
+}
+adjustNginxWebRoot() {
+    # global modified $nginx_web_root
+    local url_path=$1; shift;
+    if [ -z "$url_path" ];then
+        # not modified.
+        return
+    fi
+    local url_path_clean=$(echo "$url_path" | sed -E 's|(^/+\|/+$)||g')
+    if [[ ! "$url_path_clean" =~ / ]];then
+        # not modified.
+        return
+    fi
+    # Explode by space.
+    # read -ra array -d '' <<< "$string"
+    # Explode by slash.
+    IFS='/' read -ra array <<< "$url_path_clean"
+    # for each in "${array[@]}"; do echo "_${each}_"; done;
+    ArrayPop array[@]
+    array=("${_return[@]}"); unset _return
+    for each in "${array[@]}"; do nginx_web_root+="/${each}.d"; done;
+}
 
 # Require, validate, and populate value.
 chapter Dump variable.
@@ -405,6 +438,8 @@ nginx_config_dir="${nginx_user_home}/${url_host}${additional_path_custom_port}/n
 nginx_config_file="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx.conf"
 code 'nginx_config_dir="'$nginx_config_dir'"'
 code 'nginx_config_file="'$nginx_config_file'"'
+adjustNginxWebRoot "$url_path"
+code 'nginx_web_root="'$nginx_web_root'"'
 ____
 
 chapter Mengecek direktori web root '`'$nginx_web_root'`'.
@@ -459,7 +494,6 @@ master_root="$nginx_web_root"
 master_include="${nginx_config_dir}/*"
 master_include_2="$nginx_config_file"
 master_filename="$filename"
-master_url_host="$url_host"
 master_url_host="$url_host"
 master_url_scheme="$url_scheme"
 master_url_port="$url_port"
