@@ -98,14 +98,25 @@ fileMustExists() {
 backupFile() {
     local mode="$1"
     local oldpath="$2" i newpath
+    local target_dir="$3"
     i=1
-    newpath="${oldpath}.${i}"
+    oldpath=$(realpath "$oldpath")
+    dirname=$(dirname "$oldpath")
+    basename=$(basename "$oldpath")
+    if [ -n "$target_dir" ];then
+        case "$target_dir" in
+            parent) dirname=$(dirname "$dirname") ;;
+            *) dirname="$target_dir"
+        esac
+    fi
+    [ -d "$target_dir" ] || { echo 'Directory is not exists.' >&2; return 1; }
+    newpath="${dirname}/${basename}.${i}"
     if [ -f "$newpath" ]; then
         let i++
-        newpath="${oldpath}.${i}"
+        newpath="${dirname}/${basename}.${i}"
         while [ -f "$newpath" ] ; do
             let i++
-            newpath="${oldpath}.${i}"
+            newpath="${dirname}/${basename}.${i}"
         done
     fi
     case $mode in
