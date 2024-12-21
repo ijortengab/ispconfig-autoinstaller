@@ -79,15 +79,15 @@ Options:
         Set the IP Address. Used to verify A record in DNS.
         Value available from command: rcm-ispconfig-setup-variation-5(get-ipv4).
    --url-ispconfig
-        Add ISPConfig public domain.
+        Add ISPConfig public domain. The value can be domain or URL.
         ISPConfig automatically has address at http://ispconfig.localhost/.
         Value available from command: rcm-ispconfig-setup-variation-5(suggest-url ispconfig [--fqdn]).
    --url-phpmyadmin
-        Add PHPMyAdmin public domain.
+        Add PHPMyAdmin public domain. The value can be domain or URL.
         PHPMyAdmin automatically has address at http://phpmyadmin.localhost/.
         Value available from command: rcm-ispconfig-setup-variation-5(suggest-url phpmyadmin [--fqdn] [--url-ispconfig]).
    --url-roundcube
-        Add Roundcube public domain.
+        Add Roundcube public domain. The value can be domain or URL.
         Roundcube automatically has address at http://roundcube.localhost/.
         Value available from command: rcm-ispconfig-setup-variation-5(suggest-url roundcube [--fqdn] [--url-ispconfig]).
    --timezone
