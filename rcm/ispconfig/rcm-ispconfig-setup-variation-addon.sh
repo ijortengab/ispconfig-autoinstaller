@@ -95,24 +95,21 @@ Options:
         Value available from command: rcm-ispconfig-setup-variation-addon(get-ipv4).
    --with-ispconfig ^
         Add ISPConfig public domain.
-        If skipped, the option --without-ispconfig is used.
-        By default, ISPConfig automatically has address at http://ispconfig.localhost/.
    --url-ispconfig *
-        The address to set up ISPConfig, domain or URL, for example: \`cp.example.org\` or \`https://example.org:8080/\`.
+        The value can be domain or URL.
+        For example: \`cp.example.org\` or \`https://example.org:8080/\`.
         Value available from command: rcm-ispconfig-setup-variation-addon(suggest-url ispconfig [--with-ispconfig] [--domain]), or other.
    --with-phpmyadmin ^
         Add PHPMyAdmin public domain.
-        If skipped, the option --without-phpmyadmin is used.
-        By default, PHPMyAdmin automatically has address at http://phpmyadmin.localhost/.
    --url-phpmyadmin *
-        The address to set up PHPMyAdmin, domain or URL, for example: \`db.example.org\` or \`https://example.org:8080/phpmyadmin/\`.
+        The value can be domain or URL.
+        For example: \`db.example.org\` or \`https://example.org:8081/phpmyadmin/\`.
         Value available from command: rcm-ispconfig-setup-variation-addon(suggest-url phpmyadmin [--with-phpmyadmin] [--url-ispconfig] [--domain]), or other.
    --with-roundcube ^
         Add Roundcube public domain.
-        If skipped, the option --without-roundcube is used.
-        By default, Roundcube automatically has address at http://roundcube.localhost/.
    --url-roundcube *
-        The address to set up Roundcube, domain or URL, for example: \`mail.example.org\` or \`https://example.org:8080/roundcube/\`.
+        The value can be domain or URL.
+        For example: \`mail.example.org\` or \`https://example.org:8081/roundcube/\`.
         Value available from command: rcm-ispconfig-setup-variation-addon(suggest-url roundcube [--with-roundcube] [--url-ispconfig] [--domain]), or other.
 
 Global Options:
