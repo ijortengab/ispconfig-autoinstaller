@@ -187,7 +187,6 @@ backupFile() {
     local oldpath="$2" i newpath
     local target_dir="$3"
     i=1
-    oldpath=$(realpath "$oldpath")
     dirname=$(dirname "$oldpath")
     basename=$(basename "$oldpath")
     if [ -n "$target_dir" ];then
@@ -196,7 +195,7 @@ backupFile() {
             *) dirname="$target_dir"
         esac
     fi
-    [ -d "$target_dir" ] || { echo 'Directory is not exists.' >&2; return 1; }
+    [ -d "$dirname" ] || { echo 'Directory is not exists.' >&2; return 1; }
     newpath="${dirname}/${basename}.${i}"
     if [ -f "$newpath" ]; then
         let i++
