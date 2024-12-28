@@ -240,6 +240,7 @@ ____
 
 INDENT+="    " \
 rcm-nginx-virtual-host-autocreate-php $isfast --root-sure \
+    --with-certbot-obtain \
     --root="$root" \
     --fastcgi-pass="unix:${socket_filename}" \
     --filename="$filename" \
