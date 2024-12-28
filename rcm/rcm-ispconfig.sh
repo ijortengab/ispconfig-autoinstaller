@@ -7,7 +7,8 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --digitalocean) digitalocean=1; shift ;;
+        --dns-api-provider=*) dns_api_provider="${1#*=}"; shift ;;
+        --dns-api-provider) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then dns_api_provider="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --mode=*) mode="${1#*=}"; shift ;;
         --mode) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mode="$2"; shift; fi; shift ;;
@@ -138,10 +139,10 @@ Usage: rcm-ispconfig [command] [options]
 Options:
    --mode *
         Select the setup mode. Values available from command: rcm-ispconfig(mode-available).
-   --digitalocean ^
-        Select this if your server use DigitalOcean DNS.
+   --dns-api-provider
+        Select the DNS Provider that have API (Application Programming Interface). Available value: digitalocean.
    --variation *
-        Select the variation setup. Values available from command: rcm-ispconfig(eligible [--mode] [--digitalocean]).
+        Select the variation setup. Values available from command: rcm-ispconfig(eligible [--mode] [--dns-api-provider]).
 
 Global Options.
    --fast
@@ -185,7 +186,7 @@ ArraySearch() {
 }
 command-eligible() {
     local mode=$1; shift
-    local is_digitalocean=$1
+    local dns_api_provider=$1
     eligible=()
     if [ -f /etc/os-release ];then
         . /etc/os-release
@@ -193,8 +194,8 @@ command-eligible() {
     case "$mode" in
         init)
         _; _.
-            case "$is_digitalocean" in
-                1)
+            case "$dns_api_provider" in
+                digitalocean)
                     ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11    ]] && color=green || color=red; $color d1;
                     _, . Debian 11, PHP 7.4, ISPConfig 3.2.7,; _.
                     ___; _,  '             ' PHPMyAdmin 5.2.0, Roundcube 1.6.0, DigitalOcean DNS.; _.
@@ -411,13 +412,19 @@ if [ -z "$mode" ];then
     error "Argument --mode required."; x
 fi
 code 'mode="'$mode'"'
-code 'digitalocean="'$digitalocean'"'
+code 'dns_api_provider="'$dns_api_provider'"'
+if [ -n "$dns_api_provider" ];then
+	case "$dns_api_provider" in
+		digitalocean) ;;
+		*) error DNS API is not supported yet. ; x
+	esac
+fi
 code 'variation="'$variation'"'
 ____
 
 case "$mode" in
     init)
-        if [ -n "$digitalocean" ];then
+        if [[ "$dns_api_provider" == digitalocean ]];then
             case "$variation" in
                 d1) rcm_operand=ispconfig-setup-variation-1 ;;
                 u2) rcm_operand=ispconfig-setup-variation-2 ;;
@@ -433,7 +440,7 @@ case "$mode" in
         fi
         ;;
     addon)
-        if [ -n "$digitalocean" ];then
+        if [[ "$dns_api_provider" == digitalocean ]];then
             rcm_operand=ispconfig-setup-variation-addon-2
         else
             rcm_operand=ispconfig-setup-variation-addon
@@ -474,11 +481,11 @@ exit 0
 # --help
 # --root-sure
 # --non-interactive
-# --digitalocean
 # )
 # VALUE=(
 # --mode
 # --variation
+# --dns-api-provider
 # )
 # MULTIVALUE=(
 # )
