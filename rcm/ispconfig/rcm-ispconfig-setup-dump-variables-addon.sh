@@ -112,16 +112,6 @@ if [ -z "$root_sure" ];then
 fi
 
 # Functions.
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
 backupFile() {
     local mode="$1"
     local oldpath="$2" i newpath
@@ -154,20 +144,6 @@ backupFile() {
             cp "$oldpath" "$newpath"
             chown ${user}:${group} "$newpath"
     esac
-}
-isFileExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
 }
 populateDatabaseUserPassword() {
     local path="${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/$1"

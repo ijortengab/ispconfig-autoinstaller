@@ -152,20 +152,6 @@ backupFile() {
             chown ${user}:${group} "$newpath"
     esac
 }
-isFileExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
-}
 populateDatabaseUserPassword() {
     local path="${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/$1"
     local DB_USER DB_USER_PASSWORD
