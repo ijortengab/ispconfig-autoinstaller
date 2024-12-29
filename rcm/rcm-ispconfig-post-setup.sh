@@ -50,7 +50,7 @@ Usage: rcm-ispconfig-post-setup [command] [options]
 
 Options:
    --domain
-        Set the domain to control. Values available from command: ispconfig.php(mail_domain).
+        Set the domain to control. Values available from command: soap-ispconfig(mail_domain).
 
 Global Options:
    --fast
@@ -70,7 +70,7 @@ Environment Variables:
 
 Dependency:
    php
-   ispconfig.php
+   soap-ispconfig
    rcm-dig-is-record-exists
 EOF
 }
@@ -346,7 +346,7 @@ _ ' - 'hostname:; _.
 _ '   'value'   ':' '; magenta "$data_spf"; _.
 ____
 
-dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain --fast --root-sure --ispconfig-soap-exists-sure --domain="$domain" get_dns_record 2>/dev/null)
+dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain --fast --root-sure --ispconfig-soap-exists-sure --domain="$domain" get-dns-record 2>/dev/null)
 data_dkim="v=DKIM1; t=s; p=${dns_record}"
 chapter DNS TXT Record for DKIM in $domain
 _ ' - 'hostname:' '; magenta "${DKIM_SELECTOR}._domainkey"; _.
