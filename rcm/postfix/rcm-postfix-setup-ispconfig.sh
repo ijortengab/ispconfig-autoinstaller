@@ -57,7 +57,7 @@ Global Options:
         Bypass root checking.
 
 Environment Variables:
-   POSTFIX_CONFIG_FILE
+   POSTFIX_CONFIG_FILE_MASTER
         Default to /etc/postfix/master.cf
 
 Dependency:
@@ -209,11 +209,11 @@ ArrayIntersect() {
 }
 postfixConfigEditor() {
     # global modified append_contents
-    # global used POSTFIX_CONFIG_FILE reference_contents
+    # global used POSTFIX_CONFIG_FILE_MASTER reference_contents
     local mode=$1
     append_contents=
     # Rules 1. Cleaning line start with hash (#).
-    local input_contents=$(sed -e '/^\s*#.*$/d' -e '/^\s*$/d' <"$POSTFIX_CONFIG_FILE")
+    local input_contents=$(sed -e '/^\s*#.*$/d' -e '/^\s*$/d' <"$POSTFIX_CONFIG_FILE_MASTER")
     while IFS= read -r line; do
         reference_list_services_headonly=$(grep -v -E "^[[:blank:]]+" <<< "$reference_contents")
     done <<< "$reference_contents"
@@ -318,8 +318,8 @@ postfixConfigEditor() {
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
-POSTFIX_CONFIG_FILE=${POSTFIX_CONFIG_FILE:=/etc/postfix/master.cf}
-code 'POSTFIX_CONFIG_FILE="'$POSTFIX_CONFIG_FILE'"'
+POSTFIX_CONFIG_FILE_MASTER=${POSTFIX_CONFIG_FILE_MASTER:=/etc/postfix/master.cf}
+code 'POSTFIX_CONFIG_FILE_MASTER="'$POSTFIX_CONFIG_FILE_MASTER'"'
 ____
 
 application=
@@ -393,21 +393,21 @@ chapter Mengecek konfigurasi Postfix.
 is_different=
 if postfixConfigEditor is_different;then
     is_different=1
-    __ Diperlukan modifikasi file '`'$POSTFIX_CONFIG_FILE'`'.
+    __ Diperlukan modifikasi file '`'$POSTFIX_CONFIG_FILE_MASTER'`'.
 else
-    __ File '`'$POSTFIX_CONFIG_FILE'`' tidak ada perubahan.
+    __ File '`'$POSTFIX_CONFIG_FILE_MASTER'`' tidak ada perubahan.
 fi
 ____
 
 if [ -n "$is_different" ];then
-    chapter Memodifikasi file '`'$POSTFIX_CONFIG_FILE'`'.
-    __ Backup file $POSTFIX_CONFIG_FILE
-    backupFile copy $POSTFIX_CONFIG_FILE
-    echo "$append_contents" >> $POSTFIX_CONFIG_FILE
+    chapter Memodifikasi file '`'$POSTFIX_CONFIG_FILE_MASTER'`'.
+    __ Backup file $POSTFIX_CONFIG_FILE_MASTER
+    backupFile copy $POSTFIX_CONFIG_FILE_MASTER
+    echo "$append_contents" >> $POSTFIX_CONFIG_FILE_MASTER
     if postfixConfigEditor is_different;then
-        __; red Modifikasi file '`'$POSTFIX_CONFIG_FILE'`' gagal.; x
+        __; red Modifikasi file '`'$POSTFIX_CONFIG_FILE_MASTER'`' gagal.; x
     else
-        __; green Modifikasi file '`'$POSTFIX_CONFIG_FILE'`' berhasil.; _.
+        __; green Modifikasi file '`'$POSTFIX_CONFIG_FILE_MASTER'`' berhasil.; _.
         __; magenta systemctl restart postfix; _.
         systemctl restart postfix
     fi
