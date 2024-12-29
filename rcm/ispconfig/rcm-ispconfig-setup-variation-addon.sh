@@ -502,7 +502,14 @@ if [ "$install_ispconfig" == 1 ];then
         error Argument --url-ispconfig is cannot have subpath: '`'"$url_ispconfig"'`'.; x
     else
         [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
-        [ -n "$PHP_URL_PORT" ] && port="$PHP_URL_PORT" || port=443
+        if [ -z "$PHP_URL_PORT" ];then
+            case "$scheme" in
+                http) port=80;;
+                https) port=443;;
+            esac
+        else
+            port="$PHP_URL_PORT"
+        fi
         [ -n "$PHP_URL_PATH" ] && fqdn_path_array_raw+=("$PHP_URL_HOST")
         ispconfig_url_scheme="$scheme"
         ispconfig_url_host="$PHP_URL_HOST"
@@ -520,7 +527,14 @@ if [ "$install_phpmyadmin" == 1 ];then
         error Argument --url-phpmyadmin is not valid: '`'"$url_phpmyadmin"'`'.; x
     else
         [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
-        [ -n "$PHP_URL_PORT" ] && port="$PHP_URL_PORT" || port=443
+        if [ -z "$PHP_URL_PORT" ];then
+            case "$scheme" in
+                http) port=80;;
+                https) port=443;;
+            esac
+        else
+            port="$PHP_URL_PORT"
+        fi
         [ -n "$PHP_URL_PATH" ] && fqdn_path_array_raw+=("$PHP_URL_HOST")
         phpmyadmin_url_scheme="$scheme"
         phpmyadmin_url_host="$PHP_URL_HOST"
@@ -538,7 +552,14 @@ if [ "$install_roundcube" == 1 ];then
         error Argument --url-roundcube is not valid: '`'"$url_roundcube"'`'.; x
     else
         [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
-        [ -n "$PHP_URL_PORT" ] && port="$PHP_URL_PORT" || port=443
+        if [ -z "$PHP_URL_PORT" ];then
+            case "$scheme" in
+                http) port=80;;
+                https) port=443;;
+            esac
+        else
+            port="$PHP_URL_PORT"
+        fi
         [ -n "$PHP_URL_PATH" ] && fqdn_path_array_raw+=("$PHP_URL_HOST")
         roundcube_url_scheme="$scheme"
         roundcube_url_host="$PHP_URL_HOST"
