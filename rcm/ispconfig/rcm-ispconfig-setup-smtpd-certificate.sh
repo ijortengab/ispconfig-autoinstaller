@@ -250,18 +250,14 @@ if [ -z "$fqdn" ];then
     error "Argument --fqdn required."; x
 fi
 code 'fqdn="'$fqdn'"'
+if [ -n "$certbot_authenticator" ];then
+    case "$certbot_authenticator" in
+        digitalocean|nginx) ;;
+        *) error "Argument --certbot-authenticator not valid."; x ;;
+    esac
+fi
 if [ -z "$certbot_authenticator" ];then
     error "Argument --certbot-authenticator required."; x
-fi
-case "$certbot_authenticator" in
-    digitalocean) ;;
-    nginx) ;;
-    *) certbot_authenticator=
-esac
-if [ -z "$certbot_authenticator" ];then
-    error "Argument --certbot-authenticator is not valid.";
-    _ Available value:' '; yellow digitalocean; _, ', '; yellow nginx; _, .; _.
-    x
 fi
 code 'certbot_authenticator="'$certbot_authenticator'"'
 certbot_certificate_name="$fqdn"
@@ -309,7 +305,6 @@ if [ -n "$notfound" ];then
     fi
 fi
 
-restart=
 link_symbolic "/etc/letsencrypt/live/${certbot_certificate_name}/fullchain.pem" /etc/postfix/smtpd.cert - absolute
 link_symbolic "/etc/letsencrypt/live/${certbot_certificate_name}/privkey.pem" /etc/postfix/smtpd.key - absolute
 
