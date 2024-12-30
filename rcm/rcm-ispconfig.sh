@@ -140,7 +140,9 @@ Options:
    --mode *
         Select the setup mode. Values available from command: rcm-ispconfig(mode-available).
    --dns-api-provider
-        Select the DNS Provider that have API (Application Programming Interface). Available value: digitalocean.
+        Select if your server using the DNS Provider that have API (Application Programming Interface).
+        Available value: digitalocean.
+        Just skip if you write DNS record manually.
    --variation *
         Select the variation setup. Values available from command: rcm-ispconfig(eligible [--mode] [--dns-api-provider]).
 
