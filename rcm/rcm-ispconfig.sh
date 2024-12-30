@@ -126,7 +126,7 @@ DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 
 # Functions.
 printVersion() {
-    echo '0.9.10'
+    echo '0.9.11'
 }
 printHelp() {
     title ISPConfig Auto-Installer
