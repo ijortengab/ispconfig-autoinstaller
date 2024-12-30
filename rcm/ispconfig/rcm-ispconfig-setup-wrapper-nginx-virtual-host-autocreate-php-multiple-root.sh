@@ -182,6 +182,9 @@ link_symbolic_dir() {
     local sudo="$3"
     local source_mode="$4"
     local create
+    # Trim trailing slash.
+    source=$(echo "$source" | sed -E 's|/+$||g')
+    target=$(echo "$target" | sed -E 's|/+$||g')
     [ "$sudo" == - ] && sudo=
     [ "$source_mode" == absolute ] || source_mode=
     [ -e "$source" ] || { error Source not exist: $source.; x; }
