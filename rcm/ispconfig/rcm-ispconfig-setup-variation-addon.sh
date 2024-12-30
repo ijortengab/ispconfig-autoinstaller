@@ -151,6 +151,8 @@ Dependency:
    rcm-ispconfig-setup-internal-command:`printVersion`
    rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root:`printVersion`
    rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:`printVersion`
+   rcm-postfix-multiple-certificate-ispconfig:`printVersion`
+   rcm-dovecot-multiple-certificate-ispconfig:`printVersion`
    rcm-dig-is-name-exists
    rcm-dig-is-record-exists
    rcm-dig-watch-domain-exists
@@ -165,6 +167,8 @@ Download:
    [rcm-ispconfig-setup-internal-command](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-internal-command.sh)
    [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php.sh)
    [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root.sh)
+   [rcm-postfix-multiple-certificate-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/postfix/rcm-postfix-multiple-certificate-ispconfig.sh)
+   [rcm-dovecot-multiple-certificate-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/dovecot/rcm-dovecot-multiple-certificate-ispconfig.sh)
 EOF
 }
 
@@ -646,10 +650,12 @@ php_version="${major}.${minor}"
 __; magenta php_version="$php_version"; _.
 ____
 
-chapter Take a break.
-_ Lets play with Certbot LetsEncrypt with Nginx Plugin.; _.
-sleepExtended 3
-____
+if [ "${#fqdn_array[@]}" -gt 0 ];then
+	chapter Take a break.
+	_ Lets play with Certbot LetsEncrypt with Nginx Plugin.; _.
+	sleepExtended 3
+	____
+fi
 
 for each in ispconfig phpmyadmin roundcube;do
     parameter="${each}_url_scheme"
@@ -726,6 +732,14 @@ rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-
     --domain="$domain" \
     --destination-name="$MAILBOX_ADMIN" \
     --destination-domain="$domain" \
+    && INDENT+="    " \
+rcm-postfix-multiple-certificate-ispconfig $isfast --root-sure \
+    --certbot-authenticator=nginx \
+    --fqdn="$domain" \
+    && INDENT+="    " \
+rcm-dovecot-multiple-certificate-ispconfig $isfast --root-sure \
+    --certbot-authenticator=nginx \
+    --fqdn="$domain" \
     ; [ ! $? -eq 0 ] && x
 
 chapter Send Welcome email.
