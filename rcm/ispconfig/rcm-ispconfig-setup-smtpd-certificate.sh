@@ -310,18 +310,13 @@ if [ -n "$notfound" ];then
 fi
 
 restart=
-link_symbolic "/etc/letsencrypt/live/${certbot_certificate_name}/fullchain.pem" \
-    /etc/postfix/smtpd.cert
-[ -n "$_success" ] && restart=1
-link_symbolic "/etc/letsencrypt/live/${certbot_certificate_name}/privkey.pem" \
-    /etc/postfix/smtpd.key
-[ -n "$_success" ] && restart=1
-if [ -n "$restart" ];then
-    chapter Restart Postfix
-    code systemctl restart postfix
-    systemctl restart postfix
-    ____
-fi
+link_symbolic "/etc/letsencrypt/live/${certbot_certificate_name}/fullchain.pem" /etc/postfix/smtpd.cert - absolute
+link_symbolic "/etc/letsencrypt/live/${certbot_certificate_name}/privkey.pem" /etc/postfix/smtpd.key - absolute
+
+chapter Restart Postfix
+code systemctl restart postfix
+systemctl restart postfix
+____
 
 exit 0
 
