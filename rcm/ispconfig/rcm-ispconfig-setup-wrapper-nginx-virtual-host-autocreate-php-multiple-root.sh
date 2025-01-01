@@ -337,6 +337,9 @@ fi
 if [ -z "$url_port" ];then
     error "Argument --url-port required."; x
 fi
+if [[ "$url_path" == '/' ]];then
+    url_path=
+fi
 if [ -n "$url_path" ];then
     # Trim leading and trailing slash.
     url_path_clean=$(echo "$url_path" | sed -E 's|(^/+\|/+$)||g')
