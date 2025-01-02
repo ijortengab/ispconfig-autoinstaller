@@ -62,7 +62,7 @@ SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
 
 # Functions.
 printVersion() {
-    echo '0.9.11'
+    echo '0.9.12'
 }
 printHelp() {
     title RCM ISPConfig Setup
@@ -81,15 +81,15 @@ Options:
    --url-ispconfig
         Add ISPConfig public domain. The value can be domain or URL.
         ISPConfig automatically has address at http://ispconfig.localhost/.
-        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url ispconfig [--fqdn]).
+        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url ispconfig [--fqdn]), or other.
    --url-phpmyadmin
         Add PHPMyAdmin public domain. The value can be domain or URL.
         PHPMyAdmin automatically has address at http://phpmyadmin.localhost/.
-        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url phpmyadmin [--fqdn] [--url-ispconfig]).
+        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url phpmyadmin [--fqdn] [--url-ispconfig]), or other.
    --url-roundcube
         Add Roundcube public domain. The value can be domain or URL.
         Roundcube automatically has address at http://roundcube.localhost/.
-        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url roundcube [--fqdn] [--url-ispconfig]).
+        Value available from command: rcm-ispconfig-setup-variation-5(suggest-url roundcube [--fqdn] [--url-ispconfig]), or other.
    --timezone
         Set the timezone of this machine. Available values: Asia/Jakarta, or other.
 
