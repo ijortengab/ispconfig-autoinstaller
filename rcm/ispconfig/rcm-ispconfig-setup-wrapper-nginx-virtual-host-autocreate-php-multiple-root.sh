@@ -543,11 +543,11 @@ if [ "$url_scheme" == https ];then
 else
     _k=''
 fi
-code curl${_k} -L ${url_scheme}://127.0.0.1:${url_port}${url_path} -H '"'Host: ${url_host}'"'
-code=$(curl${_k} -L \
+code curl${_k} ${url_scheme}://127.0.0.1:${url_port}${url_path} -H '"'Host: ${url_host}'"'
+code=$(curl${_k} \
     -o /dev/null -s -w "%{http_code}\n" \
     ${url_scheme}://127.0.0.1:${url_port}${url_path} -H "Host: ${url_host}")
-[[ $code =~ ^2 ]] && {
+[[ $code =~ ^[2,3] ]] && {
     __ HTTP Response code '`'$code'`' '('Required')'.
 } || {
     __; red Terjadi kesalahan. HTTP Response code '`'$code'`'.; x
