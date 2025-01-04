@@ -19,18 +19,12 @@ while [[ $# -gt 0 ]]; do
         --url-phpmyadmin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_phpmyadmin="$2"; shift; fi; shift ;;
         --url-roundcube=*) url_roundcube="${1#*=}"; shift ;;
         --url-roundcube) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_roundcube="$2"; shift; fi; shift ;;
-        --with-ispconfig=*) install_ispconfig="${1#*=}"; shift ;;
-        --with-ispconfig) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_ispconfig="$2"; shift; else install_ispconfig=1; fi; shift ;;
-        --without-ispconfig=*) install_ispconfig="${1#*=}"; shift ;;
-        --without-ispconfig) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_ispconfig="$2"; shift; else install_ispconfig=0; fi; shift ;;
-        --without-phpmyadmin=*) install_phpmyadmin="${1#*=}"; shift ;;
-        --without-phpmyadmin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_phpmyadmin="$2"; shift; else install_phpmyadmin=0; fi; shift ;;
-        --with-phpmyadmin=*) install_phpmyadmin="${1#*=}"; shift ;;
-        --with-phpmyadmin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_phpmyadmin="$2"; shift; else install_phpmyadmin=1; fi; shift ;;
-        --without-roundcube=*) install_roundcube="${1#*=}"; shift ;;
-        --without-roundcube) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_roundcube="$2"; shift; else install_roundcube=0; fi; shift ;;
-        --with-roundcube=*) install_roundcube="${1#*=}"; shift ;;
-        --with-roundcube) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then install_roundcube="$2"; shift; else install_roundcube=1; fi; shift ;;
+        --with-ispconfig) install_ispconfig=1; shift ;;
+        --without-ispconfig) install_ispconfig=0; shift ;;
+        --without-phpmyadmin) install_phpmyadmin=0; shift ;;
+        --with-phpmyadmin) install_phpmyadmin=1; shift ;;
+        --without-roundcube) install_roundcube=0; shift ;;
+        --with-roundcube) install_roundcube=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -498,7 +492,10 @@ code ip_address="$ip_address"
 if ! grep -q -m 1 -oE '^[0-9]{1,3}(\.[0-9]{1,3}){3}$' <<< "$ip_address";then
     error IP Address version 4 format is not valid; x
 fi
-if [ "$install_ispconfig" == 1 ];then
+[ "$install_ispconfig" == 0 ] && install_ispconfig=
+[ "$install_phpmyadmin" == 0 ] && install_phpmyadmin=
+[ "$install_roundcube" == 0 ] && install_roundcube=
+if [ -n "$install_ispconfig" ];then
     Rcm_parse_url "$url_ispconfig"
     if [ -z "$PHP_URL_HOST" ];then
         error Argument --url-ispconfig is not valid: '`'"$url_ispconfig"'`'.; x
@@ -525,7 +522,7 @@ if [ "$install_ispconfig" == 1 ];then
         code url_ispconfig="$url_ispconfig"
     fi
 fi
-if [ "$install_phpmyadmin" == 1 ];then
+if [ -n "$install_phpmyadmin" ];then
     Rcm_parse_url "$url_phpmyadmin"
     if [ -z "$PHP_URL_HOST" ];then
         error Argument --url-phpmyadmin is not valid: '`'"$url_phpmyadmin"'`'.; x
@@ -550,7 +547,7 @@ if [ "$install_phpmyadmin" == 1 ];then
         code url_phpmyadmin="$url_phpmyadmin"
     fi
 fi
-if [ "$install_roundcube" == 1 ];then
+if [ -n "$install_roundcube" ];then
     Rcm_parse_url "$url_roundcube"
     if [ -z "$PHP_URL_HOST" ];then
         error Argument --url-roundcube is not valid: '`'"$url_roundcube"'`'.; x
@@ -959,12 +956,12 @@ exit 0
 # FLAG_VALUE=(
 # )
 # CSV=(
-    # 'long:--with-ispconfig,parameter:install_ispconfig,type:flag_value'
-    # 'long:--without-ispconfig,parameter:install_ispconfig,type:flag_value,flag_option:reverse'
-    # 'long:--with-phpmyadmin,parameter:install_phpmyadmin,type:flag_value'
-    # 'long:--without-phpmyadmin,parameter:install_phpmyadmin,type:flag_value,flag_option:reverse'
-    # 'long:--with-roundcube,parameter:install_roundcube,type:flag_value'
-    # 'long:--without-roundcube,parameter:install_roundcube,type:flag_value,flag_option:reverse'
+    # 'long:--with-ispconfig,parameter:install_ispconfig'
+    # 'long:--without-ispconfig,parameter:install_ispconfig,flag_option:reverse'
+    # 'long:--with-phpmyadmin,parameter:install_phpmyadmin'
+    # 'long:--without-phpmyadmin,parameter:install_phpmyadmin,flag_option:reverse'
+    # 'long:--with-roundcube,parameter:install_roundcube'
+    # 'long:--without-roundcube,parameter:install_roundcube,flag_option:reverse'
 # )
 # EOF
 # clear

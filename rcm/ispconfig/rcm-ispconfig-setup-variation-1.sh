@@ -271,8 +271,10 @@ sleepExtended() {
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-[[ "$update_system" == "0" ]] && is_without_update_system=' --without-update-system' || is_without_update_system=''
-[[ "$upgrade_system" == "0" ]] && is_without_upgrade_system=' --without-upgrade-system' || is_without_upgrade_system=''
+[ "$update_system" == 0 ] && update_system=
+[ "$upgrade_system" == 0 ] && upgrade_system=
+[ -z "$update_system" ] && is_without_update_system=' --without-update-system' || is_without_update_system=''
+[ -z "$upgrade_system" ] && is_without_upgrade_system=' --without-upgrade-system' || is_without_upgrade_system=''
 SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
 code 'SUBDOMAIN_ISPCONFIG="'$SUBDOMAIN_ISPCONFIG'"'
 SUBDOMAIN_PHPMYADMIN=${SUBDOMAIN_PHPMYADMIN:=db}
