@@ -38,6 +38,8 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+DKIM_SELECTOR=${DKIM_SELECTOR:=default}
+MAILBOX_POST=${MAILBOX_POST:=postmaster}
 
 # Functions.
 printVersion() {
@@ -48,7 +50,7 @@ printHelp() {
     _ 'Variation '; yellow Post Setup; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-ispconfig-post-setup [command] [options]
 
 Options:
@@ -67,9 +69,9 @@ Global Options:
 
 Environment Variables:
    DKIM_SELECTOR
-        Default to default.
+        Default to $DKIM_SELECTOR
    MAILBOX_POST
-        Default to postmaster
+        Default to $MAILBOX_POST
 
 Dependency:
    php
@@ -317,9 +319,7 @@ sleepExtended() {
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
-DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 code 'DKIM_SELECTOR="'$DKIM_SELECTOR'"'
-MAILBOX_POST=${MAILBOX_POST:=postmaster}
 code 'MAILBOX_POST="'$MAILBOX_POST'"'
 if [ -z "$domain" ];then
     error "Argument --domain required."; x

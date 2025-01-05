@@ -36,6 +36,8 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+MYSQL_ROOT_PASSWD=${MYSQL_ROOT_PASSWD:=[HOME]/.mysql-root-passwd.txt}
+MYSQL_ROOT_PASSWD_INI=${MYSQL_ROOT_PASSWD_INI:=[HOME]/.mysql-root-passwd.ini}
 
 # Functions.
 printVersion() {
@@ -46,7 +48,7 @@ printHelp() {
     _ 'Variation '; yellow ISPConfig; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-mariadb-setup-ispconfig [options]
 
 Global Options:
@@ -61,9 +63,9 @@ Global Options:
 
 Environment Variables:
    MYSQL_ROOT_PASSWD
-        Default to $HOME/.mysql-root-passwd.txt
+        Default to $MYSQL_ROOT_PASSWD
    MYSQL_ROOT_PASSWD_INI
-        Default to $HOME/.mysql-root-passwd.ini
+        Default to $MYSQL_ROOT_PASSWD_INI
 
 Dependency:
    systemctl
@@ -97,9 +99,15 @@ done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
-MYSQL_ROOT_PASSWD=${MYSQL_ROOT_PASSWD:=$HOME/.mysql-root-passwd.txt}
 code 'MYSQL_ROOT_PASSWD="'$MYSQL_ROOT_PASSWD'"'
-MYSQL_ROOT_PASSWD_INI=${MYSQL_ROOT_PASSWD_INI:=$HOME/.mysql-root-passwd.ini}
+find='[HOME]'
+replace="$HOME"
+MYSQL_ROOT_PASSWD="${MYSQL_ROOT_PASSWD/"$find"/"$replace"}"
+code 'MYSQL_ROOT_PASSWD="'$MYSQL_ROOT_PASSWD'"'
+code 'MYSQL_ROOT_PASSWD_INI="'$MYSQL_ROOT_PASSWD_INI'"'
+find='[HOME]'
+replace="$HOME"
+MYSQL_ROOT_PASSWD_INI="${MYSQL_ROOT_PASSWD_INI/"$find"/"$replace"}"
 code 'MYSQL_ROOT_PASSWD_INI="'$MYSQL_ROOT_PASSWD_INI'"'
 ____
 

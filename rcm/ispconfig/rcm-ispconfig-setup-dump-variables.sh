@@ -42,6 +42,15 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
+SUBDOMAIN_PHPMYADMIN=${SUBDOMAIN_PHPMYADMIN:=db}
+SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
+MAILBOX_ADMIN=${MAILBOX_ADMIN:=admin}
+MAILBOX_SUPPORT=${MAILBOX_SUPPORT:=support}
+MAILBOX_POST=${MAILBOX_POST:=postmaster}
+MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
+MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
+DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 
 # Functions.
 printVersion() {
@@ -52,7 +61,7 @@ printHelp() {
     _ 'Variation '; yellow Dump Variables; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-ispconfig-setup-dump-variables [options]
 
 Options:
@@ -73,23 +82,23 @@ Global Options:
 
 Environment Variables:
    SUBDOMAIN_ISPCONFIG
-        Default to cp
+        Default to $SUBDOMAIN_ISPCONFIG
    SUBDOMAIN_PHPMYADMIN
-        Default to db
+        Default to $SUBDOMAIN_PHPMYADMIN
    SUBDOMAIN_ROUNDCUBE
-        Default to mail
+        Default to $SUBDOMAIN_ROUNDCUBE
    MAILBOX_ADMIN
-        Default to admin
+        Default to $MAILBOX_ADMIN
    MAILBOX_SUPPORT
-        Default to support
+        Default to $MAILBOX_SUPPORT
    MAILBOX_POST
-        Default to postmaster
+        Default to $MAILBOX_POST
    MARIADB_PREFIX_MASTER
-        Default to /usr/local/share/mariadb
+        Default to $MARIADB_PREFIX_MASTER
    MARIADB_USERS_CONTAINER_MASTER
-        Default to users
+        Default to $MARIADB_USERS_CONTAINER_MASTER
    DKIM_SELECTOR
-        Default to default
+        Default to $DKIM_SELECTOR
 EOF
 }
 
@@ -181,23 +190,14 @@ websiteCredentialIspconfig() {
 
 # Require, validate, and populate value.
 chapter Dump variable.
-SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
 code 'SUBDOMAIN_ISPCONFIG="'$SUBDOMAIN_ISPCONFIG'"'
-SUBDOMAIN_PHPMYADMIN=${SUBDOMAIN_PHPMYADMIN:=db}
 code 'SUBDOMAIN_PHPMYADMIN="'$SUBDOMAIN_PHPMYADMIN'"'
-SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
 code 'SUBDOMAIN_ROUNDCUBE="'$SUBDOMAIN_ROUNDCUBE'"'
-MAILBOX_ADMIN=${MAILBOX_ADMIN:=admin}
 code 'MAILBOX_ADMIN="'$MAILBOX_ADMIN'"'
-MAILBOX_SUPPORT=${MAILBOX_SUPPORT:=support}
 code 'MAILBOX_SUPPORT="'$MAILBOX_SUPPORT'"'
-MAILBOX_POST=${MAILBOX_POST:=postmaster}
 code 'MAILBOX_POST="'$MAILBOX_POST'"'
-MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
-MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
-DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 code 'DKIM_SELECTOR="'$DKIM_SELECTOR'"'
 if [ -z "$domain" ];then
     error "Argument --domain required."; x

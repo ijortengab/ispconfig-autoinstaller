@@ -36,6 +36,8 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
+MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 
 # Functions.
 printVersion() {
@@ -46,7 +48,7 @@ printHelp() {
     _ 'Variation '; yellow Dump Variables; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-ispconfig-setup-dump-variables-init [options]
 
 Options:
@@ -63,9 +65,9 @@ Global Options:
 
 Environment Variables:
    MARIADB_PREFIX_MASTER
-        Default to /usr/local/share/mariadb
+        Default to $MARIADB_PREFIX_MASTER
    MARIADB_USERS_CONTAINER_MASTER
-        Default to users
+        Default to $MARIADB_USERS_CONTAINER_MASTER
 EOF
 }
 
@@ -157,9 +159,7 @@ websiteCredentialIspconfig() {
 
 # Require, validate, and populate value.
 chapter Dump variable.
-MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
-MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
 ____
 

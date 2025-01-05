@@ -36,6 +36,9 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
+ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
+ISPCONFIG_REMOTE_USER_ROUNDCUBE=${ISPCONFIG_REMOTE_USER_ROUNDCUBE:=roundcube}
 
 # Functions.
 printVersion() {
@@ -46,7 +49,7 @@ printHelp() {
     _ 'Variation '; yellow ISPConfig Integration; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-roundcube-setup-ispconfig-integration [options]
 
 Global Options:
@@ -61,13 +64,11 @@ Global Options:
 
 Environment Variables:
    ISPCONFIG_REMOTE_USER_ROUNDCUBE
-        Default to roundcube
-   ISPCONFIG_INSTALL_DIR
-        Default to /usr/local/ispconfig
-   ISPCONFIG_DB_USER_HOST
-        Default to localhost
+        Default to $ISPCONFIG_REMOTE_USER_ROUNDCUBE
    ISPCONFIG_FQDN_LOCALHOST
-        Default to ispconfig.localhost
+        Default to $ISPCONFIG_FQDN_LOCALHOST
+   ROUNDCUBE_FQDN_LOCALHOST
+        Default to $ROUNDCUBE_FQDN_LOCALHOST
 
 Dependency:
    mysql
@@ -284,15 +285,8 @@ isDirExists() {
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
-ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 code 'ROUNDCUBE_FQDN_LOCALHOST="'$ROUNDCUBE_FQDN_LOCALHOST'"'
-ISPCONFIG_REMOTE_USER_ROUNDCUBE=${ISPCONFIG_REMOTE_USER_ROUNDCUBE:=roundcube}
 code 'ISPCONFIG_REMOTE_USER_ROUNDCUBE="'$ISPCONFIG_REMOTE_USER_ROUNDCUBE'"'
-# ISPCONFIG_INSTALL_DIR=${ISPCONFIG_INSTALL_DIR:=/usr/local/ispconfig}
-# code 'ISPCONFIG_INSTALL_DIR="'$ISPCONFIG_INSTALL_DIR'"'
-# ISPCONFIG_DB_USER_HOST=${ISPCONFIG_DB_USER_HOST:=localhost}
-# code 'ISPCONFIG_DB_USER_HOST="'$ISPCONFIG_DB_USER_HOST'"'
-ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
 nginx_user=
 conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`

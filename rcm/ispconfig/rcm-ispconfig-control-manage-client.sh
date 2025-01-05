@@ -137,16 +137,6 @@ Global Options:
    --root-sure
         Bypass root checking.
 
-Environment Variables:
-   DKIM_SELECTOR
-        Default to default.
-   MAILBOX_WEB
-        Default to webmaster
-   ISPCONFIG_REMOTE_USER_ROOT
-        Default to root
-   ISPCONFIG_FQDN_LOCALHOST
-        Default to ispconfig.localhost
-
 Dependency:
    pwgen
    rcm-php-ispconfig:`printVersion`

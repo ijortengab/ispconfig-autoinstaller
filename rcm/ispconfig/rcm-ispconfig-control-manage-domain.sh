@@ -47,6 +47,9 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+DKIM_SELECTOR=${DKIM_SELECTOR:=default}
+MAILBOX_ADMIN=${MAILBOX_ADMIN:=admin}
+MAILBOX_WEB=${MAILBOX_WEB:=webmaster}
 
 # Functions.
 printVersion() {
@@ -78,13 +81,11 @@ Global Options:
 
 Environment Variables:
    DKIM_SELECTOR
-        Default to default.
+        Default to $DKIM_SELECTOR
+   MAILBOX_ADMIN
+        Default to $MAILBOX_ADMIN
    MAILBOX_WEB
-        Default to webmaster
-   ISPCONFIG_REMOTE_USER_ROOT
-        Default to root
-   ISPCONFIG_FQDN_LOCALHOST
-        Default to ispconfig.localhost
+        Default to $MAILBOX_WEB
 
 Dependency:
    rcm-ispconfig:`printVersion`
@@ -369,16 +370,9 @@ create() {
 # Requirement, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-MAILBOX_ADMIN=${MAILBOX_ADMIN:=admin}
 code 'MAILBOX_ADMIN="'$MAILBOX_ADMIN'"'
-DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 code 'DKIM_SELECTOR="'$DKIM_SELECTOR'"'
-MAILBOX_WEB=${MAILBOX_WEB:=webmaster}
 code 'MAILBOX_WEB="'$MAILBOX_WEB'"'
-ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
-code 'ISPCONFIG_REMOTE_USER_ROOT="'$ISPCONFIG_REMOTE_USER_ROOT'"'
-ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
-code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi

@@ -53,7 +53,7 @@ printHelp() {
     _ 'Variation '; yellow Internal Command; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-ispconfig-remote-user-autocreate [options]
 
 Options:
@@ -73,16 +73,6 @@ Global Options:
         Show this help.
    --root-sure
         Bypass root checking.
-
-Environment Variables:
-   ISPCONFIG_INSTALL_DIR
-        Default to /usr/local/ispconfig
-   ISPCONFIG_DB_USER_HOST
-        Default to localhost
-   ISPCONFIG_REMOTE_USER_ROOT
-        Default to root
-   ISPCONFIG_FQDN_LOCALHOST
-        Default to ispconfig.localhost
 
 Dependency:
    mysql

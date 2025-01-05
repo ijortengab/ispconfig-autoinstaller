@@ -36,6 +36,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 
 # Functions.
 printVersion() {
@@ -46,7 +47,7 @@ printHelp() {
     _ 'Variation '; yellow Internal Command; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-ispconfig-setup-internal-command [options]
 
 Options:
@@ -63,15 +64,7 @@ Global Options:
 
 Environment Variables:
    BINARY_DIRECTORY
-        Default to $__DIR__
-   ISPCONFIG_INSTALL_DIR
-        Default to /usr/local/ispconfig
-   ISPCONFIG_DB_USER_HOST
-        Default to localhost
-   ISPCONFIG_REMOTE_USER_ROOT
-        Default to root
-   ISPCONFIG_FQDN_LOCALHOST
-        Default to ispconfig.localhost
+        Default to $BINARY_DIRECTORY
 
 Dependency:
    php
@@ -295,11 +288,11 @@ isFileExists() {
 chapter Dump variable.
 __FILE__=$(resolve_relative_path "$0")
 __DIR__=$(dirname "$__FILE__")
-BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
-ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
-code 'ISPCONFIG_REMOTE_USER_ROOT="'$ISPCONFIG_REMOTE_USER_ROOT'"'
-ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
+find='[__DIR__]'
+replace="$__DIR__"
+BINARY_DIRECTORY="${BINARY_DIRECTORY/"$find"/"$replace"}"
+code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
 NEW_VERSION=`printVersion`
 code 'NEW_VERSION="'$NEW_VERSION'"'
 mktemp=

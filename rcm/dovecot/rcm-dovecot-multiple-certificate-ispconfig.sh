@@ -40,8 +40,6 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
-
-# Define variables.
 DOVECOT_CONFIG_DIR=${DOVECOT_CONFIG_DIR:=/etc/dovecot}
 DOVECOT_CONFIG_FILE_ISPCONFIG=${DOVECOT_CONFIG_FILE_ISPCONFIG:=${DOVECOT_CONFIG_DIR}/conf.d/99-ispconfig-custom-config.conf}
 MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
@@ -55,7 +53,7 @@ printHelp() {
     _ 'Variation '; yellow ISPConfig; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-dovecot-multiple-certificate-ispconfig [options]
 
 Options:
@@ -76,7 +74,11 @@ Global Options:
 
 Environment Variables:
    MAILBOX_HOST
-        Default to hostmaster
+        Default to $MAILBOX_HOST
+   DOVECOT_CONFIG_DIR
+        Default to $DOVECOT_CONFIG_DIR
+   DOVECOT_CONFIG_FILE_ISPCONFIG
+        Default to $DOVECOT_CONFIG_FILE_ISPCONFIG
 
 Dependency:
    rcm-certbot-obtain-authenticator-nginx

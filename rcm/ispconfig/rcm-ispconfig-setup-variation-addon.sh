@@ -61,8 +61,6 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
-
-# Define variables.
 SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
 SUBDOMAIN_PHPMYADMIN=${SUBDOMAIN_PHPMYADMIN:=db}
 SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
@@ -71,6 +69,8 @@ MAILBOX_SUPPORT=${MAILBOX_SUPPORT:=support}
 MAILBOX_WEB=${MAILBOX_WEB:=webmaster}
 MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 MAILBOX_POST=${MAILBOX_POST:=postmaster}
+ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
+ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 
 # Functions.
 printVersion() {
@@ -121,23 +121,25 @@ Global Options:
 
 Environment Variables:
    SUBDOMAIN_ISPCONFIG
-        Default to cp
+        Default to $SUBDOMAIN_ISPCONFIG
    SUBDOMAIN_PHPMYADMIN
-        Default to db
+        Default to $SUBDOMAIN_PHPMYADMIN
    SUBDOMAIN_ROUNDCUBE
-        Default to mail
+        Default to $SUBDOMAIN_ROUNDCUBE
    MAILBOX_ADMIN
-        Default to admin
+        Default to $MAILBOX_ADMIN
    MAILBOX_SUPPORT
-        Default to support
+        Default to $MAILBOX_SUPPORT
    MAILBOX_WEB
-        Default to webmaster
+        Default to $MAILBOX_WEB
    MAILBOX_HOST
-        Default to hostmaster
+        Default to $MAILBOX_HOST
    MAILBOX_POST
-        Default to postmaster
+        Default to $MAILBOX_POST
    ISPCONFIG_FQDN_LOCALHOST
-        Default to ispconfig.localhost
+        Default to $ISPCONFIG_FQDN_LOCALHOST
+   ROUNDCUBE_FQDN_LOCALHOST
+        Default to $ROUNDCUBE_FQDN_LOCALHOST
 
 Dependency:
    rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:`printVersion`
@@ -463,25 +465,15 @@ ArraySearch() {
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
-ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 code 'ROUNDCUBE_FQDN_LOCALHOST="'$ROUNDCUBE_FQDN_LOCALHOST'"'
-SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
 code 'SUBDOMAIN_ISPCONFIG="'$SUBDOMAIN_ISPCONFIG'"'
-SUBDOMAIN_PHPMYADMIN=${SUBDOMAIN_PHPMYADMIN:=db}
 code 'SUBDOMAIN_PHPMYADMIN="'$SUBDOMAIN_PHPMYADMIN'"'
-SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
 code 'SUBDOMAIN_ROUNDCUBE="'$SUBDOMAIN_ROUNDCUBE'"'
-MAILBOX_ADMIN=${MAILBOX_ADMIN:=admin}
 code 'MAILBOX_ADMIN="'$MAILBOX_ADMIN'"'
-MAILBOX_SUPPORT=${MAILBOX_SUPPORT:=support}
 code 'MAILBOX_SUPPORT="'$MAILBOX_SUPPORT'"'
-MAILBOX_WEB=${MAILBOX_WEB:=webmaster}
 code 'MAILBOX_WEB="'$MAILBOX_WEB'"'
-MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
-MAILBOX_POST=${MAILBOX_POST:=postmaster}
 code 'MAILBOX_POST="'$MAILBOX_POST'"'
 if [ -z "$domain" ];then
     error "Argument --domain required."; x

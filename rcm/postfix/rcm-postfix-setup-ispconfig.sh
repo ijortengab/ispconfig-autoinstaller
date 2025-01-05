@@ -36,6 +36,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+POSTFIX_CONFIG_FILE_MASTER=${POSTFIX_CONFIG_FILE_MASTER:=/etc/postfix/master.cf}
 
 # Functions.
 printVersion() {
@@ -46,7 +47,7 @@ printHelp() {
     _ 'Variation '; yellow ISPConfig; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-postfix-setup-ispconfig [options]
 
 Global Options:
@@ -61,7 +62,7 @@ Global Options:
 
 Environment Variables:
    POSTFIX_CONFIG_FILE_MASTER
-        Default to /etc/postfix/master.cf
+        Default to $POSTFIX_CONFIG_FILE_MASTER
 
 Dependency:
    systemctl
@@ -321,7 +322,6 @@ postfixConfigEditor() {
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
-POSTFIX_CONFIG_FILE_MASTER=${POSTFIX_CONFIG_FILE_MASTER:=/etc/postfix/master.cf}
 code 'POSTFIX_CONFIG_FILE_MASTER="'$POSTFIX_CONFIG_FILE_MASTER'"'
 ____
 

@@ -53,6 +53,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 
 # Functions.
 printVersion() {
@@ -98,7 +99,7 @@ Global Options:
 
 Environment Variables:
    DKIM_SELECTOR
-        Default to default
+        Default to $DKIM_SELECTOR
 
 Dependency:
    rcm-ispconfig-control-manage-domain:`printVersion`
@@ -136,7 +137,6 @@ done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/
 # Requirement, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 code 'DKIM_SELECTOR="'$DKIM_SELECTOR'"'
 code 'action="'$action'"'
 case "$type" in

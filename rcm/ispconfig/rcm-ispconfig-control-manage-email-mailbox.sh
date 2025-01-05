@@ -82,12 +82,6 @@ Global Options:
    --ispconfig-domain-exists-sure
         Bypass domain exists checking.
 
-Environment Variables:
-   ISPCONFIG_REMOTE_USER_ROOT
-        Default to root
-   ISPCONFIG_FQDN_LOCALHOST
-        Default to ispconfig.localhost
-
 Dependency:
    rcm-ispconfig-control-manage-domain:`printVersion`
    rcm-php-ispconfig:`printVersion`
@@ -196,10 +190,6 @@ create() {
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
-code 'ISPCONFIG_REMOTE_USER_ROOT="'$ISPCONFIG_REMOTE_USER_ROOT'"'
-ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
-code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi

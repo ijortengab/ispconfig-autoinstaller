@@ -52,6 +52,8 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
+PHPMYADMIN_FQDN_LOCALHOST=${PHPMYADMIN_FQDN_LOCALHOST:=phpmyadmin.localhost}
 
 # Functions.
 printVersion() {
@@ -62,7 +64,7 @@ printHelp() {
     _ 'Variation '; yellow Nginx Virtual Host Autocreate PHP-FPM; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root [options]
 
 Options:
@@ -87,9 +89,9 @@ Global Options:
 
 Environment Variables:
    ROUNDCUBE_FQDN_LOCALHOST
-        Default to roundcube.localhost
+        Default to $ROUNDCUBE_FQDN_LOCALHOST
    PHPMYADMIN_FQDN_LOCALHOST
-        Default to phpmyadmin.localhost
+        Default to $PHPMYADMIN_FQDN_LOCALHOST
 
 Dependency:
    rcm-nginx-virtual-host-autocreate-php-multiple-root
@@ -316,9 +318,7 @@ adjustNginxWebRoot() {
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 code 'ROUNDCUBE_FQDN_LOCALHOST="'$ROUNDCUBE_FQDN_LOCALHOST'"'
-PHPMYADMIN_FQDN_LOCALHOST=${PHPMYADMIN_FQDN_LOCALHOST:=phpmyadmin.localhost}
 code 'PHPMYADMIN_FQDN_LOCALHOST="'$PHPMYADMIN_FQDN_LOCALHOST'"'
 if [ -n "$project" ];then
     case "$project" in

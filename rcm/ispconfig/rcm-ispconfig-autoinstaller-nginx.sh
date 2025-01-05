@@ -48,6 +48,13 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
+MYSQL_ROOT_PASSWD=${MYSQL_ROOT_PASSWD:=$HOME/.mysql-root-passwd.txt}
+MYSQL_ROOT_PASSWD_INI=${MYSQL_ROOT_PASSWD_INI:=$HOME/.mysql-root-passwd.ini}
+ISPCONFIG_DB_USER_HOST=${ISPCONFIG_DB_USER_HOST:=localhost}
+ISPCONFIG_NGINX_CONFIG_FILE=${ISPCONFIG_NGINX_CONFIG_FILE:=ispconfig}
+MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
+MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 
 # Functions.
 printVersion() {
@@ -87,19 +94,19 @@ Global Options:
 
 Environment Variables:
    ISPCONFIG_FQDN_LOCALHOST
-        Default to ispconfig.localhost
+        Default to $ISPCONFIG_FQDN_LOCALHOST
    MYSQL_ROOT_PASSWD
-        Default to $HOME/.mysql-root-passwd.txt
+        Default to $MYSQL_ROOT_PASSWD
    MYSQL_ROOT_PASSWD_INI
-        Default to $HOME/.mysql-root-passwd.ini
+        Default to $MYSQL_ROOT_PASSWD_INI
    ISPCONFIG_DB_USER_HOST
-        Default to localhost
+        Default to $ISPCONFIG_DB_USER_HOST
    ISPCONFIG_NGINX_CONFIG_FILE
-        Default to ispconfig
+        Default to $ISPCONFIG_NGINX_CONFIG_FILE
    MARIADB_PREFIX_MASTER
-        Default to /usr/local/share/mariadb
+        Default to $MARIADB_PREFIX_MASTER
    MARIADB_USERS_CONTAINER_MASTER
-        Default to users
+        Default to $MARIADB_USERS_CONTAINER_MASTER
 
 Dependency:
    mysql
@@ -433,19 +440,12 @@ isDirExists() {
 # Requirement, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
-MYSQL_ROOT_PASSWD=${MYSQL_ROOT_PASSWD:=$HOME/.mysql-root-passwd.txt}
 code 'MYSQL_ROOT_PASSWD="'$MYSQL_ROOT_PASSWD'"'
-MYSQL_ROOT_PASSWD_INI=${MYSQL_ROOT_PASSWD_INI:=$HOME/.mysql-root-passwd.ini}
 code 'MYSQL_ROOT_PASSWD_INI="'$MYSQL_ROOT_PASSWD_INI'"'
-ISPCONFIG_DB_USER_HOST=${ISPCONFIG_DB_USER_HOST:=localhost}
 code 'ISPCONFIG_DB_USER_HOST="'$ISPCONFIG_DB_USER_HOST'"'
-ISPCONFIG_NGINX_CONFIG_FILE=${ISPCONFIG_NGINX_CONFIG_FILE:=ispconfig}
 code 'ISPCONFIG_NGINX_CONFIG_FILE="'$ISPCONFIG_NGINX_CONFIG_FILE'"'
-MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
-MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
 if [ -z "$ispconfig_version" ];then
     error "Argument --ispconfig-version required."; x

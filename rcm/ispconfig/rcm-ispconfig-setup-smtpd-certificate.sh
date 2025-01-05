@@ -50,7 +50,7 @@ printHelp() {
     _ 'Variation '; yellow SMTPD Certificate; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-ispconfig-setup-smtpd-certificate [options]
 
 Options:
@@ -68,10 +68,6 @@ Global Options:
         Show this help.
    --root-sure
         Bypass root checking.
-
-Environment Variables:
-   MAILBOX_HOST
-        Default to hostmaster
 
 Dependency:
    rcm-certbot-obtain-authenticator-nginx
@@ -246,8 +242,6 @@ isDirExists() {
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
-code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
 if [ -z "$fqdn" ];then
     error "Argument --fqdn required."; x
 fi

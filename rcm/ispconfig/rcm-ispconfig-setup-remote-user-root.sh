@@ -36,6 +36,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
 
 # Functions.
 printVersion() {
@@ -61,7 +62,7 @@ Global Options:
 
 Environment Variables:
    ISPCONFIG_REMOTE_USER_ROOT
-        Default to root
+        Default to $ISPCONFIG_REMOTE_USER_ROOT
 
 Dependency:
    pwgen
@@ -415,7 +416,6 @@ EOF
 # Requirement, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
 code 'ISPCONFIG_REMOTE_USER_ROOT="'$ISPCONFIG_REMOTE_USER_ROOT'"'
 ____
 

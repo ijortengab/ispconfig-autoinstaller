@@ -40,8 +40,6 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
-
-# Define variables.
 POSTFIX_CONFIG_DIR=${POSTFIX_CONFIG_DIR:=/etc/postfix}
 POSTFIX_CONFIG_FILE_VMAIL_SSL=${POSTFIX_CONFIG_FILE_VMAIL_SSL:=${POSTFIX_CONFIG_DIR}/vmail_ssl.map}
 MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
@@ -55,7 +53,7 @@ printHelp() {
     _ 'Variation '; yellow ISPConfig; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-postfix-multiple-certificate-ispconfig [options]
 
 Options:
@@ -75,8 +73,12 @@ Global Options:
         Bypass root checking.
 
 Environment Variables:
+   POSTFIX_CONFIG_DIR
+        Default to $POSTFIX_CONFIG_DIR
+   POSTFIX_CONFIG_FILE_VMAIL_SSL
+        Default to $POSTFIX_CONFIG_FILE_VMAIL_SSL
    MAILBOX_HOST
-        Default to hostmaster
+        Default to $MAILBOX_HOST
 
 Dependency:
    rcm-certbot-obtain-authenticator-nginx
