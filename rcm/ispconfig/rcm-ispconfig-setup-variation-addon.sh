@@ -59,6 +59,9 @@ __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >
 ___() { echo -n "$INDENT" >&2; echo -n "#" '        ' >&2; [ -n "$1" ] && echo "$@" >&2 || echo -n  >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
+# Define variables and constants.
+delay=.5; [ -n "$fast" ] && unset delay
+
 # Define variables.
 SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
 SUBDOMAIN_PHPMYADMIN=${SUBDOMAIN_PHPMYADMIN:=db}

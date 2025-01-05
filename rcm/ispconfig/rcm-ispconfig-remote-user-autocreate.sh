@@ -41,6 +41,9 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
+# Define variables and constants.
+delay=.5; [ -n "$fast" ] && unset delay
+
 # Functions.
 printVersion() {
     echo '0.9.12'
@@ -293,7 +296,6 @@ php_fpm_user=ispconfig
 code 'php_fpm_user="'$php_fpm_user'"'
 prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
 code 'prefix="'$prefix'"'
-delay=.5; [ -n "$fast" ] && unset delay
 ____
 
 if [ -z "$ispconfig_sure" ];then

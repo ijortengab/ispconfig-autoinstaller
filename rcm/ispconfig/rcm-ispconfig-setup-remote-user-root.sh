@@ -34,6 +34,9 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
+# Define variables and constants.
+delay=.5; [ -n "$fast" ] && unset delay
+
 # Functions.
 printVersion() {
     echo '0.9.12'
@@ -411,7 +414,6 @@ EOF
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
-delay=.5; [ -n "$fast" ] && unset delay
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
 code 'ISPCONFIG_REMOTE_USER_ROOT="'$ISPCONFIG_REMOTE_USER_ROOT'"'

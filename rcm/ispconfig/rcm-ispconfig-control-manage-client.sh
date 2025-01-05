@@ -49,6 +49,9 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
+# Define variables and constants.
+delay=.5; [ -n "$fast" ] && unset delay
+
 # Command.
 if [ -n "$1" ];then
     case "$1" in
@@ -56,7 +59,7 @@ if [ -n "$1" ];then
     esac
 fi
 
-# Functions. Functions before define constants.
+# Functions.
 resolve_relative_path() {
     if [ -d "$1" ];then
         cd "$1" || return 1
@@ -267,7 +270,6 @@ create() {
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
-delay=.5; [ -n "$fast" ] && unset delay
 if [ -z "$username" ];then
     error "Argument --username required."; x
 fi

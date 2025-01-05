@@ -40,6 +40,9 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
+# Define variables and constants.
+delay=.5; [ -n "$fast" ] && unset delay
+
 # Functions.
 printVersion() {
     echo '0.9.12'
@@ -178,7 +181,6 @@ websiteCredentialIspconfig() {
 
 # Require, validate, and populate value.
 chapter Dump variable.
-delay=.5; [ -n "$fast" ] && unset delay
 SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
 code 'SUBDOMAIN_ISPCONFIG="'$SUBDOMAIN_ISPCONFIG'"'
 SUBDOMAIN_PHPMYADMIN=${SUBDOMAIN_PHPMYADMIN:=db}

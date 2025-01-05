@@ -38,6 +38,9 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
+# Define variables and constants.
+delay=.5; [ -n "$fast" ] && unset delay
+
 # Define variables.
 DOVECOT_CONFIG_DIR=${DOVECOT_CONFIG_DIR:=/etc/dovecot}
 DOVECOT_CONFIG_FILE_ISPCONFIG=${DOVECOT_CONFIG_FILE_ISPCONFIG:=${DOVECOT_CONFIG_DIR}/conf.d/99-ispconfig-custom-config.conf}
@@ -124,7 +127,6 @@ isDirExists() {
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-delay=.5; [ -n "$fast" ] && unset delay
 code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
 code 'DOVECOT_CONFIG_DIR="'$DOVECOT_CONFIG_DIR'"'
 code 'DOVECOT_CONFIG_FILE_ISPCONFIG="'$DOVECOT_CONFIG_FILE_ISPCONFIG'"'

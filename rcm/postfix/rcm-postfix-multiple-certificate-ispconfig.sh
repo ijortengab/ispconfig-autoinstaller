@@ -38,6 +38,9 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
+# Define variables and constants.
+delay=.5; [ -n "$fast" ] && unset delay
+
 # Define variables.
 POSTFIX_CONFIG_DIR=${POSTFIX_CONFIG_DIR:=/etc/postfix}
 POSTFIX_CONFIG_FILE_VMAIL_SSL=${POSTFIX_CONFIG_FILE_VMAIL_SSL:=${POSTFIX_CONFIG_DIR}/vmail_ssl.map}
@@ -124,7 +127,6 @@ isDirExists() {
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-delay=.5; [ -n "$fast" ] && unset delay
 code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
 code 'POSTFIX_CONFIG_DIR="'$POSTFIX_CONFIG_DIR'"'
 code 'POSTFIX_CONFIG_FILE_VMAIL_SSL="'$POSTFIX_CONFIG_FILE_VMAIL_SSL'"'

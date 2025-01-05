@@ -34,6 +34,9 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
+# Define variables and constants.
+delay=.5; [ -n "$fast" ] && unset delay
+
 # Functions.
 printVersion() {
     echo '0.9.12'
@@ -253,7 +256,6 @@ vercomp() {
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
-delay=.5; [ -n "$fast" ] && unset delay
 declare -i countdown
 vercomp `stat --version | head -1 | grep -o -E '\S+$'` 8.31
 if [[ $? -lt 2 ]];then
