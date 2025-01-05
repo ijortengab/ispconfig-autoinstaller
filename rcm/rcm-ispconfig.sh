@@ -143,7 +143,7 @@ Options:
         Select how to create the DNS record.
         Available value: manual, digitalocean-api.
    --variation *
-        Select the variation setup. Values available from command: rcm-ispconfig(eligible [--mode] [--dns-record]).
+        Select the variation bundle setup. Values available from command: rcm-ispconfig(eligible [--mode] [--dns-record]).
 
 Global Options.
    --fast
@@ -187,51 +187,41 @@ ArraySearch() {
 }
 command-eligible() {
     local mode=$1; shift
+    if [ ! "$mode" == init ];then
+        return 1
+    fi
     local dns_record=$1
     eligible=()
     if [ -f /etc/os-release ];then
         . /etc/os-release
     fi
-    case "$mode" in
-        init)
-        _; _.
-            case "$dns_record" in
-                digitalocean-api)
-                    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11    ]] && color=green || color=red; $color d1;
-                    _, . Debian 11, PHP 7.4, ISPConfig 3.2.7,; _.
-                    ___; _,  '             ' PHPMyAdmin 5.2.0, Roundcube 1.6.0, DigitalOcean API DNS.; _.
-                    eligible+=("d1;debian;11")
-                    ___; _, 'Variation '; [[ "$ID" == ubuntu && "$VERSION_ID" == 22.04 ]] && color=green || color=red; $color u2;
-                    _, . Ubuntu 22.04, PHP 7.4, ISPConfig 3.2.7,; _.
-                    ___; _,  '             ' PHPMyAdmin 5.2.0, Roundcube 1.6.0, DigitalOcean API DNS.; _.
-                    eligible+=("u2;ubuntu;22.04")
-                    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 12    ]] && color=green || color=red; $color d3;
-                    _, . Debian 12, PHP 8.1, ISPConfig 3.2.10,; _.
-                    ___; _,  '             ' PHPMyAdmin 5.2.1, Roundcube 1.6.2, DigitalOcean API DNS.; _.
-                    eligible+=("d3;debian;12")
-                    ;;
-                manual)
-                    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11    ]] && color=green || color=red; $color d4;
-                    _, . Debian 11, PHP 8.1, ISPConfig 3.2.11p2,; _.
-                    ___; _,  '             ' PHPMyAdmin 5.2.1, Roundcube 1.6.6, Manual DNS.; _.
-                    eligible+=("d4;debian;11")
-                    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 12    ]] && color=green || color=red; $color d5;
-                    _, . Debian 12, PHP 8.3, ISPConfig 3.2.11p2,; _.
-                    ___; _,  '             ' PHPMyAdmin 5.2.1, Roundcube 1.6.6, Manual DNS.; _.
-                    eligible+=("d5;debian;12")
-                    ;;
-            esac
-            ;;
-        addon)
-            ;;
-    esac
+    _; _.
+    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11 && "$dns_record" == 'digitalocean-api' ]] && color=green2 || color=red; $color debian11a;
+    _, . Debian' '; hN 11; _, , '       'PHP' '; hN 7.4; _, , '        'ISPConfig' '; hN 3.2.7; _, ,; _.
+    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.0; _, , Roundcube' '; hN 1.6.0; _, , DigitalOcean API DNS.; _.
+    eligible+=("debian11a;debian;11;digitalocean-api")
+    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11 && "$dns_record" == 'manual' ]] && color=green2 || color=red; $color debian11b;
+    _, . Debian' '; hN 11; _, , '       'PHP' '; hN 8.1; _, , '        'ISPConfig' '; hN 3.2.11p2; _, ,; _.
+    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.1; _, , Roundcube' '; hN 1.6.6; _, , Manual DNS.; _.
+    eligible+=("debian11b;debian;11;manual")
+    ___; _, 'Variation '; [[ "$ID" == ubuntu && "$VERSION_ID" == 22.04 && "$dns_record" == 'digitalocean-api' ]] && color=green2 || color=red; $color ubuntu22a;
+    _, . Ubuntu' '; hN 22.04; _, , '    'PHP' '; hN 7.4; _, , '        'ISPConfig' '; hN 3.2.7; _, ,; _.
+    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.0; _, , Roundcube' '; hN 1.6.0; _, , DigitalOcean API DNS.; _.
+    eligible+=("ubuntu22a;ubuntu;22.04;digitalocean-api")
+    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 12 && "$dns_record" == 'digitalocean-api' ]] && color=green2 || color=red; $color debian12a;
+    _, . Debian' '; hN 12; _, , '       'PHP' '; hN 8.1; _, , '        'ISPConfig' '; hN 3.2.10; _, ,; _.
+    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.1; _, , Roundcube' '; hN 1.6.2; _, , DigitalOcean API DNS.; _.
+    eligible+=("debian12a;debian;12;digitalocean-api")
+    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 12 && "$dns_record" == 'manual' ]] && color=green2 || color=red; $color debian12b;
+    _, . Debian' '; hN 12; _, , '       'PHP' '; hN 8.3; _, , '        'ISPConfig' '; hN 3.2.11p2; _, ,; _.
+    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.1; _, , Roundcube' '; hN 1.6.6; _, , Manual DNS.; _.
+    eligible+=("debian12b;debian;12;manual")
     for each in "${eligible[@]}";do
         variation=$(cut -d';' -f1 <<< "$each")
         _id=$(cut -d';' -f2 <<< "$each")
         _version_id=$(cut -d';' -f3 <<< "$each")
-        if [[ "$_id" == "all" && "$_version_id" == "all" ]];then
-            echo $variation
-        elif [[ "$_id" == "$ID" && "$_version_id" == "$VERSION_ID" ]];then
+        _dns_record=$(cut -d';' -f4 <<< "$each")
+        if [[ "$_id" == "$ID" && "$_version_id" == "$VERSION_ID" && "$dns_record" == "$_dns_record" ]];then
             echo $variation
         fi
     done
@@ -361,6 +351,32 @@ EOF
     # @todo: serialize_array
     [ -n "$tempfile" ] && rm "$tempfile"
 }
+green2() {
+    local word=$1
+    hN "$word" green
+}
+hN() {
+    # hightlightNumber
+    local other=$2
+    [ -z "$other" ] && other=_,
+    local number=yellow
+    local word=$1 segment
+    local current last
+    for ((i = 0 ; i < ${#word} ; i++)); do
+        if [[ ${word:$i:1} =~ ^[0-9]+$ ]];then
+            current=number
+        else
+            current=other
+        fi
+        if [[ -n "$last" && ! "$last" == "$current" ]];then
+            ${!last} $segment
+            segment=
+        fi
+        last="$current"
+        segment+=${word:$i:1}
+    done
+    ${!last} $segment
+}
 
 # Execute command.
 if [[ -n "$command" && $(type -t "command-${command}") == function ]];then
@@ -407,14 +423,16 @@ if [ -z "$mode" ];then
     error "Argument --mode required."; x
 fi
 code 'mode="'$mode'"'
+if [ "$mode" == init ];then
+    if [ -z "$variation" ];then
+        error "Argument --variation required."; x
+    fi
+fi
 if [ -n "$variation" ];then
     case "$variation" in
-        d1|u2|d3|d4|d5) ;;
+        debian11a|ubuntu22a|debian12a|debian11b|debian12b) ;;
         *) error "Argument --variation not valid."; x ;;
     esac
-fi
-if [ -z "$variation" ];then
-    error "Argument --variation required."; x
 fi
 code 'variation="'$variation'"'
 if [ -n "$dns_record" ];then
@@ -432,27 +450,32 @@ ____
 
 case "$mode" in
     init)
-        if [[ "$dns_record" == digitalocean-api ]];then
-            case "$variation" in
-                d1) rcm_operand=ispconfig-setup-variation-1 ;;
-                u2) rcm_operand=ispconfig-setup-variation-2 ;;
-                d3) rcm_operand=ispconfig-setup-variation-3 ;;
-                *) error "Argument --variation not valid."; x ;;
-            esac
-        else
-            case "$variation" in
-                d4) rcm_operand=ispconfig-setup-variation-4 ;;
-                d5) rcm_operand=ispconfig-setup-variation-5 ;;
-                *) error "Argument --variation not valid."; x ;;
-            esac
-        fi
+        case "$dns_record" in
+            digitalocean-api)
+                case "$variation" in
+                    debian11a) rcm_operand=ispconfig-setup-variation-1 ;;
+                    ubuntu22a) rcm_operand=ispconfig-setup-variation-2 ;;
+                    debian12a) rcm_operand=ispconfig-setup-variation-3 ;;
+                    *) error "Argument --variation not valid."; x ;;
+                esac
+                ;;
+            manual)
+                case "$variation" in
+                    debian11b) rcm_operand=ispconfig-setup-variation-4 ;;
+                    debian12b) rcm_operand=ispconfig-setup-variation-5 ;;
+                    *) error "Argument --variation not valid."; x ;;
+                esac
+                ;;
+        esac
         ;;
     addon)
-        if [[ "$dns_record" == digitalocean-api ]];then
-            rcm_operand=ispconfig-setup-variation-addon-2
-        else
-            rcm_operand=ispconfig-setup-variation-addon
-        fi
+        case "$dns_record" in
+            digitalocean-api)
+                rcm_operand=ispconfig-setup-variation-addon-2
+                ;;
+            manual)
+                rcm_operand=ispconfig-setup-variation-addon
+        esac
         ;;
 esac
 
