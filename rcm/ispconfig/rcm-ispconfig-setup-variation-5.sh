@@ -12,7 +12,6 @@ while [[ $# -gt 0 ]]; do
         --fqdn) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fqdn="$2"; shift; fi; shift ;;
         --ip-address=*) ip_address="${1#*=}"; shift ;;
         --ip-address) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then ip_address="$2"; shift; fi; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
         --timezone) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then timezone="$2"; shift; fi; shift ;;
         --url-ispconfig=*) url_ispconfig="${1#*=}"; shift ;;
@@ -101,8 +100,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
    --bypass-validation-is-installed
         Bypass ISPConfig installed validation.
 
@@ -350,15 +347,7 @@ while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 if [ -z "$bypass_validation_is_installed" ];then
     chapter Mengecek ISPConfig User.
@@ -601,7 +590,7 @@ fi
 ____
 
 INDENT+="    " \
-rcm-dig-autoinstaller $isfast --root-sure \
+rcm-dig-autoinstaller $isfast \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
@@ -610,14 +599,14 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+rcm-dig-is-record-exists $isfast --name-exists-sure \
     --reverse \
     --domain="$fqdn" \
     --type=cname \
     --hostname="@" \
     --hostname-origin="*" \
     && INDENT+="    " \
-rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+rcm-dig-is-record-exists $isfast --name-exists-sure \
     --domain="$fqdn" \
     --type=a \
     --ip-address="$ip_address" \
@@ -625,11 +614,11 @@ rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
 
 for each in "${fqdn_array[@]}";do
     INDENT+="    " \
-    rcm-dig-watch-domain-exists $isfast --root-sure \
+    rcm-dig-watch-domain-exists $isfast \
         --domain="$each" \
         --waiting-time="60" \
         && INDENT+="    " \
-    rcm-dig-has-address $isfast --root-sure \
+    rcm-dig-has-address $isfast \
         --fqdn="$each" \
         --ip-address="$ip_address" \
         ; [ ! $? -eq 0 ] && x
@@ -668,25 +657,25 @@ if [[ -n "$adjust" ]];then
 fi
 
 INDENT+="    " \
-rcm-debian-12-setup-basic $isfast --root-sure \
+rcm-debian-12-setup-basic $isfast \
     --timezone="$timezone" \
     --without-update-system \
     --without-upgrade-system \
     && INDENT+="    " \
-rcm-mariadb-autoinstaller $isfast --root-sure \
+rcm-mariadb-autoinstaller $isfast \
     && INDENT+="    " \
-rcm-nginx-autoinstaller $isfast --root-sure \
+rcm-nginx-autoinstaller $isfast \
     && INDENT+="    " \
-rcm-php-autoinstaller $isfast --root-sure \
+rcm-php-autoinstaller $isfast \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-php-setup-adjust-cli-version $isfast --root-sure \
+rcm-php-setup-adjust-cli-version $isfast \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-postfix-autoinstaller $isfast --root-sure \
+rcm-postfix-autoinstaller $isfast \
     --fqdn="$fqdn" \
     && INDENT+="    " \
-rcm-certbot-autoinstaller $isfast --root-sure \
+rcm-certbot-autoinstaller $isfast \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
@@ -695,7 +684,7 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-ispconfig-autoinstaller-nginx $isfast --root-sure \
+rcm-ispconfig-autoinstaller-nginx $isfast \
     --certbot-authenticator=nginx \
     --fqdn="$fqdn" \
     --ispconfig-version="$ispconfig_version" \
@@ -703,9 +692,9 @@ rcm-ispconfig-autoinstaller-nginx $isfast --root-sure \
     --phpmyadmin-version="$phpmyadmin_version" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-remote-user-root $isfast --root-sure \
+rcm-ispconfig-setup-remote-user-root $isfast \
     && INDENT+="    " \
-rcm-roundcube-setup-ispconfig-integration $isfast --root-sure \
+rcm-roundcube-setup-ispconfig-integration $isfast \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
@@ -726,7 +715,7 @@ for each in ispconfig phpmyadmin roundcube;do
 
         if ArraySearch "$url_host" fqdn_path_array[@];then
             INDENT+="    " \
-            rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root $isfast --root-sure \
+            rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root $isfast \
                 --project="$each" \
                 --php-version="$php_version" \
                 --url-scheme="$url_scheme" \
@@ -736,7 +725,7 @@ for each in ispconfig phpmyadmin roundcube;do
                 ; [ ! $? -eq 0 ] && x
         else
             INDENT+="    " \
-            rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sure \
+            rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast \
                 --project="$each" \
                 --php-version="$php_version" \
                 --url-scheme="$url_scheme" \
@@ -780,7 +769,7 @@ fi
 ____
 
 INDENT+="    " \
-rcm-ispconfig-setup-dump-variables-init $isfast --root-sure \
+rcm-ispconfig-setup-dump-variables-init $isfast \
     ; [ ! $? -eq 0 ] && x
 
 chapter Finish
@@ -800,7 +789,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # --bypass-validation-is-installed
 # )
 # VALUE=(

@@ -13,7 +13,6 @@ while [[ $# -gt 0 ]]; do
         --ispconfig-soap-exists-sure) ispconfig_soap_exists_sure=1; shift ;;
         --password=*) password="${1#*=}"; shift ;;
         --password) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then password="$2"; shift; fi; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --username=*) username="${1#*=}"; shift ;;
         --username) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then username="$2"; shift; fi; shift ;;
         --) shift
@@ -134,8 +133,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Dependency:
    pwgen
@@ -183,15 +180,7 @@ fi
 title rcm-ispconfig-control-manage-client
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -324,7 +313,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # --ispconfig-soap-exists-sure
 # --get-client-id
 # )

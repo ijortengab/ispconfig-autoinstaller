@@ -7,7 +7,6 @@ while [[ $# -gt 0 ]]; do
         --help) help=1; shift ;;
         --version) version=1; shift ;;
         --fast) fast=1; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -60,8 +59,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Environment Variables:
    MARIADB_PREFIX_MASTER
@@ -79,15 +76,7 @@ EOF
 title rcm-ispconfig-setup-dump-variables-init
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Functions.
 fileMustExists() {
@@ -219,7 +208,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # )
 # VALUE=(
 # )

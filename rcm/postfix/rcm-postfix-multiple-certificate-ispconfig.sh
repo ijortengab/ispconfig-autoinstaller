@@ -11,7 +11,6 @@ while [[ $# -gt 0 ]]; do
         --fast) fast=1; shift ;;
         --fqdn=*) fqdn="${1#*=}"; shift ;;
         --fqdn) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fqdn="$2"; shift; fi; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -69,8 +68,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Environment Variables:
    POSTFIX_CONFIG_DIR
@@ -95,15 +92,7 @@ EOF
 title rcm-postfix-multiple-certificate-ispconfig
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -176,7 +165,7 @@ if [ -n "$notfound" ];then
     if [[ "$certbot_authenticator" == 'digitalocean' ]]; then
         INDENT+="    " \
         PATH=$PATH \
-        rcm-certbot-obtain-authenticator-digitalocean $isfast --root-sure \
+        rcm-certbot-obtain-authenticator-digitalocean $isfast \
             --certbot-dns-digitalocean-sure \
             --domain="$fqdn" \
             ; [ ! $? -eq 0 ] && x
@@ -185,7 +174,7 @@ if [ -n "$notfound" ];then
     elif [[ "$certbot_authenticator" == 'nginx' ]]; then
         INDENT+="    " \
         PATH=$PATH \
-        rcm-certbot-obtain-authenticator-nginx $isfast --root-sure \
+        rcm-certbot-obtain-authenticator-nginx $isfast \
             --domain="$fqdn" \
             ; [ ! $? -eq 0 ] && x
     fi
@@ -201,7 +190,7 @@ code 'ssl_key="'$ssl_key'"'
 ____
 
 INDENT+="    " \
-rcm-postfix-multiple-certificate $isfast --root-sure \
+rcm-postfix-multiple-certificate $isfast \
     --ssl-cert="$ssl_cert" \
     --ssl-key="$ssl_key" \
     --fqdn="$fqdn" \
@@ -222,7 +211,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # )
 # VALUE=(
 # --fqdn

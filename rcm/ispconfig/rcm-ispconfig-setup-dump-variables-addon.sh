@@ -13,7 +13,6 @@ while [[ $# -gt 0 ]]; do
         --fast) fast=1; shift ;;
         --ip-address=*) ip_address="${1#*=}"; shift ;;
         --ip-address) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then ip_address="$2"; shift; fi; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -73,8 +72,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Environment Variables:
    SUBDOMAIN_ISPCONFIG
@@ -113,15 +110,7 @@ EOF
 title rcm-ispconfig-setup-dump-variables-addon
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Functions.
 backupFile() {
@@ -262,7 +251,7 @@ _ '   'value'   ':' '; magenta "v=spf1 a:${mail_provider} ~all"; _.
 ____
 
 chapter DNS TXT Record for DKIM in $domain
-dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain --fast --root-sure --ispconfig-soap-exists-sure --domain="$domain" get-dns-record 2>/dev/null)
+dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain --fast --ispconfig-soap-exists-sure --domain="$domain" get-dns-record 2>/dev/null)
 _ ' - 'hostname:' '; magenta "${DKIM_SELECTOR}._domainkey"; _.
 _ '   'value'   ':' '; magenta "v=DKIM1; t=s; p=${dns_record}"; _.
 ____
@@ -326,7 +315,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # )
 # VALUE=(
 # --domain

@@ -13,7 +13,6 @@ while [[ $# -gt 0 ]]; do
         --mode=*) mode="${1#*=}"; shift ;;
         --mode) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mode="$2"; shift; fi; shift ;;
         --non-interactive) non_interactive=1; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --variation=*) variation="${1#*=}"; shift ;;
         --variation) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then variation="$2"; shift; fi; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
@@ -153,8 +152,6 @@ Global Options.
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
    --non-interactive
         Skip prompt for every options.
    --
@@ -389,15 +386,7 @@ fi
 title rcm-ispconfig
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -489,7 +478,7 @@ ____
 
 case "$rcm_operand" in
     *)
-        INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" rcm${isfast}${isnoninteractive}${isverbose} $rcm_operand --root-sure --binary-directory-exists-sure --non-immediately -- "$@"
+        INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" rcm${isfast}${isnoninteractive}${isverbose} $rcm_operand --binary-directory-exists-sure --non-immediately -- "$@"
 esac
 ____
 
@@ -510,7 +499,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # --non-interactive
 # )
 # VALUE=(

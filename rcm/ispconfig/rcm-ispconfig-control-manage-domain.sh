@@ -11,7 +11,6 @@ while [[ $# -gt 0 ]]; do
         --fast) fast=1; shift ;;
         --get-domain-id) get_domain_id=1; shift ;;
         --ispconfig-soap-exists-sure) ispconfig_soap_exists_sure=1; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -76,8 +75,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Environment Variables:
    DKIM_SELECTOR
@@ -155,15 +152,7 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Validation and bypass validation. Validation after title.
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Functions. Functions after title. For main command.
 backupFile() {
@@ -340,7 +329,7 @@ create() {
     [ -n "$domain" ] || { error Variable domain is required; x; }
     [ -n "$tempfile" ] || { error Variable tempfile is required; x; }
 
-    ____; client_id=$(INDENT+="    " rcm-ispconfig-control-manage-client $isfast --username "$domain" --email "${MAILBOX_ADMIN}@${domain}" --root-sure --ispconfig-soap-exists-sure --get-client-id -- --limit-mailaliasdomain=0 --limit-mailaliasdomain=0 --limit-maildomain=1 --startmodule=mail)
+    ____; client_id=$(INDENT+="    " rcm-ispconfig-control-manage-client $isfast --username "$domain" --email "${MAILBOX_ADMIN}@${domain}" --ispconfig-soap-exists-sure --get-client-id -- --limit-mailaliasdomain=0 --limit-mailaliasdomain=0 --limit-maildomain=1 --startmodule=mail)
     code 'client_id="'$client_id'"'
     [ -n "$client_id" ] || { client_id=0; code 'client_id="'$client_id'"'; }
 
@@ -462,7 +451,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # --ispconfig-soap-exists-sure
 # --get-domain-id
 # )

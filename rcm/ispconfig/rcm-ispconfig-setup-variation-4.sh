@@ -14,7 +14,6 @@ while [[ $# -gt 0 ]]; do
         --ip-address=*) ip_address="${1#*=}"; shift ;;
         --ip-address) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then ip_address="$2"; shift; fi; shift ;;
         --non-interactive) non_interactive=1; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
         --timezone) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then timezone="$2"; shift; fi; shift ;;
         --with-update-system) update_system=1; shift ;;
@@ -93,8 +92,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Environment Variables:
    SUBDOMAIN_ISPCONFIG
@@ -155,15 +152,7 @@ EOF
 title rcm-ispconfig-setup-variation-4
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 chapter Mengecek ISPConfig User.
 php_fpm_user=ispconfig
@@ -321,69 +310,69 @@ fi
 ____
 
 INDENT+="    " \
-rcm-debian-11-setup-basic $isfast --root-sure \
+rcm-debian-11-setup-basic $isfast \
     --timezone="$timezone" \
     $is_without_update_system \
     $is_without_upgrade_system \
     INDENT+="    " \
-rcm-dig-is-name-exists $isfast --root-sure \
+rcm-dig-is-name-exists $isfast \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+rcm-dig-is-record-exists $isfast --name-exists-sure \
     --domain="$domain" \
     --type=a \
     --ip-address="$ip_address" \
     --hostname=@ \
     && INDENT+="    " \
-rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+rcm-dig-is-record-exists $isfast --name-exists-sure \
     --reverse \
     --domain="$domain" \
     --type=cname \
     --hostname="$hostname" \
     && INDENT+="    " \
-rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+rcm-dig-is-record-exists $isfast --name-exists-sure \
     --domain="$domain" \
     --type=a \
     --ip-address="$ip_address" \
     --hostname="$hostname" \
     && INDENT+="    " \
-rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+rcm-dig-is-record-exists $isfast --name-exists-sure \
     --reverse \
     --domain="$domain" \
     --type=a \
     --ip-address="$ip_address" \
     --hostname="$SUBDOMAIN_ISPCONFIG" \
     && INDENT+="    " \
-rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+rcm-dig-is-record-exists $isfast --name-exists-sure \
     --domain="$domain" \
     --type=cname \
     --hostname="$SUBDOMAIN_ISPCONFIG" \
     && INDENT+="    " \
-rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+rcm-dig-is-record-exists $isfast --name-exists-sure \
     --reverse \
     --domain="$domain" \
     --type=a \
     --ip-address="$ip_address" \
     --hostname="$SUBDOMAIN_PHPMYADMIN" \
     && INDENT+="    " \
-rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+rcm-dig-is-record-exists $isfast --name-exists-sure \
     --domain="$domain" \
     --type=cname \
     --hostname="$SUBDOMAIN_PHPMYADMIN" \
     && INDENT+="    " \
-rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+rcm-dig-is-record-exists $isfast --name-exists-sure \
     --reverse \
     --domain="$domain" \
     --type=a \
     --ip-address="$ip_address" \
     --hostname="$SUBDOMAIN_ROUNDCUBE" \
     && INDENT+="    " \
-rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+rcm-dig-is-record-exists $isfast --name-exists-sure \
     --domain="$domain" \
     --type=cname \
     --hostname="$SUBDOMAIN_ROUNDCUBE" \
     && INDENT+="    " \
-rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+rcm-dig-is-record-exists $isfast --name-exists-sure \
     --domain="$domain" \
     --type=mx \
     --hostname=@ \
@@ -418,20 +407,20 @@ if [[ -n "$adjust" ]];then
 fi
 
 INDENT+="    " \
-rcm-mariadb-autoinstaller $isfast --root-sure \
+rcm-mariadb-autoinstaller $isfast \
     && INDENT+="    " \
-rcm-nginx-autoinstaller $isfast --root-sure \
+rcm-nginx-autoinstaller $isfast \
     && INDENT+="    " \
-rcm-php-autoinstaller $isfast --root-sure \
+rcm-php-autoinstaller $isfast \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-php-setup-adjust-cli-version $isfast --root-sure \
+rcm-php-setup-adjust-cli-version $isfast \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-postfix-autoinstaller $isfast --root-sure \
+rcm-postfix-autoinstaller $isfast \
     --fqdn="$fqdn" \
     && INDENT+="    " \
-rcm-certbot-autoinstaller $isfast --root-sure \
+rcm-certbot-autoinstaller $isfast \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
@@ -440,7 +429,7 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-ispconfig-autoinstaller-nginx $isfast --root-sure \
+rcm-ispconfig-autoinstaller-nginx $isfast \
     --certbot-authenticator=nginx \
     --hostname="$hostname" \
     --domain="$domain" \
@@ -449,13 +438,13 @@ rcm-ispconfig-autoinstaller-nginx $isfast --root-sure \
     --phpmyadmin-version="$phpmyadmin_version" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-remote-user-root $isfast --root-sure \
+rcm-ispconfig-setup-remote-user-root $isfast \
     && INDENT+="    " \
-rcm-ispconfig-setup-internal-command $isfast --root-sure \
+rcm-ispconfig-setup-internal-command $isfast \
     && INDENT+="    " \
-rcm-roundcube-setup-ispconfig-integration $isfast --root-sure \
+rcm-roundcube-setup-ispconfig-integration $isfast \
     && INDENT+="    " \
-rcm-amavis-setup-ispconfig $isfast --root-sure \
+rcm-amavis-setup-ispconfig $isfast \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
@@ -464,37 +453,37 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast \
     --project=ispconfig \
     --subdomain="$SUBDOMAIN_ISPCONFIG" \
     --domain="$domain" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast \
     --project=roundcube \
     --subdomain="$SUBDOMAIN_ROUNDCUBE" \
     --domain="$domain" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast \
     --project=phpmyadmin \
     --subdomain="$SUBDOMAIN_PHPMYADMIN" \
     --domain="$domain" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast \
     --project=ispconfig \
     --subdomain="${SUBDOMAIN_ISPCONFIG}.${domain}" \
     --domain="localhost" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast \
     --project=roundcube \
     --subdomain="${SUBDOMAIN_ROUNDCUBE}.${domain}" \
     --domain="localhost" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast \
     --project=phpmyadmin \
     --subdomain="${SUBDOMAIN_PHPMYADMIN}.${domain}" \
     --domain="localhost" \
@@ -520,7 +509,7 @@ ____
 
 INDENT+="    " \
 PATH=$PATH \
-rcm-certbot-deploy-nginx $isfast --root-sure \
+rcm-certbot-deploy-nginx $isfast \
     --domain="${SUBDOMAIN_ISPCONFIG}.${domain}" \
     --domain="${SUBDOMAIN_PHPMYADMIN}.${domain}" \
     --domain="${SUBDOMAIN_ROUNDCUBE}.${domain}" \
@@ -532,35 +521,35 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-ispconfig-control-manage-domain $isfast --root-sure \
+rcm-ispconfig-control-manage-domain $isfast \
     add \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-mailbox $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-mailbox $isfast --ispconfig-domain-exists-sure \
     --ispconfig-soap-exists-sure \
     --name="$MAILBOX_ADMIN" \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-mailbox $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-mailbox $isfast --ispconfig-domain-exists-sure \
     --ispconfig-soap-exists-sure \
     --name="$MAILBOX_SUPPORT" \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-alias $isfast --ispconfig-domain-exists-sure \
     --ispconfig-soap-exists-sure \
     --name="$MAILBOX_HOST" \
     --domain="$domain" \
     --destination-name="$MAILBOX_ADMIN" \
     --destination-domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-alias $isfast --ispconfig-domain-exists-sure \
     --ispconfig-soap-exists-sure \
     --name="$MAILBOX_POST" \
     --domain="$domain" \
     --destination-name="$MAILBOX_ADMIN" \
     --destination-domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-alias $isfast --ispconfig-domain-exists-sure \
     --ispconfig-soap-exists-sure \
     --name="$MAILBOX_WEB" \
     --domain="$domain" \
@@ -579,7 +568,7 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-ispconfig-setup-dump-variables $isfast --root-sure \
+rcm-ispconfig-setup-dump-variables $isfast \
     --domain="$domain" \
     --ip-address="$ip_address" \
     ; [ ! $? -eq 0 ] && x
@@ -601,7 +590,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # --non-interactive
 # )
 # VALUE=(

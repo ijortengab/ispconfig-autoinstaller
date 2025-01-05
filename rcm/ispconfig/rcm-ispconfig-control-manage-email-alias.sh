@@ -17,7 +17,6 @@ while [[ $# -gt 0 ]]; do
         --ispconfig-soap-exists-sure) ispconfig_soap_exists_sure=1; shift ;;
         --name=*) name="${1#*=}"; shift ;;
         --name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then name="$2"; shift; fi; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --) shift
             while [[ $# -gt 0 ]]; do
                 case "$1" in
@@ -87,8 +86,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
    --ispconfig-domain-exists-sure
         Bypass domain exists checking.
 
@@ -123,15 +120,7 @@ while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Functions.
 populateDatabaseUserPassword() {
@@ -399,7 +388,7 @@ ____
 
 if [ -z "$ispconfig_domain_exists_sure" ];then
     INDENT+="    " \
-    rcm-ispconfig-control-manage-domain $isfast --root-sure \
+    rcm-ispconfig-control-manage-domain $isfast \
         --domain="$domain" \
         ; [ ! $? -eq 0 ] && x
 fi
@@ -523,7 +512,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # --ispconfig-domain-exists-sure
 # --ispconfig-soap-exists-sure
 # )

@@ -16,7 +16,6 @@ while [[ $# -gt 0 ]]; do
         --ip-address=*) ip_address="${1#*=}"; shift ;;
         --ip-address) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then ip_address="$2"; shift; fi; shift ;;
         --non-interactive) non_interactive=1; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
         --timezone) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then timezone="$2"; shift; fi; shift ;;
         --with-update-system) update_system=1; shift ;;
@@ -97,8 +96,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Environment Variables:
    SUBDOMAIN_ISPCONFIG
@@ -164,15 +161,7 @@ EOF
 title rcm-ispconfig-setup-variation-2
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 chapter Mengecek ISPConfig User.
 php_fpm_user=ispconfig
@@ -359,7 +348,7 @@ fileMustExists $HOME/.digitalocean-token.txt
 ____
 
 INDENT+="    " \
-rcm-ubuntu-22.04-setup-basic $isfast --root-sure \
+rcm-ubuntu-22.04-setup-basic $isfast \
     --timezone="$timezone" \
     $is_without_update_system \
     $is_without_upgrade_system \
@@ -425,22 +414,22 @@ fi
 ____
 
 INDENT+="    " \
-rcm-mariadb-autoinstaller $isfast --root-sure \
+rcm-mariadb-autoinstaller $isfast \
     && INDENT+="    " \
-rcm-nginx-autoinstaller $isfast --root-sure \
+rcm-nginx-autoinstaller $isfast \
     && INDENT+="    " \
-rcm-php-autoinstaller $isfast --root-sure \
+rcm-php-autoinstaller $isfast \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-php-setup-adjust-cli-version $isfast --root-sure \
+rcm-php-setup-adjust-cli-version $isfast \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-postfix-autoinstaller $isfast --root-sure \
+rcm-postfix-autoinstaller $isfast \
     --fqdn="$fqdn" \
     && INDENT+="    " \
-rcm-certbot-autoinstaller $isfast --root-sure \
+rcm-certbot-autoinstaller $isfast \
     && INDENT+="    " \
-rcm-certbot-digitalocean-autoinstaller $isfast --root-sure \
+rcm-certbot-digitalocean-autoinstaller $isfast \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
@@ -449,71 +438,71 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-digitalocean-api-manage-domain $isfast --root-sure \
+rcm-digitalocean-api-manage-domain $isfast \
     add \
     --domain="$domain" \
     --ip-address="$ip_address" \
     && INDENT+="    " \
-rcm-digitalocean-api-manage-domain-record $isfast --root-sure --digitalocean-domain-exists-sure \
+rcm-digitalocean-api-manage-domain-record $isfast --digitalocean-domain-exists-sure \
     add \
     --domain="$domain" \
     --type=a \
     --ip-address="$ip_address" \
     --hostname=@ \
     && INDENT+="    " \
-rcm-digitalocean-api-manage-domain-record $isfast --root-sure --digitalocean-domain-exists-sure \
+rcm-digitalocean-api-manage-domain-record $isfast --digitalocean-domain-exists-sure \
     delete \
     --domain="$domain" \
     --type=cname \
     --hostname="$hostname" \
     && INDENT+="    " \
-rcm-digitalocean-api-manage-domain-record $isfast --root-sure --digitalocean-domain-exists-sure \
+rcm-digitalocean-api-manage-domain-record $isfast --digitalocean-domain-exists-sure \
     add \
     --domain="$domain" \
     --type=a \
     --ip-address="$ip_address" \
     --hostname="$hostname" \
     && INDENT+="    " \
-rcm-digitalocean-api-manage-domain-record $isfast --root-sure --digitalocean-domain-exists-sure \
+rcm-digitalocean-api-manage-domain-record $isfast --digitalocean-domain-exists-sure \
     delete \
     --domain="$domain" \
     --type=a \
     --ip-address="$ip_address" \
     --hostname="$SUBDOMAIN_ISPCONFIG" \
     && INDENT+="    " \
-rcm-digitalocean-api-manage-domain-record $isfast --root-sure --digitalocean-domain-exists-sure \
+rcm-digitalocean-api-manage-domain-record $isfast --digitalocean-domain-exists-sure \
     add \
     --domain="$domain" \
     --type=cname \
     --hostname="$SUBDOMAIN_ISPCONFIG" \
     && INDENT+="    " \
-rcm-digitalocean-api-manage-domain-record $isfast --root-sure --digitalocean-domain-exists-sure \
+rcm-digitalocean-api-manage-domain-record $isfast --digitalocean-domain-exists-sure \
     delete \
     --domain="$domain" \
     --type=a \
     --ip-address="$ip_address" \
     --hostname="$SUBDOMAIN_PHPMYADMIN" \
     && INDENT+="    " \
-rcm-digitalocean-api-manage-domain-record $isfast --root-sure --digitalocean-domain-exists-sure \
+rcm-digitalocean-api-manage-domain-record $isfast --digitalocean-domain-exists-sure \
     add \
     --domain="$domain" \
     --type=cname \
     --hostname="$SUBDOMAIN_PHPMYADMIN" \
     && INDENT+="    " \
-rcm-digitalocean-api-manage-domain-record $isfast --root-sure --digitalocean-domain-exists-sure \
+rcm-digitalocean-api-manage-domain-record $isfast --digitalocean-domain-exists-sure \
     delete \
     --domain="$domain" \
     --type=a \
     --ip-address="$ip_address" \
     --hostname="$SUBDOMAIN_ROUNDCUBE" \
     && INDENT+="    " \
-rcm-digitalocean-api-manage-domain-record $isfast --root-sure --digitalocean-domain-exists-sure \
+rcm-digitalocean-api-manage-domain-record $isfast --digitalocean-domain-exists-sure \
     add \
     --domain="$domain" \
     --type=cname \
     --hostname="$SUBDOMAIN_ROUNDCUBE" \
     && INDENT+="    " \
-rcm-digitalocean-api-manage-domain-record $isfast --root-sure --digitalocean-domain-exists-sure \
+rcm-digitalocean-api-manage-domain-record $isfast --digitalocean-domain-exists-sure \
     add \
     --domain="$domain" \
     --type=mx \
@@ -527,7 +516,7 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-ispconfig-autoinstaller-nginx $isfast --root-sure \
+rcm-ispconfig-autoinstaller-nginx $isfast \
     --certbot-authenticator=digitalocean \
     --hostname="$hostname" \
     --domain="$domain" \
@@ -536,11 +525,11 @@ rcm-ispconfig-autoinstaller-nginx $isfast --root-sure \
     --phpmyadmin-version="$phpmyadmin_version" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-remote-user-root $isfast --root-sure \
+rcm-ispconfig-setup-remote-user-root $isfast \
     && INDENT+="    " \
-rcm-ispconfig-setup-internal-command $isfast --root-sure \
+rcm-ispconfig-setup-internal-command $isfast \
     && INDENT+="    " \
-rcm-roundcube-setup-ispconfig-integration $isfast --root-sure \
+rcm-roundcube-setup-ispconfig-integration $isfast \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
@@ -549,37 +538,37 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast \
     --project=ispconfig \
     --subdomain="$SUBDOMAIN_ISPCONFIG" \
     --domain="$domain" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast \
     --project=roundcube \
     --subdomain="$SUBDOMAIN_ROUNDCUBE" \
     --domain="$domain" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast \
     --project=phpmyadmin \
     --subdomain="$SUBDOMAIN_PHPMYADMIN" \
     --domain="$domain" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast \
     --project=ispconfig \
     --subdomain="${SUBDOMAIN_ISPCONFIG}.${domain}" \
     --domain="localhost" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast \
     --project=roundcube \
     --subdomain="${SUBDOMAIN_ROUNDCUBE}.${domain}" \
     --domain="localhost" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast \
     --project=phpmyadmin \
     --subdomain="${SUBDOMAIN_PHPMYADMIN}.${domain}" \
     --domain="localhost" \
@@ -605,7 +594,7 @@ ____
 
 INDENT+="    " \
 PATH=$PATH \
-rcm-certbot-deploy-installer-nginx-authenticator-digitalocean $isfast --root-sure \
+rcm-certbot-deploy-installer-nginx-authenticator-digitalocean $isfast \
     --certbot-dns-digitalocean-sure \
     --domain="${SUBDOMAIN_ISPCONFIG}.${domain}" \
     --domain="${SUBDOMAIN_PHPMYADMIN}.${domain}" \
@@ -618,55 +607,55 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-ispconfig-control-manage-domain $isfast --root-sure \
+rcm-ispconfig-control-manage-domain $isfast \
     add \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-mailbox $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-mailbox $isfast --ispconfig-domain-exists-sure \
     --ispconfig-soap-exists-sure \
     --name="$MAILBOX_ADMIN" \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-mailbox $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-mailbox $isfast --ispconfig-domain-exists-sure \
     --ispconfig-soap-exists-sure \
     --name="$MAILBOX_SUPPORT" \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-alias $isfast --ispconfig-domain-exists-sure \
     --ispconfig-soap-exists-sure \
     --name="$MAILBOX_HOST" \
     --domain="$domain" \
     --destination-name="$MAILBOX_ADMIN" \
     --destination-domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-alias $isfast --ispconfig-domain-exists-sure \
     --ispconfig-soap-exists-sure \
     --name="$MAILBOX_POST" \
     --domain="$domain" \
     --destination-name="$MAILBOX_ADMIN" \
     --destination-domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-alias $isfast --ispconfig-domain-exists-sure \
     --ispconfig-soap-exists-sure \
     --name="$MAILBOX_WEB" \
     --domain="$domain" \
     --destination-name="$MAILBOX_ADMIN" \
     --destination-domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-digitalocean $isfast --root-sure --digitalocean-domain-exists-sure \
+rcm-ispconfig-setup-wrapper-digitalocean $isfast --digitalocean-domain-exists-sure \
     --ip-address="$ip_address" \
     --domain="$domain" \
     --type=spf \
     --hostname=@ \
     --mail-provider="$fqdn" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-digitalocean $isfast --root-sure --digitalocean-domain-exists-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-setup-wrapper-digitalocean $isfast --digitalocean-domain-exists-sure --ispconfig-domain-exists-sure \
     --ip-address="$ip_address" \
     --domain="$domain" \
     --type=dmarc \
     --email="${MAILBOX_POST}@${domain}" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-digitalocean $isfast --root-sure --digitalocean-domain-exists-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-setup-wrapper-digitalocean $isfast --digitalocean-domain-exists-sure --ispconfig-domain-exists-sure \
     --ip-address="$ip_address" \
     --domain="$domain" \
     --type=dkim  \
@@ -684,7 +673,7 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-ispconfig-setup-dump-variables $isfast --root-sure \
+rcm-ispconfig-setup-dump-variables $isfast \
     --additional-info=digitalocean \
     --domain="$domain" \
     --ip-address="$ip_address" \
@@ -707,7 +696,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # --non-interactive
 # )
 # VALUE=(

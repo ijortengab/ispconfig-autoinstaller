@@ -22,7 +22,6 @@ while [[ $# -gt 0 ]]; do
         --ispconfig-domain-exists-sure) ispconfig_domain_exists_sure=1; shift ;;
         --mail-provider=*) mail_provider="${1#*=}"; shift ;;
         --mail-provider) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mail_provider="$2"; shift; fi; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --type=*) type="${1#*=}"; shift ;;
         --type) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then type="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
@@ -94,8 +93,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Environment Variables:
    DKIM_SELECTOR
@@ -119,15 +116,7 @@ EOF
 title rcm-ispconfig-setup-wrapper-digitalocean
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -180,19 +169,11 @@ code 'digitalocean_domain_exists_sure="'$digitalocean_domain_exists_sure'"'
 code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 if [ -z "$ispconfig_domain_exists_sure" ];then
     INDENT+="    " \
-    rcm-ispconfig-control-manage-domain $isfast --root-sure \
+    rcm-ispconfig-control-manage-domain $isfast \
         isset \
         --domain="$domain" \
         ; [ $? -eq 0 ] && ispconfig_domain_exists_sure=1
@@ -206,7 +187,7 @@ fi
 
 if [ -z "$digitalocean_domain_exists_sure" ];then
     INDENT+="    " \
-    rcm-digitalocean-api-manage-domain $isfast --root-sure \
+    rcm-digitalocean-api-manage-domain $isfast \
         --domain="$domain" \
         --ip-address="$ip_address" \
         ; [ ! $? -eq 0 ] && x
@@ -230,7 +211,7 @@ if [[ $type == spf ]];then
     data=$(php -r "$php" "$data" )
 
     INDENT+="    " \
-    rcm-digitalocean-api-manage-domain-record $isfast --root-sure \
+    rcm-digitalocean-api-manage-domain-record $isfast \
         add \
         --domain="$domain" \
         --type=txt \
@@ -244,7 +225,7 @@ if [[ $type == dmarc ]];then
     data=$(php -r "$php" "$data" )
 
     INDENT+="    " \
-    rcm-digitalocean-api-manage-domain-record $isfast --root-sure \
+    rcm-digitalocean-api-manage-domain-record $isfast \
         add \
         --domain="$domain" \
         --type=txt \
@@ -255,7 +236,7 @@ if [[ $type == dmarc ]];then
 fi
 if [[ $type == dkim ]];then
     if [ -n "$dns_record_auto" ];then
-        dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain --fast --root-sure --ispconfig-soap-exists-sure --domain="$domain" get-dns-record 2>/dev/null)
+        dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain --fast --ispconfig-soap-exists-sure --domain="$domain" get-dns-record 2>/dev/null)
     fi
     if [ -z "$dns_record" ];then
         __; red DNS record not found.; x
@@ -264,7 +245,7 @@ if [[ $type == dkim ]];then
     data=$(php -r "$php" "$data" )
 
     INDENT+="    " \
-    rcm-digitalocean-api-manage-domain-record $isfast --root-sure \
+    rcm-digitalocean-api-manage-domain-record $isfast \
         add \
         --domain="$domain" \
         --type=txt \
@@ -288,7 +269,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # --ispconfig-domain-exists-sure
 # --digitalocean-domain-exists-sure
 # --dns-record-auto

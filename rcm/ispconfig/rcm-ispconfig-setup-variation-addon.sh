@@ -12,7 +12,6 @@ while [[ $# -gt 0 ]]; do
         --ip-address=*) ip_address="${1#*=}"; shift ;;
         --ip-address) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then ip_address="$2"; shift; fi; shift ;;
         --non-interactive) non_interactive=1; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --url-ispconfig=*) url_ispconfig="${1#*=}"; shift ;;
         --url-ispconfig) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_ispconfig="$2"; shift; fi; shift ;;
         --url-phpmyadmin=*) url_phpmyadmin="${1#*=}"; shift ;;
@@ -116,8 +115,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Environment Variables:
    SUBDOMAIN_ISPCONFIG
@@ -320,15 +317,7 @@ fi
 title rcm-ispconfig-setup-variation-addon
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -599,11 +588,11 @@ ____
 
 for each in "${fqdn_array[@]}";do
     INDENT+="    " \
-    rcm-dig-watch-domain-exists $isfast --root-sure \
+    rcm-dig-watch-domain-exists $isfast \
         --domain="$each" \
         --waiting-time="60" \
         && INDENT+="    " \
-    rcm-dig-has-address $isfast --root-sure \
+    rcm-dig-has-address $isfast \
         --fqdn="$each" \
         --ip-address="$ip_address" \
         ; [ ! $? -eq 0 ] && x
@@ -662,7 +651,7 @@ for each in ispconfig phpmyadmin roundcube;do
 
         if ArraySearch "$url_host" fqdn_path_array[@];then
             INDENT+="    " \
-            rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root $isfast --root-sure \
+            rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root $isfast \
                 --project="$each" \
                 --php-version="$php_version" \
                 --url-scheme="$url_scheme" \
@@ -672,7 +661,7 @@ for each in ispconfig phpmyadmin roundcube;do
                 ; [ ! $? -eq 0 ] && x
         else
             INDENT+="    " \
-            rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast --root-sure \
+            rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast \
                 --project="$each" \
                 --php-version="$php_version" \
                 --url-scheme="$url_scheme" \
@@ -689,47 +678,47 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-ispconfig-setup-internal-command $isfast --root-sure \
+rcm-ispconfig-setup-internal-command $isfast \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-domain $isfast --root-sure \
+rcm-ispconfig-control-manage-domain $isfast \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-mailbox $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-mailbox $isfast --ispconfig-domain-exists-sure \
     --ispconfig-soap-exists-sure \
     --name="$MAILBOX_ADMIN" \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-mailbox $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-mailbox $isfast --ispconfig-domain-exists-sure \
     --ispconfig-soap-exists-sure \
     --name="$MAILBOX_SUPPORT" \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-alias $isfast --ispconfig-domain-exists-sure \
     --ispconfig-soap-exists-sure \
     --name="$MAILBOX_HOST" \
     --domain="$domain" \
     --destination-name="$MAILBOX_ADMIN" \
     --destination-domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-alias $isfast --ispconfig-domain-exists-sure \
     --ispconfig-soap-exists-sure \
     --name="$MAILBOX_POST" \
     --domain="$domain" \
     --destination-name="$MAILBOX_ADMIN" \
     --destination-domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-alias $isfast --ispconfig-domain-exists-sure \
     --ispconfig-soap-exists-sure \
     --name="$MAILBOX_WEB" \
     --domain="$domain" \
     --destination-name="$MAILBOX_ADMIN" \
     --destination-domain="$domain" \
     && INDENT+="    " \
-rcm-postfix-multiple-certificate-ispconfig $isfast --root-sure \
+rcm-postfix-multiple-certificate-ispconfig $isfast \
     --certbot-authenticator=nginx \
     --fqdn="$domain" \
     && INDENT+="    " \
-rcm-dovecot-multiple-certificate-ispconfig $isfast --root-sure \
+rcm-dovecot-multiple-certificate-ispconfig $isfast \
     --certbot-authenticator=nginx \
     --fqdn="$domain" \
     ; [ ! $? -eq 0 ] && x
@@ -914,7 +903,7 @@ fi
 ____
 
 INDENT+="    " \
-rcm-ispconfig-setup-dump-variables-addon $isfast --root-sure \
+rcm-ispconfig-setup-dump-variables-addon $isfast \
     --domain="$domain" \
     --ip-address="$ip_address" \
     ; [ ! $? -eq 0 ] && x
@@ -936,7 +925,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # --non-interactive
 # )
 # VALUE=(

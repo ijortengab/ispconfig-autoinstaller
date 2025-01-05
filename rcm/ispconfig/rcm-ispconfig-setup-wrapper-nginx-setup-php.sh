@@ -13,7 +13,6 @@ while [[ $# -gt 0 ]]; do
         --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
         --project=*) project="${1#*=}"; shift ;;
         --project) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then project="$2"; shift; fi; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --subdomain=*) subdomain="${1#*=}"; shift ;;
         --subdomain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then subdomain="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
@@ -74,8 +73,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Dependency:
    rcm-nginx-setup-php
@@ -91,15 +88,7 @@ EOF
 title rcm-ispconfig-setup-wrapper-nginx-setup-php
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -194,7 +183,7 @@ code server_name="$server_name"
 ____
 
 INDENT+="    " \
-rcm-nginx-setup-php $isfast --root-sure \
+rcm-nginx-setup-php $isfast \
     --root="$root" \
     --php-version="$php_version" \
     --filename="$filename" \
@@ -227,7 +216,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # )
 # VALUE=(
 # --domain
