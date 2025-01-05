@@ -30,10 +30,10 @@ title() { echo -n "$INDENT" >&2; blue '#' "$@" >&2; echo >&2; }
 code() { echo -n "$INDENT" >&2; magenta "$@" >&2; echo >&2; }
 x() { echo >&2; exit 1; }
 e() { echo -n "$INDENT" >&2; echo -n "$@" >&2; }
-_() { echo -n "$INDENT" >&2; echo -n "#" "$@" >&2; }
+_() { echo -n "$INDENT" >&2; echo -n "#"' ' >&2; [ -n "$1" ] && echo "$@" >&2; }
 _,() { echo -n "$@" >&2; }
 _.() { echo >&2; }
-__() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2 || echo -n  >&2; }
+__() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
