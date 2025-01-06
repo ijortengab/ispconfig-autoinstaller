@@ -38,10 +38,10 @@ _() { echo -n "$INDENT" >&2; echo -n "#"' ' >&2; [ -n "$1" ] && echo -n "$@" >&2
 _,() { echo -n "$@" >&2; }
 _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2; }
-____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
+____() { echo >&2; [ -n "$RCM_DELAY" ] && sleep "$RCM_DELAY"; }
 
 # Define variables and constants.
-delay=.5; [ -n "$fast" ] && unset delay
+RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
 SUBDOMAIN_PHPMYADMIN=${SUBDOMAIN_PHPMYADMIN:=db}
 SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
