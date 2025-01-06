@@ -468,6 +468,8 @@ if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
 code 'domain="'$domain'"'
+domain_length="${#domain}"
+code 'domain_length="'$domain_length'"'
 if [ -z "$ip_address" ];then
     error "Argument --ip-address required."; x
 fi
@@ -485,6 +487,8 @@ if [ -n "$install_ispconfig" ];then
         error Argument --url-ispconfig is not valid: '`'"$url_ispconfig"'`'.; x
     elif [ -n "$PHP_URL_PATH" ];then
         error Argument --url-ispconfig is cannot have subpath: '`'"$url_ispconfig"'`'.; x
+    elif [ ! "${PHP_URL_HOST:(-$domain_length):$domain_length}" == "$domain" ];then
+        error Argument --url-ispconfig is not part of domain: '`'"$url_ispconfig"'`'.; x
     else
         [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
         if [ -z "$PHP_URL_PORT" ];then
@@ -510,6 +514,8 @@ if [ -n "$install_phpmyadmin" ];then
     Rcm_parse_url "$url_phpmyadmin"
     if [ -z "$PHP_URL_HOST" ];then
         error Argument --url-phpmyadmin is not valid: '`'"$url_phpmyadmin"'`'.; x
+    elif [ ! "${PHP_URL_HOST:(-$domain_length):$domain_length}" == "$domain" ];then
+        error Argument --url-phpmyadmin is not part of domain: '`'"$url_phpmyadmin"'`'.; x
     else
         [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
         if [ -z "$PHP_URL_PORT" ];then
@@ -535,6 +541,8 @@ if [ -n "$install_roundcube" ];then
     Rcm_parse_url "$url_roundcube"
     if [ -z "$PHP_URL_HOST" ];then
         error Argument --url-roundcube is not valid: '`'"$url_roundcube"'`'.; x
+    elif [ ! "${PHP_URL_HOST:(-$domain_length):$domain_length}" == "$domain" ];then
+        error Argument --url-roundcube is not part of domain: '`'"$url_roundcube"'`'.; x
     else
         [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
         if [ -z "$PHP_URL_PORT" ];then
