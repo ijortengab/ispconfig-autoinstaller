@@ -45,7 +45,7 @@ RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 
 # Functions.
 printVersion() {
-    echo '0.9.12'
+    echo '0.9.13'
 }
 printHelp() {
     title RCM ISPConfig Setup
