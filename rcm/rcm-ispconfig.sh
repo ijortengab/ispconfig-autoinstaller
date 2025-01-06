@@ -123,6 +123,7 @@ ____() { echo >&2; [ -n "$RCM_DELAY" ] && sleep "$RCM_DELAY"; }
 # Define variables and constants.
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
+[ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
 
 # Functions.
 printVersion() {
@@ -435,6 +436,7 @@ if [ -z "$dns_record" ];then
     error "Argument --dns-record required."; x
 fi
 code 'dns_record="'$dns_record'"'
+print_version=`printVersion`
 ____
 
 case "$mode" in
@@ -471,14 +473,22 @@ esac
 chapter Execute:
 case "$rcm_operand" in
     *)
-        words_array=(rcm ${isfast} ${isnoninteractive} ${isverbose} $rcm_operand -- "$@")
+        words_array=(rcm ${isfast} ${isnoninteractive} ${isverbose} $rcm_operand:$print_version -- "$@")
 esac
 wordWrapCommand
 ____
 
+_help=$(printHelp 2>/dev/null)
+_download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
+if [ -n "$_download" ];then
+    [ -n "$table_downloads" ] && table_downloads+=$'\n'
+    table_downloads+="$_download"
+fi
+export RCM_TABLE_DOWNLOADS="$table_downloads"
+
 case "$rcm_operand" in
     *)
-        INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" rcm${isfast}${isnoninteractive}${isverbose} $rcm_operand --binary-directory-exists-sure --non-immediately -- "$@"
+        INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" rcm${isfast}${isnoninteractive}${isverbose} $rcm_operand:$print_version -- "$@"
 esac
 ____
 
