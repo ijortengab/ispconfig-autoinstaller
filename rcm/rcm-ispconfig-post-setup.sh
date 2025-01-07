@@ -42,7 +42,7 @@ MAILBOX_POST=${MAILBOX_POST:=postmaster}
 
 # Functions.
 printVersion() {
-    echo '0.9.13'
+    echo '0.9.14'
 }
 printHelp() {
     title ISPConfig Auto-Installer

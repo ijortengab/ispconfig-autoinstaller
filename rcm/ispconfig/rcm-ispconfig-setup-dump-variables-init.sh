@@ -40,7 +40,7 @@ MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 
 # Functions.
 printVersion() {
-    echo '0.9.13'
+    echo '0.9.14'
 }
 printHelp() {
     title RCM ISPConfig Setup
