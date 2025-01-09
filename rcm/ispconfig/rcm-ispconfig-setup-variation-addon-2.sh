@@ -102,12 +102,12 @@ Environment Variables:
 Dependency:
    wget
    rcm-debian-11-setup-basic
-   rcm-mariadb-autoinstaller
-   rcm-nginx-autoinstaller
-   rcm-php-autoinstaller
+   rcm-mariadb-apt
+   rcm-nginx-apt
+   rcm-php-apt
    rcm-php-setup-adjust-cli-version
-   rcm-postfix-autoinstaller
-   rcm-certbot-autoinstaller
+   rcm-postfix-apt
+   rcm-certbot-apt
    rcm-certbot-digitalocean-autoinstaller
    rcm-digitalocean-api-manage-domain
    rcm-digitalocean-api-manage-domain-record

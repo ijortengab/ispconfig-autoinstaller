@@ -114,12 +114,12 @@ Environment Variables:
 Dependency:
    wget
    rcm-debian-12-setup-basic
-   rcm-mariadb-autoinstaller
-   rcm-nginx-autoinstaller
-   rcm-php-autoinstaller
+   rcm-mariadb-apt
+   rcm-nginx-apt
+   rcm-php-apt
    rcm-php-setup-adjust-cli-version
-   rcm-postfix-autoinstaller
-   rcm-certbot-autoinstaller
+   rcm-postfix-apt
+   rcm-certbot-apt
    rcm-dig-autoinstaller
    rcm-dig-has-address
    rcm-dig-watch-domain-exists
@@ -662,20 +662,20 @@ rcm-debian-12-setup-basic $isfast \
     --without-update-system \
     --without-upgrade-system \
     && INDENT+="    " \
-rcm-mariadb-autoinstaller $isfast \
+rcm-mariadb-apt $isfast \
     && INDENT+="    " \
-rcm-nginx-autoinstaller $isfast \
+rcm-nginx-apt $isfast \
     && INDENT+="    " \
-rcm-php-autoinstaller $isfast \
+rcm-php-apt $isfast \
     --php-version="$php_version" \
     && INDENT+="    " \
 rcm-php-setup-adjust-cli-version $isfast \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-postfix-autoinstaller $isfast \
+rcm-postfix-apt $isfast \
     --fqdn="$fqdn" \
     && INDENT+="    " \
-rcm-certbot-autoinstaller $isfast \
+rcm-certbot-apt $isfast \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
