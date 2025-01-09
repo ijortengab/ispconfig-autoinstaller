@@ -158,6 +158,9 @@ Global Options.
    --
         Every arguments after double dash will pass to rcm-ispconfig-setup-variation-* command.
 
+Dependency:
+   rcm
+
 Download:
    [rcm-ispconfig-setup-variation-1](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-1.sh)
    [rcm-ispconfig-setup-variation-2](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-2.sh)
