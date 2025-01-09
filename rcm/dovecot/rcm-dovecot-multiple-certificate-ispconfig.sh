@@ -45,7 +45,7 @@ MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 
 # Functions.
 printVersion() {
-    echo '0.9.14'
+    echo '0.9.15'
 }
 printHelp() {
     title RCM Postfix Multiple Certificate

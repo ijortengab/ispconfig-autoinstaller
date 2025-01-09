@@ -53,7 +53,7 @@ DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 
 # Functions.
 printVersion() {
-    echo '0.9.14'
+    echo '0.9.15'
 }
 printHelp() {
     title RCM ISPConfig Setup
