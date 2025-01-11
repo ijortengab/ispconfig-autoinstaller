@@ -120,7 +120,7 @@ Dependency:
    rcm-php-setup-adjust-cli-version
    rcm-postfix-apt
    rcm-certbot-apt
-   rcm-dig-autoinstaller
+   rcm-dig-apt
    rcm-dig-has-address
    rcm-dig-watch-domain-exists
    rcm-ispconfig-autoinstaller-nginx:`printVersion`
@@ -590,7 +590,7 @@ fi
 ____
 
 INDENT+="    " \
-rcm-dig-autoinstaller $isfast \
+rcm-dig-apt $isfast \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
