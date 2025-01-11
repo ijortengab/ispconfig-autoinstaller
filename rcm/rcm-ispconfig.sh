@@ -251,8 +251,20 @@ wordWrapCommand() {
     # global words_array
     local inline_description="$1"
     local current_line first_line
-    declare -i min; min=80
-    declare -i max; max=100
+    declare -i max
+    declare -i min
+
+    max=$(tput cols)
+    # Angka 2 adalah tambahan dari ' \'.
+    _max=$((100 + ${#INDENT} + 2))
+    if [ $max -gt $_max ];then
+        max=100
+        min=80
+    else
+        max=$((max - ${#INDENT} - 2))
+        min="$max"
+    fi
+
     declare -i i; i=0
     local count="${#words_array[@]}"
     current_line=
