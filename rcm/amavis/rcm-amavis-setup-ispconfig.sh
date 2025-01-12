@@ -38,7 +38,7 @@ RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 
 # Functions.
 printVersion() {
-    echo '0.9.15'
+    echo '0.9.16'
 }
 printHelp() {
     title RCM Amavis Setup

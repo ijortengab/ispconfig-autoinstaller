@@ -73,7 +73,7 @@ ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 
 # Functions.
 printVersion() {
-    echo '0.9.15'
+    echo '0.9.16'
 }
 printHelp() {
     title RCM ISPConfig Setup
