@@ -58,6 +58,7 @@ Global Options:
 
 Dependency:
    systemctl
+   rcm-nginx-reload
 EOF
 }
 
@@ -77,6 +78,82 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
+link_symbolic() {
+    local source="$1"
+    local target="$2"
+    local sudo="$3"
+    local source_mode="$4"
+    local create
+    [ "$sudo" == - ] && sudo=
+    [ "$source_mode" == absolute ] || source_mode=
+    [ -e "$source" ] || { error Source not exist: $source.; x; }
+    [ -f "$source" ] || { error Source exists but not file: $source.; x; }
+    [ -n "$target" ] || { error Target not defined.; x; }
+    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
+    [[ $(type -t backupDir) == function ]] || { error Function backupDir not found.; x; }
+    chapter Membuat symbolic link.
+    __ source: '`'$source'`'
+    __ target: '`'$target'`'
+    if [ -f "$target" ];then
+        if [ -h "$target" ];then
+            __ Path target saat ini sudah merupakan file symbolic link: '`'$target'`'
+            local _readlink=$(readlink "$target")
+            __; magenta readlink "$target"; _.
+            _ $_readlink; _.
+            if [[ "$_readlink" =~ ^[^/\.] ]];then
+                local target_parent=$(dirname "$target")
+                local _dereference="${target_parent}/${_readlink}"
+            elif [[ "$_readlink" =~ ^[\.] ]];then
+                local target_parent=$(dirname "$target")
+                local _dereference="${target_parent}/${_readlink}"
+                _dereference=$(realpath -s "$_dereference")
+            else
+                _dereference="$_readlink"
+            fi
+            __; _, Mengecek apakah link merujuk ke '`'$source'`':' '
+            if [[ "$source" == "$_dereference" ]];then
+                _, merujuk.; _.
+            else
+                _, tidak merujuk.; _.
+                __ Melakukan backup.
+                backupFile move "$target"
+                create=1
+            fi
+        else
+            __ Melakukan backup regular file: '`'"$target"'`'.
+            backupFile move "$target"
+            create=1
+        fi
+    elif [ -d "$target" ];then
+        __ Melakukan backup direktori: '`'"$target"'`'.
+        backupDir "$target"
+        create=1
+    else
+        create=1
+    fi
+    if [ -n "$create" ];then
+        __ Membuat symbolic link: '`'$target'`'.
+        local target_parent=$(dirname "$target")
+        code mkdir -p "$target_parent"
+        mkdir -p "$target_parent"
+        if [ -z "$source_mode" ];then
+            source=$(realpath -s --relative-to="$target_parent" "$source")
+        fi
+        if [ -n "$sudo" ];then
+            code sudo -u '"'$sudo'"' ln -s '"'$source'"' '"'$target'"'
+            sudo -u "$sudo" ln -s "$source" "$target"
+        else
+            code ln -s '"'$source'"' '"'$target'"'
+            ln -s "$source" "$target"
+        fi
+        if [ $? -eq 0 ];then
+            __; green Symbolic link berhasil dibuat.; _.
+        else
+            __; red Symbolic link gagal dibuat.; x
+        fi
+    fi
+    ____
+}
 backupFile() {
     local mode="$1"
     local oldpath="$2" i newpath
@@ -110,9 +187,26 @@ backupFile() {
             chown ${user}:${group} "$newpath"
     esac
 }
+backupDir() {
+    local oldpath="$1" i newpath
+    # Trim trailing slash.
+    oldpath=$(echo "$oldpath" | sed -E 's|/+$||g')
+    i=1
+    newpath="${oldpath}.${i}"
+    if [ -e "$newpath" ]; then
+        let i++
+        newpath="${oldpath}.${i}"
+        while [ -e "$newpath" ] ; do
+            let i++
+            newpath="${oldpath}.${i}"
+        done
+    fi
+    mv "$oldpath" "$newpath"
+}
 
 # Require, validate, and populate value.
 chapter Dump variable.
+rcm_nginx_reload=
 ____
 
 chapter Mengecek UnitFileState service Apache2. # Menginstall PHP di Debian, biasanya auto install juga Apache2.
@@ -172,10 +266,7 @@ if [ -n "$restart" ];then
 fi
 
 chapter Membatasi akses ke localhost.
-if [ -L /etc/nginx/sites-enabled/default ];then
-    __ Menghapus symlink /etc/nginx/sites-enabled/default
-    rm /etc/nginx/sites-enabled/default
-fi
+
 if [ -f /etc/nginx/sites-available/default ];then
     __ Backup file /etc/nginx/sites-available/default
     backupFile move /etc/nginx/sites-available/default
@@ -191,30 +282,50 @@ server {
     }
 }
 EOF
-    cd /etc/nginx/sites-enabled/
-    ln -sf ../sites-available/default
-    __ Cleaning broken symbolic link.
-    code find /etc/nginx/sites-enabled -xtype l -delete -print
-    find /etc/nginx/sites-enabled -xtype l -delete -print
-    if nginx -t 2> /dev/null;then
-        code nginx -s reload
-        nginx -s reload
-        sleep .5
-    else
-        error Terjadi kesalahan konfigurasi nginx. Gagal reload nginx.; exit
-    fi
-    cd - >/dev/null
+    rcm_nginx_reload=1
 fi
-    __; magenta curl http://127.0.0.1; _.
-code=$(curl -L \
-    -o /dev/null -s -w "%{http_code}\n" \
-    http://127.0.0.1)
-[ $code -eq 403 ] && {
-    __ HTTP Response code '`'$code'`' '('Required')'.
-} || {
-    __; red Terjadi kesalahan. HTTP Response code '`'$code'`'.; x
-}
 ____
+
+source=/etc/nginx/sites-available/default
+target=/etc/nginx/sites-enabled/default
+link_symbolic "$source" "$target"
+
+if [ -n "$rcm_nginx_reload" ];then
+    INDENT+="    " \
+    rcm-nginx-reload \
+        ; [ ! $? -eq 0 ] && x
+fi
+
+chapter Mengecek HTTP Response Code.
+i=0
+code=
+if [ -z "$tempfile" ];then
+    tempfile=$(mktemp -p /dev/shm -t rcm-nginx-setup-ispconfig.XXXXXX)
+fi
+until [ $i -eq 10 ];do
+    __; magenta curl -o /dev/null -s -w '"'%{http_code}\\n'"' '"'http://127.0.0.1'"' -H '"'Host: $drupal_fqdn_localhost'"'; _.
+    curl -o /dev/null -s -w "%{http_code}\n" "http://127.0.0.1" -H "Host: ${drupal_fqdn_localhost}" > $tempfile
+    while read line; do e "$line"; _.; done < $tempfile
+    code=$(head -1 $tempfile)
+    if [ "$code" -eq 403 ];then
+        break
+    else
+        __ Retry.
+        __; magenta sleep .5; _.
+        sleep .5
+    fi
+    let i++
+done
+if [ "$code" -eq 403 ];then
+    __ HTTP Response code '`'$code'`' '('Required')'.
+else
+    __; red Terjadi kesalahan. HTTP Response code '`'$code'`'.; x
+fi
+____
+
+if [ -n "$tempfile" ];then
+    rm "$tempfile"
+fi
 
 exit 0
 
