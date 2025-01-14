@@ -121,6 +121,7 @@ Dependency:
    rcm-mariadb-setup-project-database
    rcm-php-fpm-setup-project-config
    rcm-nginx-virtual-host-autocreate-php
+   rcm-nginx-reload
 
 Download:
    [rcm-mariadb-setup-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/mariadb/rcm-mariadb-setup-ispconfig.sh)
@@ -467,6 +468,7 @@ if [ -z "$certbot_authenticator" ];then
     x
 fi
 code 'certbot_authenticator="'$certbot_authenticator'"'
+rcm_nginx_reload=
 ____
 
 INDENT+="    " \
@@ -805,23 +807,31 @@ if [ -n "$notfound" ];then
 fi
 
 chapter Mengecek HTTP Response Code.
-code curl http://127.0.0.1 -H '"'Host: ${ISPCONFIG_FQDN_LOCALHOST}'"'
-code=$(curl -L \
-    -o /dev/null -s -w "%{http_code}\n" \
-    http://127.0.0.1 -H "Host: ${ISPCONFIG_FQDN_LOCALHOST}")
-[[ $code =~ ^[2,3] ]] && {
+i=0
+code=
+if [ -z "$tempfile" ];then
+    tempfile=$(mktemp -p /dev/shm -t rcm-ispconfig-autoinstaller-nginx.XXXXXX)
+fi
+until [ $i -eq 10 ];do
+    __; magenta curl -o /dev/null -s -w '"'%{http_code}\\n'"' '"'http://127.0.0.1'"' -H '"'Host: $ISPCONFIG_FQDN_LOCALHOST'"'; _.
+    curl -o /dev/null -s -w "%{http_code}\n" "http://127.0.0.1" -H "Host: ${ISPCONFIG_FQDN_LOCALHOST}" > $tempfile
+    while read line; do e "$line"; _.; done < $tempfile
+    code=$(head -1 $tempfile)
+    if [[ "$code" =~ ^[2,3] ]];then
+        break
+    else
+        __ Retry.
+        __; magenta sleep .5; _.
+        sleep .5
+    fi
+    let i++
+done
+if [[ "$code" =~ ^[2,3] ]];then
     __ HTTP Response code '`'$code'`' '('Required')'.
-} || {
+else
     __; red Terjadi kesalahan. HTTP Response code '`'$code'`'.; x
-}
-code curl http://${ISPCONFIG_FQDN_LOCALHOST}
-code=$(curl -L \
-    -o /dev/null -s -w "%{http_code}\n" \
-    http://127.0.0.1 -H "Host: ${ISPCONFIG_FQDN_LOCALHOST}")
-__ HTTP Response code '`'$code'`'.
+fi
 ____
-
-reload=
 
 chapter Menghapus port 8080 buatan ISPConfig
 path=/etc/nginx/sites-enabled/000-ispconfig.vhost
@@ -830,7 +840,7 @@ if [ -L "$path" ];then
     __ Menghapus symlink "$path"
     code rm "$path"
     rm "$path"
-    reload=1
+    rcm_nginx_reload=1
 fi
 ____
 
@@ -841,22 +851,14 @@ if [ -L "$path" ];then
     __ Menghapus symlink "$path"
     code rm "$path"
     rm "$path"
-    reload=1
+    rcm_nginx_reload=1
 fi
 ____
 
-if [ -n "$reload" ];then
-    chapter Reload nginx configuration.
-    __ Cleaning broken symbolic link.
-    code find /etc/nginx/sites-enabled -xtype l -delete -print
-    find /etc/nginx/sites-enabled -xtype l -delete -print
-    if nginx -t 2> /dev/null;then
-        code nginx -s reload
-        nginx -s reload; sleep .5
-    else
-        error Terjadi kesalahan konfigurasi nginx. Gagal reload nginx.; x
-    fi
-    ____
+if [ -n "$rcm_nginx_reload" ];then
+    INDENT+="    " \
+    rcm-nginx-reload \
+        ; [ ! $? -eq 0 ] && x
 fi
 
 chapter Copy ISPConfig PHP scripts.
