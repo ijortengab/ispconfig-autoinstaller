@@ -542,7 +542,7 @@ if [ -z "$tempfile" ];then
 fi
 until [ $i -eq 10 ];do
     __; magenta curl"$_k" -o /dev/null -s -w '"'%{http_code}\\n'"' '"'"${url_scheme}://127.0.0.1:${url_port}${url_path}"'"' -H '"'Host: $url_host'"'; _.
-    curl"$_k" -o /dev/null -s -w "%{http_code}\n" "${url_scheme}://127.0.0.1:${url_port}${url_path}" -H "Host: ${url_host}" > $tempfile
+    curl$_k -o /dev/null -s -w "%{http_code}\n" "${url_scheme}://127.0.0.1:${url_port}${url_path}" -H "Host: ${url_host}" > $tempfile
     while read line; do e "$line"; _.; done < $tempfile
     code=$(head -1 $tempfile)
     if [[ "$code" =~ ^[2,3] ]];then
