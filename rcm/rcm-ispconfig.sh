@@ -198,27 +198,32 @@ command-eligible() {
     if [ -f /etc/os-release ];then
         . /etc/os-release
     fi
+
     _; _.
     ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11 && "$dns_record" == 'digitalocean-api' ]] && color=green2 || color=red; $color debian11a;
-    _, . Debian' '; hN 11; _, , '       'PHP' '; hN 7.4; _, , '        'ISPConfig' '; hN 3.2.7; _, ,; _.
-    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.0; _, , Roundcube' '; hN 1.6.0; _, , DigitalOcean API DNS.; _.
+    _, . Debian' '; hN 11; _, , '       'PHP' '; hN 7.4; _, , '         'ISPConfig' '; hN 3.2.7; _, ,; _.
+    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.0; _, , Roundcube' '; hN 1.6.0; _, , ' 'DigitalOcean API DNS.; _.
     eligible+=("debian11a;debian;11;digitalocean-api")
     ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11 && "$dns_record" == 'manual' ]] && color=green2 || color=red; $color debian11b;
-    _, . Debian' '; hN 11; _, , '       'PHP' '; hN 8.1; _, , '        'ISPConfig' '; hN 3.2.11p2; _, ,; _.
-    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.1; _, , Roundcube' '; hN 1.6.6; _, , Manual DNS.; _.
+    _, . Debian' '; hN 11; _, , '       'PHP' '; hN 8.1; _, , '         'ISPConfig' '; hN 3.2.11p2; _, ,; _.
+    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.1; _, , Roundcube' '; hN 1.6.6; _, , ' 'Manual DNS.; _.
     eligible+=("debian11b;debian;11;manual")
     ___; _, 'Variation '; [[ "$ID" == ubuntu && "$VERSION_ID" == 22.04 && "$dns_record" == 'digitalocean-api' ]] && color=green2 || color=red; $color ubuntu22a;
-    _, . Ubuntu' '; hN 22.04; _, , '    'PHP' '; hN 7.4; _, , '        'ISPConfig' '; hN 3.2.7; _, ,; _.
-    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.0; _, , Roundcube' '; hN 1.6.0; _, , DigitalOcean API DNS.; _.
+    _, . Ubuntu' '; hN 22.04; _, , '    'PHP' '; hN 7.4; _, , '         'ISPConfig' '; hN 3.2.7; _, ,; _.
+    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.0; _, , Roundcube' '; hN 1.6.0; _, , ' 'DigitalOcean API DNS.; _.
     eligible+=("ubuntu22a;ubuntu;22.04;digitalocean-api")
     ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 12 && "$dns_record" == 'digitalocean-api' ]] && color=green2 || color=red; $color debian12a;
-    _, . Debian' '; hN 12; _, , '       'PHP' '; hN 8.1; _, , '        'ISPConfig' '; hN 3.2.10; _, ,; _.
-    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.1; _, , Roundcube' '; hN 1.6.2; _, , DigitalOcean API DNS.; _.
+    _, . Debian' '; hN 12; _, , '       'PHP' '; hN 8.1; _, , '         'ISPConfig' '; hN 3.2.10; _, ,; _.
+    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.1; _, , Roundcube' '; hN 1.6.2; _, , ' 'DigitalOcean API DNS.; _.
     eligible+=("debian12a;debian;12;digitalocean-api")
     ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 12 && "$dns_record" == 'manual' ]] && color=green2 || color=red; $color debian12b;
-    _, . Debian' '; hN 12; _, , '       'PHP' '; hN 8.3; _, , '        'ISPConfig' '; hN 3.2.11p2; _, ,; _.
-    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.1; _, , Roundcube' '; hN 1.6.6; _, , Manual DNS.; _.
+    _, . Debian' '; hN 12; _, , '       'PHP' '; hN 8.3; _, , '         'ISPConfig' '; hN 3.2.11p2; _, ,; _.
+    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.1; _, , Roundcube' '; hN 1.6.6; _, , ' 'Manual DNS.; _.
     eligible+=("debian12b;debian;12;manual")
+    ___; _, 'Variation '; [[ "$ID" == ubuntu && "$VERSION_ID" == 24.04 && "$dns_record" == 'manual' ]] && color=green2 || color=red; $color ubuntu24a;
+    _, . Ubuntu' '; hN 24.04; _, , '    'PHP' '; hN 8.3; _, , '         'ISPConfig' '; hN 3.2.12p1; _, ,; _.
+    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.2; _, , Roundcube' '; hN 1.6.10; _, , Manual DNS.; _.
+    eligible+=("ubuntu24a;ubuntu;24.04;manual")
     for each in "${eligible[@]}";do
         variation=$(cut -d';' -f1 <<< "$each")
         _id=$(cut -d';' -f2 <<< "$each")
@@ -436,7 +441,8 @@ if [ "$mode" == init ];then
 fi
 if [ -n "$variation" ];then
     case "$variation" in
-        debian11a|ubuntu22a|debian12a|debian11b|debian12b) ;;
+        debian11a|debian12a|debian11b|debian12b) ;;
+        ubuntu22a|ubuntu24a) ;;
         *) error "Argument --variation not valid."; x ;;
     esac
 fi
@@ -470,6 +476,7 @@ case "$mode" in
                 case "$variation" in
                     debian11b) rcm_operand=ispconfig-setup-variation-4 ;;
                     debian12b) rcm_operand=ispconfig-setup-variation-5 ;;
+                    ubuntu24a) rcm_operand=ispconfig-setup-variation-6 ;;
                     *) error "Argument --variation not valid."; x ;;
                 esac
                 ;;
