@@ -40,7 +40,7 @@ POSTFIX_CONFIG_FILE_MASTER=${POSTFIX_CONFIG_FILE_MASTER:=/etc/postfix/master.cf}
 
 # Functions.
 printVersion() {
-    echo '0.9.18'
+    echo '0.9.19'
 }
 printHelp() {
     title RCM Postfix Setup
