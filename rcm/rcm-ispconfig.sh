@@ -168,6 +168,7 @@ Download:
    [rcm-ispconfig-setup-variation-3](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-3.sh)
    [rcm-ispconfig-setup-variation-4](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-4.sh)
    [rcm-ispconfig-setup-variation-5](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-5.sh)
+   [rcm-ispconfig-setup-variation-6](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-6.sh)
    [rcm-ispconfig-setup-variation-addon](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-addon.sh)
    [rcm-ispconfig-setup-variation-addon-2](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-addon-2.sh)
 EOF
