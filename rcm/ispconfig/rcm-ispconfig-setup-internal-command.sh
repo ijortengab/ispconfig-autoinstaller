@@ -40,7 +40,7 @@ BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 
 # Functions.
 printVersion() {
-    echo '0.9.19'
+    echo '0.9.20'
 }
 printHelp() {
     title RCM ISPConfig Setup
