@@ -304,8 +304,8 @@ if [ -z "$tempfile" ];then
     tempfile=$(mktemp -p /dev/shm -t rcm-nginx-setup-ispconfig.XXXXXX)
 fi
 until [ $i -eq 10 ];do
-    __; magenta curl -o /dev/null -s -w '"'%{http_code}\\n'"' '"'http://127.0.0.1'"' -H '"'Host: $drupal_fqdn_localhost'"'; _.
-    curl -o /dev/null -s -w "%{http_code}\n" "http://127.0.0.1" -H "Host: ${drupal_fqdn_localhost}" > $tempfile
+    __; magenta curl -o /dev/null -s -w '"'%{http_code}\\n'"' '"'http://127.0.0.1'"'; _.
+    curl -o /dev/null -s -w "%{http_code}\n" "http://127.0.0.1" > $tempfile
     while read line; do e "$line"; _.; done < $tempfile
     code=$(head -1 $tempfile)
     if [ "$code" -eq 403 ];then
