@@ -57,7 +57,7 @@ PHPMYADMIN_FQDN_LOCALHOST=${PHPMYADMIN_FQDN_LOCALHOST:=phpmyadmin.localhost}
 
 # Functions.
 printVersion() {
-    echo '0.9.20'
+    echo '0.9.21'
 }
 printHelp() {
     title RCM ISPConfig Setup Wrapper

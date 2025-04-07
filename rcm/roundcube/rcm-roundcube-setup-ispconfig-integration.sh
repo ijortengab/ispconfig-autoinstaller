@@ -42,7 +42,7 @@ ISPCONFIG_REMOTE_USER_ROUNDCUBE=${ISPCONFIG_REMOTE_USER_ROUNDCUBE:=roundcube}
 
 # Functions.
 printVersion() {
-    echo '0.9.20'
+    echo '0.9.21'
 }
 printHelp() {
     title RCM Roundcube Setup
