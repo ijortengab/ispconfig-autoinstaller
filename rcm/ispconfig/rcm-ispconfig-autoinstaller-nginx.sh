@@ -568,6 +568,12 @@ if [ -n "$do_install" ];then
                         *) error ISPConfig Version "$ispconfig_version" not supported; x;
                     esac
                     ;;
+                24.04)
+                    case "$ispconfig_version" in
+                        3.2.12p1) ;;
+                        *) error ISPConfig Version "$ispconfig_version" not supported; x;
+                    esac
+                    ;;
                 *)
                     error OS "$ID" Version "$VERSION_ID" not supported; x;
             esac
