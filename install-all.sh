@@ -27,6 +27,11 @@ echo __DIR__='"'"$__DIR__"'"'
 
 while read line; do
     chmod a+x "$line"
-    echo ln -sf '"''$__DIR__'/"$line"'"' '"'$(basename "$line" | sed s,\.sh$,,)'"'
-    ln -sf "$PWD/$line" /usr/local/bin/$(basename "$line" | sed s,\.sh$,,)
-done <<< `find * -mindepth 1 -type f -name '*.sh'`
+	if [[ ${line:(-4):4} == '.php' ]];then
+		echo ln -sf '"''$__DIR__'/"$line"'"' '"'$(basename "$line" | sed s,\.php$,,)'"'
+		ln -sf "$PWD/$line" /usr/local/bin/$(basename "$line" | sed s,\.php$,,)
+	else
+		echo ln -sf '"''$__DIR__'/"$line"'"' '"'$(basename "$line" | sed s,\.sh$,,)'"'
+		ln -sf "$PWD/$line" /usr/local/bin/$(basename "$line" | sed s,\.sh$,,)
+	fi
+done <<< `find * -mindepth 1 -type f -and \( -name '*.sh' -or  -name '*.php' \)`
