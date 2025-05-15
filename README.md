@@ -42,23 +42,18 @@ apt install -y wget
 
 ### rcm
 
-Download `rcm` from Github.
+Download `rcm` from Github, then set script as executable, then put anywhere in `$PATH`.
+
+Use one liner command below:
 
 ```
-wget git.io/rcm
-chmod a+x rcm
+wget git.io/rcm && chmod a+x rcm && mv rcm -t /usr/local/bin
 ```
 
-You can put `rcm` file anywhere in `$PATH`:
+Verify by execute the `rcm` command.
 
 ```
-mv rcm -t /usr/local/bin
-```
-
-Always fast.
-
-```
-alias rcm='rcm --fast'
+rcm
 ```
 
 ### rcm-ispconfig
