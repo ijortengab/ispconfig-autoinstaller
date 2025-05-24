@@ -52,7 +52,7 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # Functions.
 printVersion() {
-    echo '0.9.21'
+    echo '0.9.22'
 }
 printHelp() {
     title RCM ISPConfig Control
