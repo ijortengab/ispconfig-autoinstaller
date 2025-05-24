@@ -761,9 +761,9 @@ fi
 # gak tahu deh dapet dari mana ini value.
 # $php_project_name adalah section, maka perlu cari di installer,
 # apakah section nya menggunakan ispconfig value.
-php_project_name="ispconfig"
-code 'php_project_name="'$php_project_name'"'
-____; socket_filename=$(INDENT+="    " rcm-php-fpm-setup-project-config $isfast --php-version="$php_version" --php-fpm-user="$php_fpm_user" --project-name="$php_project_name" get listen)
+php_fpm_section="ispconfig"
+code 'php_fpm_section="'$php_fpm_section'"'
+socket_filename=$(rcm-php-fpm-setup-project-config get --php-version="$php_version" --section="$php_fpm_section" --key=listen)
 code 'socket_filename="'$socket_filename'"'
 if [ -z "$socket_filename" ];then
     __; red Socket Filename of PHP-FPM not found.; x
@@ -780,7 +780,25 @@ code 'url_host="'$url_host'"'
 code 'url_port="'$url_port'"'
 ____
 
+chapter Mengecek '$PATH'.
+code PATH="$PATH"
+if grep -q '/snap/bin' <<< "$PATH";then
+    __ '$PATH' sudah lengkap.
+else
+    __ '$PATH' belum lengkap.
+    __ Memperbaiki '$PATH'
+    PATH=/snap/bin:$PATH
+    if grep -q '/snap/bin' <<< "$PATH";then
+        __; green '$PATH' sudah lengkap.; _.
+        __; magenta PATH="$PATH"; _.
+    else
+        __; red '$PATH' belum lengkap.; x
+    fi
+fi
+____
+
 INDENT+="    " \
+PATH=$PATH \
 rcm-nginx-virtual-host-autocreate-php $isfast \
     --root="$root" \
     --filename="$filename" \
