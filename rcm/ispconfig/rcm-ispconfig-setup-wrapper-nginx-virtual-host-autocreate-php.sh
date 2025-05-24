@@ -198,25 +198,25 @@ code 'prefix="'$prefix'"'
 case "$project" in
     ispconfig)
         root="$prefix/interface/web"
-        php_project_name="ispconfig"
-        code 'php_project_name="'$php_project_name'"'
+        php_fpm_section="ispconfig"
+        code 'php_fpm_section="'$php_fpm_section'"'
         ;;
     phpmyadmin)
         project_container="$PHPMYADMIN_FQDN_LOCALHOST"
         code 'project_container="'$project_container'"'
         root="$prefix/${project_container}/web"
-        php_project_name=www
-        code 'php_project_name="'$php_project_name'"'
+        php_fpm_section=www
+        code 'php_fpm_section="'$php_fpm_section'"'
         ;;
     roundcube)
         project_container="$ROUNDCUBE_FQDN_LOCALHOST"
         code 'project_container="'$project_container'"'
         root="$prefix/${project_container}/web"
-        php_project_name=www
-        code 'php_project_name="'$php_project_name'"'
+        php_fpm_section=www
+        code 'php_fpm_section="'$php_fpm_section'"'
         ;;
 esac
-____; socket_filename=$(INDENT+="    " rcm-php-fpm-setup-project-config $isfast --php-version="$php_version" --php-fpm-user="$php_fpm_user" --project-name="$php_project_name" get listen)
+socket_filename=$(rcm-php-fpm-setup-project-config get --php-version="$php_version" --section="$php_fpm_section" --key=listen)
 if [ -z "$socket_filename" ];then
     __; red Socket Filename of PHP-FPM not found.; x
 fi
@@ -230,7 +230,25 @@ fi
 code filename="$filename"
 ____
 
+chapter Mengecek '$PATH'.
+code PATH="$PATH"
+if grep -q '/snap/bin' <<< "$PATH";then
+    __ '$PATH' sudah lengkap.
+else
+    __ '$PATH' belum lengkap.
+    __ Memperbaiki '$PATH'
+    PATH=/snap/bin:$PATH
+    if grep -q '/snap/bin' <<< "$PATH";then
+        __; green '$PATH' sudah lengkap.; _.
+        __; magenta PATH="$PATH"; _.
+    else
+        __; red '$PATH' belum lengkap.; x
+    fi
+fi
+____
+
 INDENT+="    " \
+PATH=$PATH \
 rcm-nginx-virtual-host-autocreate-php $isfast \
     --with-certbot-obtain \
     --root="$root" \
