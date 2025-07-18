@@ -51,6 +51,7 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 
 # Define variables and constants.
+[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
