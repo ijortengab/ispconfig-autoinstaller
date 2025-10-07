@@ -335,7 +335,7 @@ create() {
     code 'client_id="'$client_id'"'
     [ -n "$client_id" ] || { client_id=0; code 'client_id="'$client_id'"'; }
 
-    ____; json=$(INDENT+="    " rcm-ispconfig generate-key --domain "$domain")
+    ____; json=$(INDENT+="    " rcm-ispconfig helper generate-key "$domain")
     dkim_private=$(php -r "echo (json_decode(fgets(STDIN)))->dkim_private;" <<< "$json")
     dkim_public=$(php -r "echo (json_decode(fgets(STDIN)))->dkim_public;" <<< "$json")
     dns_record=$(php -r "echo (json_decode(fgets(STDIN)))->dns_record;" <<< "$json")
