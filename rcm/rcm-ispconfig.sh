@@ -508,35 +508,12 @@ print_version=`printVersion`
 ____
 
 case "$mode" in
-    init)
-        case "$dns_record" in
-            digitalocean-api)
-                case "$variation" in
-                    debian11a) rcm_operand=ispconfig-setup-variation-1 ;;
-                    ubuntu22a) rcm_operand=ispconfig-setup-variation-2 ;;
-                    debian12a) rcm_operand=ispconfig-setup-variation-3 ;;
-                    *) error "Argument --variation not valid."; x ;;
-                esac
-                ;;
-            manual)
-                case "$variation" in
-                    debian11b) rcm_operand=ispconfig-setup-variation-4 ;;
-                    debian12b) rcm_operand=ispconfig-setup-variation-5 ;;
-                    ubuntu24a) rcm_operand=ispconfig-setup-variation-6 ;;
-                    *) error "Argument --variation not valid."; x ;;
-                esac
-                ;;
-        esac
-        ;;
-    addon)
-        case "$dns_record" in
-            digitalocean-api)
-                rcm_operand=ispconfig-setup-variation-addon-2
-                ;;
-            manual)
-                rcm_operand=ispconfig-setup-variation-addon
-        esac
-        ;;
+    init)               rcm_operand=ispconfig-setup-mode-init ;;
+    mail-domain)        rcm_operand=ispconfig-setup-mode-mail-domain ;;
+    website-ispconfig)  rcm_operand=ispconfig-setup-mode-website-ispconfig ;;
+    website-roundcube)  rcm_operand=ispconfig-setup-mode-website-roundcube ;;
+    website-phpmyadmin) rcm_operand=ispconfig-setup-mode-website-phpmyadmin ;;
+    bundle)             rcm_operand=ispconfig-setup-mode-bundle ;;
 esac
 
 chapter Execute:
