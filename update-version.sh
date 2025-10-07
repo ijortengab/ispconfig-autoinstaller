@@ -25,12 +25,12 @@ version=$1
 old_version=$(./rcm/rcm-ispconfig.sh --version)
 case "$version" in
     major|minor|patch)
-        major=$(sed -E 's,^([0-9]+)\.([0-9]+)\.([0-9]+)$,\1,' <<< "$old_version")
-        minor=$(sed -E 's,^([0-9]+)\.([0-9]+)\.([0-9]+)$,\2,' <<< "$old_version")
-        patch=$(sed -E 's,^([0-9]+)\.([0-9]+)\.([0-9]+)$,\3,' <<< "$old_version")
+        major=$(sed -E 's,^([0-9]+)\.([0-9]+)\.([0-9]+),\1,' <<< "$old_version")
+        minor=$(sed -E 's,^([0-9]+)\.([0-9]+)\.([0-9]+),\2,' <<< "$old_version")
+        patch=$(sed -E 's,^([0-9]+)\.([0-9]+)\.([0-9]+),\3,' <<< "$old_version")
     ;;
     *)
-        if grep -q -E '^[0-9]+\.[0-9]+\.[0-9]+$' <<< "$version";then
+        if grep -q -E '^[0-9]+\.[0-9]+\.[0-9]+' <<< "$version";then
             echo Format version valid.
         else
             echo Format version invalid: '`'$version'`'.; exit 1
