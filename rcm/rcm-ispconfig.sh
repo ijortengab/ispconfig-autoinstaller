@@ -508,18 +508,18 @@ print_version=`printVersion`
 ____
 
 case "$mode" in
-    init)               rcm_operand=ispconfig-setup-mode-init ;;
-    mail-domain)        rcm_operand=ispconfig-setup-mode-mail-domain ;;
-    website-ispconfig)  rcm_operand=ispconfig-setup-mode-website-ispconfig ;;
-    website-roundcube)  rcm_operand=ispconfig-setup-mode-website-roundcube ;;
-    website-phpmyadmin) rcm_operand=ispconfig-setup-mode-website-phpmyadmin ;;
-    bundle)             rcm_operand=ispconfig-setup-mode-bundle ;;
+    init)               extension=ispconfig-setup-mode-init ;;
+    mail-domain)        extension=ispconfig-setup-mode-mail-domain ;;
+    website-ispconfig)  extension=ispconfig-setup-mode-website-ispconfig ;;
+    website-roundcube)  extension=ispconfig-setup-mode-website-roundcube ;;
+    website-phpmyadmin) extension=ispconfig-setup-mode-website-phpmyadmin ;;
+    bundle)             extension=ispconfig-setup-mode-bundle ;;
 esac
 
 chapter Execute:
-case "$rcm_operand" in
+case "$extension" in
     *)
-        words_array=(rcm ${isfast} ${isnoninteractive} ${isverbose} $rcm_operand:$print_version -- "$@")
+        words_array=(rcm ${isfast} ${isnoninteractive} ${isverbose} $extension:$print_version -- "$@")
 esac
 wordWrapCommand
 ____
@@ -532,9 +532,9 @@ if [ -n "$_download" ];then
 fi
 export RCM_TABLE_DOWNLOADS="$table_downloads"
 
-case "$rcm_operand" in
+case "$extension" in
     *)
-        INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" rcm${isfast}${isnoninteractive}${isverbose} $rcm_operand:$print_version -- "$@"
+        INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" rcm${isfast}${isnoninteractive}${isverbose} $extension:$print_version -- "$@"
 esac
 ____
 
