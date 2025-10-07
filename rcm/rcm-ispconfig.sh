@@ -27,14 +27,9 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --dns-record=*) dns_record="${1#*=}"; shift ;;
-        --dns-record) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then dns_record="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --mode=*) mode="${1#*=}"; shift ;;
         --mode) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mode="$2"; shift; fi; shift ;;
-        --non-interactive) non_interactive=1; shift ;;
-        --variation=*) variation="${1#*=}"; shift ;;
-        --variation) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then variation="$2"; shift; fi; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
         --)
             while [[ $# -gt 0 ]]; do
@@ -528,18 +523,15 @@ exit 0
 # --with-end-options-specific-operand \
 # --no-error-require-arguments << EOF | clip
 # INCREMENT=(
-    # '--verbose|-v'
+#     '--verbose|-v'
 # )
 # FLAG=(
 # --fast
 # --version
 # --help
-# --non-interactive
 # )
 # VALUE=(
 # --mode
-# --variation
-# --dns-record
 # )
 # MULTIVALUE=(
 # )
