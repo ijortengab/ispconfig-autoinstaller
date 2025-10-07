@@ -93,6 +93,7 @@ unset _n
 
 # Command.
 if [ -n "$1" ];then
+    command=
     case "$1" in
         helper) command="$1"; shift ;;
     esac
@@ -132,6 +133,16 @@ Global Options.
         Skip prompt for every options.
    --
         Every arguments after double dash will pass to rcm-ispconfig-setup-variation-* command.
+
+Methods dns interface:
+   prompt: rcm-ispconfig(helper do-nothing)
+   fqdn_exists_pre: rcm-ispconfig(helper dns-plugin-fqdn-exists-pre)
+   fqdn_exists: rcm-ispconfig(helper dns-plugin-fqdn-exists)
+   server_setup_post: rcm-ispconfig(helper do-nothing)
+
+Methods tls interface:
+   prompt: rcm(nginx-variables-export tls-certificate)
+   server_setup_post: rcm-ispconfig(helper do-nothing)
 
 Dependency:
    rcm:0.18.0-alpha.1
@@ -452,9 +463,13 @@ helper-dns-plugin-fqdn-exists() {
 }
 
 # Execute command.
-if [[ -n "$command" && $(type -t "command-${command}") == function ]];then
-    command-${command} "$@"
-    exit 0
+if [ -n "$command" ];then
+    if [[ $(type -t "command-${command}") == function ]];then
+        command-${command} "$@"
+        exit 0
+    else
+        error Command unknown: '`'"$command"'`'.; x
+    fi
 fi
 
 # Title.
@@ -477,40 +492,16 @@ chapter Dump variable.
         isverbose+=' --verbose'
     done
 } || isverbose=
-if [ -n "$mode" ];then
-    case "$mode" in
-        init|addon) ;;
-        *) error "Argument --mode not valid."; x ;;
-    esac
-fi
+
 if [ -z "$mode" ];then
     error "Argument --mode required."; x
-fi
-code 'mode="'$mode'"'
-if [ "$mode" == init ];then
-    if [ -z "$variation" ];then
-        error "Argument --variation required."; x
+else
+    mode-available
+    if ! ArraySearch "$mode" mode_available[@];then
+        error "Argument --mode not valid."; x
     fi
 fi
-if [ -n "$variation" ];then
-    case "$variation" in
-        debian11a|debian12a|debian11b|debian12b) ;;
-        ubuntu22a|ubuntu24a) ;;
-        *) error "Argument --variation not valid."; x ;;
-    esac
-fi
-code 'variation="'$variation'"'
-if [ -n "$dns_record" ];then
-	case "$dns_record" in
-		digitalocean-api) ;;
-		manual) ;;
-        *) error "Argument --dns-record not valid."; x ;;
-	esac
-fi
-if [ -z "$dns_record" ];then
-    error "Argument --dns-record required."; x
-fi
-code 'dns_record="'$dns_record'"'
+code 'mode="'$mode'"'
 print_version=`printVersion`
 ____
 
@@ -534,8 +525,11 @@ ____
 _help=$(printHelp 2>/dev/null)
 _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
 if [ -n "$_download" ];then
-    [ -n "$table_downloads" ] && table_downloads+=$'\n'
-    table_downloads+="$_download"
+    while IFS= read -r _line; do
+        if ! grep -q -F -- "$_line" <<< "$table_downloads";then
+            [ -n "$_line" ] && table_downloads+="$_line"$'\n'
+        fi
+    done <<< "$_download"
 fi
 export RCM_TABLE_DOWNLOADS="$table_downloads"
 
@@ -572,23 +566,6 @@ exit 0
 # )
 # OPERAND=(
 # helper
-# )
-# EOF
-# clear
-
-# parse-options.sh \
-# --compact \
-# --clean \
-# --no-hash-bang \
-# --without-end-options-double-dash \
-# --no-original-arguments \
-# --no-error-invalid-options \
-# --no-error-require-arguments << EOF | clip
-# FLAG=(
-# --serialize-array
-# )
-# VALUE=(
-# --domain
 # )
 # EOF
 # clear
