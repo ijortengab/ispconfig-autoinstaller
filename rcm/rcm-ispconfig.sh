@@ -94,7 +94,7 @@ unset _n
 # Command.
 if [ -n "$1" ];then
     case "$1" in
-        mode-available|eligible|generate-key) command="$1"; shift ;;
+        helper) command="$1"; shift ;;
     esac
 fi
 
@@ -120,11 +120,6 @@ Usage: rcm-ispconfig [command] [options]
 Options:
    --mode *
         Select the setup mode. Values available from command: rcm-ispconfig(mode-available).
-   --dns-record *
-        Select how to create the DNS record.
-        Available value: manual, digitalocean-api.
-   --variation *
-        Select the variation bundle setup. Values available from command: rcm-ispconfig(eligible [--mode] [--dns-record]).
 
 Global Options.
    --fast
@@ -167,71 +162,6 @@ ArraySearch() {
        fi
     done
     return 1
-}
-command-eligible() {
-    local mode=$1; shift
-    if [ ! "$mode" == init ];then
-        return 1
-    fi
-    local dns_record=$1
-    eligible=()
-    if [ -f /etc/os-release ];then
-        . /etc/os-release
-    fi
-
-    _; _.
-    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11 && "$dns_record" == 'digitalocean-api' ]] && color=green2 || color=red; $color debian11a;
-    _, . Debian' '; hN 11; _, , '       'PHP' '; hN 7.4; _, , '         'ISPConfig' '; hN 3.2.7; _, ,; _.
-    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.0; _, , Roundcube' '; hN 1.6.0; _, , ' 'DigitalOcean API DNS.; _.
-    eligible+=("debian11a;debian;11;digitalocean-api")
-    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 11 && "$dns_record" == 'manual' ]] && color=green2 || color=red; $color debian11b;
-    _, . Debian' '; hN 11; _, , '       'PHP' '; hN 8.1; _, , '         'ISPConfig' '; hN 3.2.11p2; _, ,; _.
-    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.1; _, , Roundcube' '; hN 1.6.6; _, , ' 'Manual DNS.; _.
-    eligible+=("debian11b;debian;11;manual")
-    ___; _, 'Variation '; [[ "$ID" == ubuntu && "$VERSION_ID" == 22.04 && "$dns_record" == 'digitalocean-api' ]] && color=green2 || color=red; $color ubuntu22a;
-    _, . Ubuntu' '; hN 22.04; _, , '    'PHP' '; hN 7.4; _, , '         'ISPConfig' '; hN 3.2.7; _, ,; _.
-    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.0; _, , Roundcube' '; hN 1.6.0; _, , ' 'DigitalOcean API DNS.; _.
-    eligible+=("ubuntu22a;ubuntu;22.04;digitalocean-api")
-    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 12 && "$dns_record" == 'digitalocean-api' ]] && color=green2 || color=red; $color debian12a;
-    _, . Debian' '; hN 12; _, , '       'PHP' '; hN 8.1; _, , '         'ISPConfig' '; hN 3.2.10; _, ,; _.
-    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.1; _, , Roundcube' '; hN 1.6.2; _, , ' 'DigitalOcean API DNS.; _.
-    eligible+=("debian12a;debian;12;digitalocean-api")
-    ___; _, 'Variation '; [[ "$ID" == debian && "$VERSION_ID" == 12 && "$dns_record" == 'manual' ]] && color=green2 || color=red; $color debian12b;
-    _, . Debian' '; hN 12; _, , '       'PHP' '; hN 8.3; _, , '         'ISPConfig' '; hN 3.2.11p2; _, ,; _.
-    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.1; _, , Roundcube' '; hN 1.6.6; _, , ' 'Manual DNS.; _.
-    eligible+=("debian12b;debian;12;manual")
-    ___; _, 'Variation '; [[ "$ID" == ubuntu && "$VERSION_ID" == 24.04 && "$dns_record" == 'manual' ]] && color=green2 || color=red; $color ubuntu24a;
-    _, . Ubuntu' '; hN 24.04; _, , '    'PHP' '; hN 8.3; _, , '         'ISPConfig' '; hN 3.2.12p1; _, ,; _.
-    ___; _,  '                    ' PHPMyAdmin' '; hN 5.2.2; _, , Roundcube' '; hN 1.6.10; _, , Manual DNS.; _.
-    eligible+=("ubuntu24a;ubuntu;24.04;manual")
-    for each in "${eligible[@]}";do
-        variation=$(cut -d';' -f1 <<< "$each")
-        _id=$(cut -d';' -f2 <<< "$each")
-        _version_id=$(cut -d';' -f3 <<< "$each")
-        _dns_record=$(cut -d';' -f4 <<< "$each")
-        if [[ "$_id" == "$ID" && "$_version_id" == "$VERSION_ID" && "$dns_record" == "$_dns_record" ]];then
-            echo $variation
-        fi
-    done
-}
-command-mode-available() {
-    local is_digitalocean=$1
-    mode_available=()
-    php_fpm_user=ispconfig
-    if id "$php_fpm_user" >/dev/null 2>&1; then
-        mode_available+=(addon)
-    else
-        mode_available+=(init)
-    fi
-    _; _.
-    if ArraySearch init mode_available[@] ]];then color=green; else color=red; fi
-    ___; _, 'Mode '; $color init; _, .; _, '  'Install ISPConfig + LEMP Stack Setup. ; _.;
-    ___; _, '            '; _, LEMP Stack '('Linux, Nginx, MySQL, PHP')'.; _.;
-    if ArraySearch addon mode_available[@] ]];then color=green; else color=red; fi
-    ___; _, 'Mode '; $color addon; _, .; _, ' 'Add on Domain. ; _.;
-    for each in init addon; do
-        if ArraySearch $each mode_available[@] ]];then echo $each; fi
-    done
 }
 wordWrapCommand() {
     # global words_array
