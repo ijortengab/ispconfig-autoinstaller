@@ -322,6 +322,127 @@ command-helper() {
         fi
     fi
 }
+mode-available() {
+    # global mode_available
+    mode_available=()
+    # Source: ISPConfigDebianOS::runPerfectSetup()
+    path=/usr/local/ispconfig/server/lib/config.inc.php
+    if [ -f "$path" ]; then
+        mode_available+=(mail-domain website-ispconfig website-roundcube website-phpmyadmin bundle)
+    else
+        mode_available+=(init)
+    fi
+}
+helper-mode-available() {
+    local wrap
+    local lines=()
+    local each
+    mode-available
+    _; _.
+    longest_text='#     Mode website-phpmyadmin.    Add Interface of PHPMyAdmin (Database Client).'
+    if [[ $(tput cols) -gt "${#longest_text}" ]];then
+        wrap=
+    else
+        wrap=1
+    fi
+    a=init b='Install ISPConfig + LEMP Stack Setup.' c='LEMP Stack (Linux, Nginx, MySQL, PHP).'
+    if ArraySearch $a mode_available[@] ]];then color=green; else color=red; fi
+    [ -n "$wrap" ] && lines+=("Mode <${color}>$a</${color}>. -->$b")
+    [ -n "$wrap" ] && lines+=("-->$c")
+    [ -z "$wrap" ] && { ___; _, 'Mode '; $color $a; _, '.'; _, '               '; _, "$b" ; _.; }
+    [ -z "$wrap" ] && { ___; _, '                         '; _, "$c"; _.; }
+
+    a=mail-domain b='Add Mail Domain (Mailbox).'
+    if ArraySearch mail-domain mode_available[@] ]];then color=green; else color=red; fi
+    [ -n "$wrap" ] && lines+=("Mode <${color}>$a</${color}>. -->$b")
+    [ -z "$wrap" ] && { ___; _, 'Mode '; $color $a; _, '.'; _, '        '; _, "$b" ; _.; }
+
+    a=website-ispconfig b='Add Interface of ISPConfig.'
+    if ArraySearch website-ispconfig mode_available[@] ]];then color=green; else color=red; fi
+    [ -n "$wrap" ] && lines+=("Mode <${color}>$a</${color}>. -->$b")
+    [ -z "$wrap" ] && { ___; _, 'Mode '; $color $a; _, '.'; _, '  '; _, "$b" ; _.; }
+
+    a=website-roundcube b='Add Interface of Roundcube (Webmail Client).'
+    if ArraySearch website-roundcube mode_available[@] ]];then color=green; else color=red; fi
+    [ -n "$wrap" ] && lines+=("Mode <${color}>$a</${color}>. -->$b")
+    [ -z "$wrap" ] && { ___; _, 'Mode '; $color $a; _, '.'; _, '  '; _, "$b" ; _.; }
+
+    a=website-phpmyadmin b='Add Interface of PHPMyAdmin (Database Client).'
+    if ArraySearch website-phpmyadmin mode_available[@] ]];then color=green; else color=red; fi
+    [ -n "$wrap" ] && lines+=("Mode <${color}>$a</${color}>. -->$b")
+    [ -z "$wrap" ] && { ___; _, 'Mode '; $color $a; _, '.'; _, ' '; _, "$b" ; _.; }
+
+    a=bundle b='All in one by Domain Name (Mailbox + Website).'
+    if ArraySearch bundle mode_available[@] ]];then color=green; else color=red; fi
+    [ -n "$wrap" ] && lines+=("Mode <${color}>$a</${color}>. -->$b")
+    [ -z "$wrap" ] && { ___; _, 'Mode '; $color $a; _, '.'; _, '             '; _, "$b" ; _.; }
+
+    if [ -n "$wrap" ];then
+        lines_cloned=("${lines[@]}")
+        lines=()
+        for line in "${lines_cloned[@]}"; do
+            lines+=("$(echo "$line" | sed -E s,-+\>,$'\t',g)")
+        done
+        unset lines_cloned
+        plain=
+        for each in "${lines[@]}"; do
+            plain+="$each"$'\n'
+        done
+        # 4 Variasi.
+        # rcm-paragraph printed-all-at-once -- --indent=2 --indent-hanging=1 <<< "$plain"
+        # rcm-paragraph printed-per-line -- --indent=2 --indent-hanging=1 <<< "$plain"
+        TAB_STOP_POSITION='25' rcm-paragraph printed-per-2-lines --indent=2 --indent-hanging=1 <<< "$plain"
+        # TAB_STOP_POSITION='21 14 9 19 18' rcm-paragraph printed-per-n-lines 3 -- --indent=2 --indent-hanging=1 <<< "$plain"
+    fi
+
+    for each in "${mode_available[@]}";do
+        echo $each
+    done
+}
+helper-tls-plugin-prompt() {
+    local tls_plugin=$1
+    if [ -n "$tls_plugin" ];then
+        rcm-plugin $isfast execute --interface=tls --name="$tls_plugin" \
+            --method='prompt' \
+            ; [ ! $? -eq 0 ] && x
+    fi
+}
+helper-dns-plugin-fqdn-exists-pre() {
+    title rcm-ispconfig::helper::dns-plugin-fqdn-exists-pre
+    ____
+
+    INDENT+='    ' \
+    rcm-dig-apt $isfast \
+        ; [ ! $? -eq 0 ] && x
+}
+helper-dns-plugin-fqdn-exists() {
+    [ -n "$RCM_DOMAIN" ] || { error Environment Variable RCM_DOMAIN required; x; }
+    [ -n "$RCM_HOSTNAME" ] || { error Environment Variable RCM_HOSTNAME required; x; }
+    [ -n "$RCM_IP_ADDRESS" ] || { error Environment Variable RCM_IP_ADDRESS required; x; }
+    local domain="$RCM_DOMAIN"
+    local hostname="$RCM_HOSTNAME"
+    local ip_address="$RCM_IP_ADDRESS"
+    [ $hostname == - ] && hostname=
+    local fqdn="$domain"
+    [ -n "$hostname" ] && fqdn="${hostname}.${domain}"
+
+    title rcm-ispconfig::helper::dns-plugin-fqdn-exists
+    ____
+
+    INDENT+='    ' \
+    rcm-dig-is-record-exists $isfast --name-exists-sure \
+        --reverse \
+        --domain="$fqdn" \
+        --type=cname \
+        --hostname="@" \
+        --alias-of="*" \
+        && INDENT+='    ' \
+    rcm-dig-is-record-exists $isfast --name-exists-sure \
+        --domain="$fqdn" \
+        --type=a \
+        --ip-address="$ip_address" \
+        ; [ ! $? -eq 0 ] && x
+}
 
 # Execute command.
 if [[ -n "$command" && $(type -t "command-${command}") == function ]];then
