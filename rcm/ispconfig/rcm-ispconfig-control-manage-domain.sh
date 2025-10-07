@@ -54,7 +54,7 @@ MAILBOX_WEB=${MAILBOX_WEB:=webmaster}
 
 # Functions.
 printVersion() {
-    echo '0.9.22'
+    echo '0.10.0-alpha.1'
 }
 printHelp() {
     title RCM ISPConfig Control
