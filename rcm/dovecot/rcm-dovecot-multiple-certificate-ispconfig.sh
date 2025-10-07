@@ -25,11 +25,13 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --certbot-authenticator=*) certbot_authenticator="${1#*=}"; shift ;;
-        --certbot-authenticator) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then certbot_authenticator="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --fqdn=*) fqdn="${1#*=}"; shift ;;
         --fqdn) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fqdn="$2"; shift; fi; shift ;;
+        --tls-certificate-key=*) tls_certificate_key="${1#*=}"; shift ;;
+        --tls-certificate-key) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_certificate_key="$2"; shift; fi; shift ;;
+        --tls-certificate=*) tls_certificate="${1#*=}"; shift ;;
+        --tls-certificate) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_certificate="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -60,8 +62,12 @@ Usage: rcm-dovecot-multiple-certificate-ispconfig [options]
 Options:
    --fqdn *
         Fully Qualified Domain Name of the certificate, for example: \`server1.example.org\`.
-   --certbot-authenticator *
-        Available value: digitalocean, nginx.
+    --tls-certificate *
+        TLS Certificate.
+        Populate value from variable TLS_CERTIFICATE.
+    --tls-certificate-key *
+        TLS Certificate.
+        Populate value from variable TLS_CERTIFICATE_KEY.
 
 Global Options:
    --fast
@@ -80,8 +86,6 @@ Environment Variables:
         Default to $DOVECOT_CONFIG_FILE_ISPCONFIG
 
 Dependency:
-   rcm-certbot-obtain-authenticator-nginx
-   rcm-certbot-obtain-authenticator-digitalocean
    rcm-dovecot-multiple-certificate
 EOF
 }
@@ -127,74 +131,25 @@ if [ -z "$fqdn" ];then
     error "Argument --fqdn required."; x
 fi
 code 'fqdn="'$fqdn'"'
-if [ -n "$certbot_authenticator" ];then
-    case "$certbot_authenticator" in
-        digitalocean|nginx) ;;
-        *) error "Argument --certbot-authenticator not valid."; x ;;
-    esac
+# If not set in argument, try load from environment.
+[ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"
+[ -z "$tls_certificate_key" ] && tls_certificate_key="$TLS_CERTIFICATE_KEY"
+if [ -z "$tls_certificate" ];then
+    error "Argument --tls-certificate or variable TLS_CERTIFICATE required."; x
 fi
-if [ -z "$certbot_authenticator" ];then
-    error "Argument --certbot-authenticator required."; x
+code tls_certificate="$tls_certificate"
+if [ -z "$tls_certificate_key" ];then
+    error "Argument --tls-certificate-key or variable TLS_CERTIFICATE_KEY required."; x
 fi
-code 'certbot_authenticator="'$certbot_authenticator'"'
-certbot_certificate_name="$fqdn"
-code 'certbot_certificate_name="'$certbot_certificate_name'"'
-____
-
-path="/etc/letsencrypt/live/${certbot_certificate_name}"
-chapter Mengecek direktori certbot '`'$path'`'.
-isDirExists "$path"
-____
-
-if [ -n "$notfound" ];then
-    chapter Mengecek '$PATH'.
-    code PATH="$PATH"
-    if grep -q '/snap/bin' <<< "$PATH";then
-        __ '$PATH' sudah lengkap.
-    else
-        __ '$PATH' belum lengkap.
-        __ Memperbaiki '$PATH'
-        PATH=/snap/bin:$PATH
-        if grep -q '/snap/bin' <<< "$PATH";then
-            __; green '$PATH' sudah lengkap.; _.
-            __; magenta PATH="$PATH"; _.
-        else
-            __; red '$PATH' belum lengkap.; x
-        fi
-    fi
-    ____
-
-    if [[ "$certbot_authenticator" == 'digitalocean' ]]; then
-        INDENT+="    " \
-        PATH=$PATH \
-        rcm-certbot-obtain-authenticator-digitalocean $isfast \
-            --certbot-dns-digitalocean-sure \
-            --domain="$fqdn" \
-            ; [ ! $? -eq 0 ] && x
-        # @todo, cek harusnya parent sudah validate certbot-dns-digitalocean
-        # sehingga bisa kita kasih option --certbot-dns-digitalocean-sure
-    elif [[ "$certbot_authenticator" == 'nginx' ]]; then
-        INDENT+="    " \
-        PATH=$PATH \
-        rcm-certbot-obtain-authenticator-nginx $isfast \
-            --domain="$fqdn" \
-            ; [ ! $? -eq 0 ] && x
-    fi
-fi
-
-chapter Memeriksa certificate SSL.
-ssl_cert="/etc/letsencrypt/live/${certbot_certificate_name}/fullchain.pem"
-code 'ssl_cert="'$ssl_cert'"'
-[ -f "$ssl_cert" ] || fileMustExists "$ssl_cert"
-ssl_key="/etc/letsencrypt/live/${certbot_certificate_name}/privkey.pem"
-code 'ssl_key="'$ssl_key'"'
-[ -f "$ssl_key" ] || fileMustExists "$ssl_key"
+code tls_certificate_key="$tls_certificate_key"
+[ -f "$tls_certificate" ] || fileMustExists "$tls_certificate"
+[ -f "$tls_certificate_key" ] || fileMustExists "$tls_certificate_key"
 ____
 
 INDENT+="    " \
 rcm-dovecot-multiple-certificate $isfast \
-    --ssl-cert="$ssl_cert" \
-    --ssl-key="$ssl_key" \
+    --ssl-cert="$tls_certificate" \
+    --ssl-key="$tls_certificate_key" \
     --fqdn="$fqdn" \
     --additional-config-file="$DOVECOT_CONFIG_FILE_ISPCONFIG" \
     ; [ ! $? -eq 0 ] && x
@@ -216,7 +171,8 @@ exit 0
 # )
 # VALUE=(
 # --fqdn
-# --certbot-authenticator
+# --tls-certificate
+# --tls-certificate-key
 # )
 # MULTIVALUE=(
 # )
