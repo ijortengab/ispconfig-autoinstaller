@@ -301,13 +301,14 @@ wordWrapCommand() {
         fi
     done
 }
-command-generate-key() {
-    title rcm-ispconfig generate-key
+helper-generate-key() {
+    title rcm-ispconfig::helper::generate-key
     ____
 
     chapter Dump variable.
+    domain="$1"
     if [ -z "$domain" ];then
-        error "Argument --domain required."; x
+        error "Operand <domain> required."; x
     fi
     code 'domain="'$domain'"'
     php_fpm_user=ispconfig
