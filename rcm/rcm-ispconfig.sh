@@ -115,11 +115,11 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
-Usage: rcm-ispconfig [command] [options]
+Usage: rcm-ispconfig [options]
 
 Options:
    --mode *
-        Select the setup mode. Values available from command: rcm-ispconfig(mode-available).
+        Select the setup mode. Values available from command: rcm-ispconfig(helper mode-available).
 
 Global Options.
    --fast
@@ -134,17 +134,24 @@ Global Options.
         Every arguments after double dash will pass to rcm-ispconfig-setup-variation-* command.
 
 Dependency:
-   rcm:0.17.0
+   rcm:0.18.0-alpha.1
+   rcm-dig-apt
+   rcm-dig-is-record-exists
 
 Download:
-   [rcm-ispconfig-setup-variation-1](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-1.sh)
-   [rcm-ispconfig-setup-variation-2](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-2.sh)
-   [rcm-ispconfig-setup-variation-3](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-3.sh)
-   [rcm-ispconfig-setup-variation-4](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-4.sh)
-   [rcm-ispconfig-setup-variation-5](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-5.sh)
-   [rcm-ispconfig-setup-variation-6](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-6.sh)
-   [rcm-ispconfig-setup-variation-addon](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-addon.sh)
-   [rcm-ispconfig-setup-variation-addon-2](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-addon-2.sh)
+   [rcm-ispconfig-setup-mode-init](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-init.sh)
+   [rcm-ispconfig-setup-mode-mail-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mail-domain.sh)
+   [rcm-ispconfig-setup-mode-website-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-website-ispconfig.sh)
+   [rcm-ispconfig-setup-mode-website-roundcube](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-website-roundcube.sh)
+   [rcm-ispconfig-setup-mode-website-phpmyadmin](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-website-phpmyadmin.sh)
+   [rcm-ispconfig-setup-mode-bundle](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-bundle.sh)
+
+Mapping Operand:
+   --mode
+
+RCM Config:
+   --no-timer
+   --no-confirmation
 EOF
 }
 
