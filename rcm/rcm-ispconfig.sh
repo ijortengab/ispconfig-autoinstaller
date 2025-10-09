@@ -39,7 +39,7 @@ while [[ $# -gt 0 ]]; do
             done
             ;;
         --[^-]*) shift ;;
-        helper)
+        helper|plugin)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -77,7 +77,7 @@ while [[ $# -gt 0 ]]; do
                 esac
             done
             ;;
-        helper)
+        helper|plugin)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -96,6 +96,7 @@ if [ -n "$1" ];then
     command=
     case "$1" in
         helper) command="$1"; shift ;;
+        plugin) command="$1"; shift ;;
     esac
 fi
 
@@ -419,21 +420,20 @@ helper-mode-available() {
 }
 helper-tls-plugin-prompt() {
     local tls_plugin=$1
+    [ "$tls_plugin" == - ] && tls_plugin=
+
     if [ -n "$tls_plugin" ];then
         rcm-plugin $isfast execute --interface=tls --name="$tls_plugin" \
             --method='prompt' \
             ; [ ! $? -eq 0 ] && x
     fi
 }
-helper-dns-plugin-fqdn-exists-pre() {
-    title rcm-ispconfig::helper::dns-plugin-fqdn-exists-pre
-    ____
-
+plugin-dns-manual-fqdn_exists_pre() {
     INDENT+='    ' \
     rcm-dig-apt $isfast \
         ; [ ! $? -eq 0 ] && x
 }
-helper-dns-plugin-fqdn-exists() {
+plugin-dns-manual-fqdn_exists() {
     [ -n "$RCM_DOMAIN" ] || { error Environment Variable RCM_DOMAIN required; x; }
     [ -n "$RCM_HOSTNAME" ] || { error Environment Variable RCM_HOSTNAME required; x; }
     [ -n "$RCM_IP_ADDRESS" ] || { error Environment Variable RCM_IP_ADDRESS required; x; }
@@ -443,9 +443,6 @@ helper-dns-plugin-fqdn-exists() {
     [ $hostname == - ] && hostname=
     local fqdn="$domain"
     [ -n "$hostname" ] && fqdn="${hostname}.${domain}"
-
-    title rcm-ispconfig::helper::dns-plugin-fqdn-exists
-    ____
 
     INDENT+='    ' \
     rcm-dig-is-record-exists $isfast --name-exists-sure \
@@ -460,6 +457,47 @@ helper-dns-plugin-fqdn-exists() {
         --type=a \
         --ip-address="$ip_address" \
         ; [ ! $? -eq 0 ] && x
+}
+command-plugin() {
+    local interface=$1 name=$2 method=$3
+    case "$interface" in
+        dns)
+            case "$name" in
+                manual)
+                    case "$method" in
+                        prompt)
+                            ;;
+
+                        fqdn_exists_pre)
+
+                            title rcm-ispconfig::plugin::"$interface"::"$name"::"$method"
+                            ____
+
+                            plugin-dns-manual-fqdn_exists_pre
+                            ;;
+
+                        fqdn_exists)
+
+                            title rcm-ispconfig::plugin::"$interface"::"$name"::"$method"
+                            ____
+
+                            plugin-dns-manual-fqdn_exists
+                            ;;
+
+                        server_setup_post)
+                            ;;
+
+                        *)  error Method has not been defined.; x
+                            ;;
+                    esac
+                    ;;
+
+                *) error Plugin Name has not been defined.; x
+            esac
+            ;;
+
+        *) error Interface has not been defined.; x
+    esac
 }
 
 # Execute command.
@@ -566,6 +604,7 @@ exit 0
 # )
 # OPERAND=(
 # helper
+# plugin
 # )
 # EOF
 # clear
