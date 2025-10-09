@@ -25,11 +25,11 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --certbot-authenticator=*) certbot_authenticator="${1#*=}"; shift ;;
-        --certbot-authenticator) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then certbot_authenticator="$2"; shift; fi; shift ;;
+        --domain=*) domain="${1#*=}"; shift ;;
+        --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
-        --fqdn=*) fqdn="${1#*=}"; shift ;;
-        --fqdn) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fqdn="$2"; shift; fi; shift ;;
+        --hostname=*) hostname="${1#*=}"; shift ;;
+        --hostname) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then hostname="$2"; shift; fi; shift ;;
         --ispconfig-version=*) ispconfig_version="${1#*=}"; shift ;;
         --ispconfig-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then ispconfig_version="$2"; shift; fi; shift ;;
         --phpmyadmin-version=*) phpmyadmin_version="${1#*=}"; shift ;;
@@ -38,6 +38,10 @@ while [[ $# -gt 0 ]]; do
         --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
         --roundcube-version=*) roundcube_version="${1#*=}"; shift ;;
         --roundcube-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then roundcube_version="$2"; shift; fi; shift ;;
+        --tls-certificate-key=*) tls_certificate_key="${1#*=}"; shift ;;
+        --tls-certificate-key) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_certificate_key="$2"; shift; fi; shift ;;
+        --tls-certificate=*) tls_certificate="${1#*=}"; shift ;;
+        --tls-certificate) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_certificate="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -53,7 +57,6 @@ ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 MYSQL_ROOT_PASSWD=${MYSQL_ROOT_PASSWD:=$HOME/.mysql-root-passwd.txt}
 MYSQL_ROOT_PASSWD_INI=${MYSQL_ROOT_PASSWD_INI:=$HOME/.mysql-root-passwd.ini}
 ISPCONFIG_DB_USER_HOST=${ISPCONFIG_DB_USER_HOST:=localhost}
-ISPCONFIG_NGINX_CONFIG_FILE=${ISPCONFIG_NGINX_CONFIG_FILE:=ispconfig}
 MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 
@@ -70,8 +73,11 @@ printHelp() {
 Usage: rcm-ispconfig-autoinstaller-nginx [options]
 
 Options:
-   --fqdn *
-        Fully Qualified Domain Name of this server, for example: \`server1.example.org\`.
+   --domain *
+        Domain name of the server.
+        Together with --hostname will make a Fully Qualified Domain Name.
+   --hostname *
+        Hostname of the server, for example: \`server1\`.
    --php-version *
         Set the version of PHP FPM.
    --ispconfig-version *
@@ -80,8 +86,12 @@ Options:
         Set the version of RoundCube.
    --phpmyadmin-version *
         Set the version of PHPMyAdmin.
-   --certbot-authenticator *
-        Available value: digitalocean, nginx.
+   --tls-certificate
+        Directive tls_certificate in nginx config.
+        Populate value from variable TLS_CERTIFICATE.
+   --tls-certificate-key
+        Directive tls_certificate_key in nginx config.
+        Populate value from variable TLS_CERTIFICATE_KEY.
 
 Global Options:
    --fast
@@ -100,8 +110,6 @@ Environment Variables:
         Default to $MYSQL_ROOT_PASSWD_INI
    ISPCONFIG_DB_USER_HOST
         Default to $ISPCONFIG_DB_USER_HOST
-   ISPCONFIG_NGINX_CONFIG_FILE
-        Default to $ISPCONFIG_NGINX_CONFIG_FILE
    MARIADB_PREFIX_MASTER
         Default to $MARIADB_PREFIX_MASTER
    MARIADB_USERS_CONTAINER_MASTER
@@ -150,6 +158,16 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
+ArraySearch() {
+    local index match="$1"
+    local source=("${!2}")
+    for index in "${!source[@]}"; do
+       if [[ "${source[$index]}" == "${match}" ]]; then
+           _return=$index; return 0
+       fi
+    done
+    return 1
+}
 fileMustExists() {
     # global used:
     # global modified:
@@ -436,7 +454,6 @@ code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
 code 'MYSQL_ROOT_PASSWD="'$MYSQL_ROOT_PASSWD'"'
 code 'MYSQL_ROOT_PASSWD_INI="'$MYSQL_ROOT_PASSWD_INI'"'
 code 'ISPCONFIG_DB_USER_HOST="'$ISPCONFIG_DB_USER_HOST'"'
-code 'ISPCONFIG_NGINX_CONFIG_FILE="'$ISPCONFIG_NGINX_CONFIG_FILE'"'
 code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
 code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
 if [ -z "$ispconfig_version" ];then
@@ -455,21 +472,21 @@ if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
 code 'php_version="'$php_version'"'
-if [ -z "$fqdn" ];then
-    error "Argument --fqdn required."; x
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
 fi
-code 'fqdn="'$fqdn'"'
-case "$certbot_authenticator" in
-    digitalocean) ;;
-    nginx) ;;
-    *) certbot_authenticator=
-esac
-if [ -z "$certbot_authenticator" ];then
-    error "Argument --certbot-authenticator required.";
-    _ Available value:' '; yellow digitalocean; _, ', '; yellow nginx; _, .; _.
-    x
+code domain="$domain"
+if [ -z "$hostname" ];then
+    error "Argument --hostname required."; x
 fi
-code 'certbot_authenticator="'$certbot_authenticator'"'
+code hostname="$hostname"
+fqdn="${hostname}.${domain}"
+code fqdn="$fqdn"
+# If not set in argument, try load from environment.
+[ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"
+[ -z "$tls_certificate_key" ] && tls_certificate_key="$TLS_CERTIFICATE_KEY"
+code tls_certificate="$tls_certificate"
+code tls_certificate="$tls_certificate"
 rcm_nginx_reload=
 ____
 
@@ -483,9 +500,9 @@ rcm-php-setup-ispconfig $isfast \
     && INDENT+="    " \
 rcm-postfix-setup-ispconfig $isfast \
     && INDENT+="    " \
+TLS_CERTIFICATE="$tls_certificate" \
+TLS_CERTIFICATE_KEY="$tls_certificate_key" \
 rcm-ispconfig-setup-smtpd-certificate $isfast \
-    --certbot-authenticator="$certbot_authenticator" \
-    --fqdn="$fqdn" \
     && INDENT+="    " \
 rcm-phpmyadmin-autoinstaller-nginx $isfast \
     --phpmyadmin-version="$phpmyadmin_version" \
@@ -771,14 +788,8 @@ if [ -z "$socket_filename" ];then
 fi
 root="$prefix/interface/web"
 code 'root="'$root'"'
-filename="$ISPCONFIG_NGINX_CONFIG_FILE"
-code 'filename="'$filename'"'
-url_scheme=http
-url_port=80
-url_host="$ISPCONFIG_FQDN_LOCALHOST"
-code 'url_scheme="'$url_scheme'"'
-code 'url_host="'$url_host'"'
-code 'url_port="'$url_port'"'
+url="http://${ISPCONFIG_FQDN_LOCALHOST}"
+code 'url="'$url'"'
 ____
 
 chapter Mengecek '$PATH'.
@@ -802,11 +813,8 @@ INDENT+="    " \
 PATH=$PATH \
 rcm-nginx-virtual-host-autocreate-php $isfast \
     --root="$root" \
-    --filename="$filename" \
+    --url="$url" \
     --fastcgi-pass="unix:${socket_filename}" \
-    --url-host="$url_host" \
-    --url-scheme="$url_scheme" \
-    --url-port="$url_port" \
     ; [ ! $? -eq 0 ] && x
 
 chapter Mengecek address host local '`'$ISPCONFIG_FQDN_LOCALHOST'`'.
@@ -913,12 +921,14 @@ exit 0
 # --help
 # )
 # VALUE=(
-# --fqdn
+# --domain
+# --hostname
 # --ispconfig-version
 # --php-version
 # --phpmyadmin-version
 # --roundcube-version
-# --certbot-authenticator
+# --tls-certificate
+# --tls-certificate-key
 # )
 # FLAG_VALUE=(
 # )
