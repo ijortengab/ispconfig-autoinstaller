@@ -40,7 +40,7 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # Functions.
 printVersion() {
-    echo '0.10.0-alpha.1'
+    echo '0.10.0-alpha.2'
 }
 printHelp() {
     title RCM Amavis Setup

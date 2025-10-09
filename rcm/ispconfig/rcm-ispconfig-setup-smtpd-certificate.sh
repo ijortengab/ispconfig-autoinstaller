@@ -45,7 +45,7 @@ POSTFIX_CONFIG_DIR=${POSTFIX_CONFIG_DIR:=/etc/postfix}
 
 # Functions.
 printVersion() {
-    echo '0.10.0-alpha.1'
+    echo '0.10.0-alpha.2'
 }
 printHelp() {
     title RCM ISPConfig Setup
