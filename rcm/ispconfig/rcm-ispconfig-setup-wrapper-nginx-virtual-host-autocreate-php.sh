@@ -30,12 +30,12 @@ while [[ $# -gt 0 ]]; do
         --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
         --project=*) project="${1#*=}"; shift ;;
         --project) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then project="$2"; shift; fi; shift ;;
-        --url-host=*) url_host="${1#*=}"; shift ;;
-        --url-host) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_host="$2"; shift; fi; shift ;;
-        --url-port=*) url_port="${1#*=}"; shift ;;
-        --url-port) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_port="$2"; shift; fi; shift ;;
-        --url-scheme=*) url_scheme="${1#*=}"; shift ;;
-        --url-scheme) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_scheme="$2"; shift; fi; shift ;;
+        --tls-certificate-key=*) tls_certificate_key="${1#*=}"; shift ;;
+        --tls-certificate-key) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_certificate_key="$2"; shift; fi; shift ;;
+        --tls-certificate=*) tls_certificate="${1#*=}"; shift ;;
+        --tls-certificate) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_certificate="$2"; shift; fi; shift ;;
+        --url=*) url="${1#*=}"; shift ;;
+        --url) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -49,6 +49,7 @@ RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 PHPMYADMIN_FQDN_LOCALHOST=${PHPMYADMIN_FQDN_LOCALHOST:=phpmyadmin.localhost}
+RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
 
 # Functions.
 printVersion() {
@@ -63,13 +64,11 @@ printHelp() {
 Usage: rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php [options]
 
 Options:
-   --subdomain
-        Set the subdomain if any.
-   --domain
-        Set the domain.
-   --project
+   --url *
+        Set the URL.
+   --project *
         Available value: ispconfig, phpmyadmin, roundcube.
-   --php-version
+   --php-version *
         Set the version of PHP FPM.
 
 Global Options:
@@ -109,6 +108,16 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
+ArraySearch() {
+    local index match="$1"
+    local source=("${!2}")
+    for index in "${!source[@]}"; do
+       if [[ "${source[$index]}" == "${match}" ]]; then
+           _return=$index; return 0
+       fi
+    done
+    return 1
+}
 backupFile() {
     local mode="$1"
     local oldpath="$2" i newpath
@@ -142,35 +151,160 @@ backupFile() {
             chown ${user}:${group} "$newpath"
     esac
 }
+Rcm_parse_url() {
+    # Reset
+    PHP_URL_SCHEME=
+    PHP_URL_HOST=
+    PHP_URL_PORT=
+    PHP_URL_USER=
+    PHP_URL_PASS=
+    PHP_URL_PATH=
+    PHP_URL_QUERY=
+    PHP_URL_FRAGMENT=
+    PHP_URL_SCHEME="$(echo "$1" | grep :// | sed -e's,^\(.*\)://.*,\1,g')"
+    _PHP_URL_SCHEME_SLASH="${PHP_URL_SCHEME}://"
+    _PHP_URL_SCHEME_REVERSE="$(echo ${1/${_PHP_URL_SCHEME_SLASH}/})"
+    if grep -q '#' <<< "$_PHP_URL_SCHEME_REVERSE";then
+        PHP_URL_FRAGMENT=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d# -f2)
+        _PHP_URL_SCHEME_REVERSE=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d# -f1)
+    fi
+    if grep -q '\?' <<< "$_PHP_URL_SCHEME_REVERSE";then
+        PHP_URL_QUERY=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d? -f2)
+        _PHP_URL_SCHEME_REVERSE=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d? -f1)
+    fi
+    _PHP_URL_USER_PASS="$(echo $_PHP_URL_SCHEME_REVERSE | grep @ | cut -d@ -f1)"
+    PHP_URL_PASS=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f2`
+    if [ -n "$PHP_URL_PASS" ]; then
+        PHP_URL_USER=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f1`
+    else
+        PHP_URL_USER=$_PHP_URL_USER_PASS
+    fi
+    _PHP_URL_HOST_PORT="$(echo ${_PHP_URL_SCHEME_REVERSE/$_PHP_URL_USER_PASS@/} | cut -d/ -f1)"
+    PHP_URL_HOST="$(echo $_PHP_URL_HOST_PORT | sed -e 's,:.*,,g')"
+    if grep -q -E ':[0-9]+$' <<< "$_PHP_URL_HOST_PORT";then
+        PHP_URL_PORT="$(echo $_PHP_URL_HOST_PORT | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
+    fi
+    _PHP_URL_HOST_PORT_LENGTH=${#_PHP_URL_HOST_PORT}
+    _LENGTH="$_PHP_URL_HOST_PORT_LENGTH"
+    if [ -n "$_PHP_URL_USER_PASS" ];then
+        _PHP_URL_USER_PASS_LENGTH=${#_PHP_URL_USER_PASS}
+        _LENGTH=$((_LENGTH + 1 + _PHP_URL_USER_PASS_LENGTH))
+    fi
+    PHP_URL_PATH="${_PHP_URL_SCHEME_REVERSE:$_LENGTH}"
+
+    # Debug
+    # e '"$PHP_URL_SCHEME"' "$PHP_URL_SCHEME"; _.
+    # e '"$PHP_URL_HOST"' "$PHP_URL_HOST"; _.
+    # e '"$PHP_URL_PORT"' "$PHP_URL_PORT"; _.
+    # e '"$PHP_URL_USER"' "$PHP_URL_USER"; _.
+    # e '"$PHP_URL_PASS"' "$PHP_URL_PASS"; _.
+    # e '"$PHP_URL_PATH"' "$PHP_URL_PATH"; _.
+    # e '"$PHP_URL_QUERY"' "$PHP_URL_QUERY"; _.
+    # e '"$PHP_URL_FRAGMENT"' "$PHP_URL_FRAGMENT"; _.
+}
+urlCompleteComponent() {
+    local tld_special _url_port _tld _url_path_correct
+    [[ $(type -t Rcm_parse_url) == function ]] || { error Function Rcm_parse_url not found.; x; }
+    [[ $(type -t ArraySearch) == function ]] || { error Function ArraySearch not found.; x; }
+    [[ -n "$url" ]] || { error Global variable url is not found or empty value.; x; }
+    [[ -n "$RCM_TLD_SPECIAL" ]] || { error Global variable RCM_TLD_SPECIAL is not found or empty value.; x; }
+    Rcm_parse_url "$url"
+    if [ -z "$PHP_URL_HOST" ];then
+        error Argument --url is not valid: '`'"$url"'`'.; x
+    fi
+    [ -n "$PHP_URL_SCHEME" ] && url_scheme="$PHP_URL_SCHEME" || url_scheme=https
+    if [ -z "$PHP_URL_PORT" ];then
+        case "$url_scheme" in
+            http) url_port=80;;
+            https) url_port=443;;
+        esac
+    else
+        url_port="$PHP_URL_PORT"
+    fi
+    url_host="$PHP_URL_HOST"
+    url_path="$PHP_URL_PATH"
+    url_path_clean=
+    url_path_clean_trailing=
+    if [[ "$url_path" == '/' ]];then
+        url_path=
+    fi
+    if [ -n "$url_path" ];then
+        # Trim leading and trailing slash.
+        url_path_clean=$(echo "$url_path" | sed -E 's|(^/+\|/+$)||g')
+        url_path_clean_trailing=$(echo "$url_path" | sed -E 's|/+$||g')
+        # Must leading with slash.
+        # Karena akan digunakan pada nginx configuration.
+        _url_path_correct="/${url_path_clean}"
+        if [ ! "$url_path_clean_trailing" == "$_url_path_correct" ];then
+            error "Argument --url-path not valid."; x
+        fi
+    fi
+    _tld="${url_host##*.}"
+    # Explode by space.
+    read -ra tld_special -d '' <<< "$RCM_TLD_SPECIAL"
+    is_tld_special=
+    if ArraySearch "$_tld" tld_special[@];then
+        # Paksa menjadi http.
+        url_scheme=http
+        if [ -z "$PHP_URL_PORT" ];then
+            url_port=80
+        fi
+        is_tld_special=1
+    fi
+    _url_port=
+    if [ -n "$url_port" ];then
+        if [[ "$url_scheme" == https && "$url_port" == 443 ]];then
+            _url_port=
+        elif [[ "$url_scheme" == http && "$url_port" == 80 ]];then
+            _url_port=
+        else
+            _url_port=":${url_port}"
+        fi
+    fi
+    # Modify variable url, auto add scheme.
+    # Modify variable url, auto trim trailing slash, auto add port.
+    url="${url_scheme}://${url_host}${_url_port}${url_path_clean_trailing}"
+}
 
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 code 'ROUNDCUBE_FQDN_LOCALHOST="'$ROUNDCUBE_FQDN_LOCALHOST'"'
 code 'PHPMYADMIN_FQDN_LOCALHOST="'$PHPMYADMIN_FQDN_LOCALHOST'"'
-if [ -n "$project" ];then
-    case "$project" in
-        ispconfig|phpmyadmin|roundcube) ;;
-        *) error "Argument --project not valid."; x ;;
-    esac
-fi
 if [ -z "$project" ];then
     error "Argument --project required."; x
-fi
-if [ -z "$url_scheme" ];then
-    error "Argument --url-scheme required."; x
-fi
-if [ -z "$url_host" ];then
-    error "Argument --url-host required."; x
-fi
-if [ -z "$url_port" ];then
-    error "Argument --url-port required."; x
+else
+    case "$project" in
+        ispconfig|phpmyadmin|roundcube) ;;
+        *) error "Argument --project not valid.";
+           _ 'Available value: '; yellow ispconfig; _, ', '; yellow phpmyadmin; _, ', '; yellow roundcube; _, '.'; _.
+           x
+    esac
 fi
 code 'project="'$project'"'
+if [ -z "$php_version" ];then
+    error "Argument --php-version required."; x
+fi
+code 'php_version="'$php_version'"'
+if [ -z "$url" ];then
+    error "Argument --url required."; x
+fi
+code 'url="'$url'"'
+urlCompleteComponent
+code 'url="'$url'"'
 code 'url_scheme="'$url_scheme'"'
 code 'url_host="'$url_host'"'
 code 'url_port="'$url_port'"'
-code 'php_version="'$php_version'"'
+code 'url_path="'$url_path'"'
+code 'url_path_clean="'$url_path_clean'"'
+code 'url_path_clean_trailing="'$url_path_clean_trailing'"'
+code 'tls_certificate="'$tls_certificate'"'
+code 'tls_certificate_key="'$tls_certificate_key'"'
+# If not set in argument, try load from environment.
+[ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"
+[ -z "$tls_certificate_key" ] && tls_certificate_key="$TLS_CERTIFICATE_KEY"
+code 'tls_certificate="'$tls_certificate'"'
+code 'tls_certificate_key="'$tls_certificate_key'"'
 ____
 
 chapter Prepare arguments.
@@ -217,18 +351,15 @@ case "$project" in
         code 'php_fpm_section="'$php_fpm_section'"'
         ;;
 esac
+if [ -z "$php_fpm_section" ];then
+    error "Variable \$php_fpm_section failed to populate."; x
+fi
 socket_filename=$(rcm-php-fpm-setup-project-config get --php-version="$php_version" --section="$php_fpm_section" --key=listen)
 if [ -z "$socket_filename" ];then
     __; red Socket Filename of PHP-FPM not found.; x
 fi
 code 'socket_filename="'$socket_filename'"'
 code root="$root"
-if [[ "$url_port" == 80 || "$url_port" == 443 ]];then
-    filename="$url_host"
-else
-    filename="${url_host}.${url_port}"
-fi
-code filename="$filename"
 ____
 
 chapter Mengecek '$PATH'.
@@ -251,14 +382,11 @@ ____
 INDENT+="    " \
 PATH=$PATH \
 rcm-nginx-virtual-host-autocreate-php $isfast \
-    --with-certbot-obtain \
     --root="$root" \
+    --url="$url" \
     --fastcgi-pass="unix:${socket_filename}" \
-    --filename="$filename" \
-    --server-name="$server_name" \
-    --url-host="$url_host" \
-    --url-scheme="$url_scheme" \
-    --url-port="$url_port" \
+    --tls-certificate="$tls_certificate" \
+    --tls-certificate-key="$tls_certificate_key" \
     ; [ ! $? -eq 0 ] && x
 
 chapter Mengecek HTTP Response Code.
@@ -313,13 +441,15 @@ exit 0
 # --help
 # )
 # VALUE=(
+# --url
 # --project
 # --php-version
-# --url-scheme
-# --url-host
-# --url-port
+# --tls-certificate
+# --tls-certificate-key
 # )
 # FLAG_VALUE=(
+# )
+# CSV=(
 # )
 # EOF
 # clear
