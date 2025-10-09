@@ -25,11 +25,11 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --certbot-authenticator=*) certbot_authenticator="${1#*=}"; shift ;;
-        --certbot-authenticator) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then certbot_authenticator="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
-        --fqdn=*) fqdn="${1#*=}"; shift ;;
-        --fqdn) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fqdn="$2"; shift; fi; shift ;;
+        --tls-certificate-key=*) tls_certificate_key="${1#*=}"; shift ;;
+        --tls-certificate-key) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_certificate_key="$2"; shift; fi; shift ;;
+        --tls-certificate=*) tls_certificate="${1#*=}"; shift ;;
+        --tls-certificate) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_certificate="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -41,6 +41,7 @@ unset _new_arguments
 [ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
+POSTFIX_CONFIG_DIR=${POSTFIX_CONFIG_DIR:=/etc/postfix}
 
 # Functions.
 printVersion() {
@@ -55,10 +56,12 @@ printHelp() {
 Usage: rcm-ispconfig-setup-smtpd-certificate [options]
 
 Options:
-   --fqdn *
-        Fully Qualified Domain Name of this server, for example: \`server1.example.org\`.
-   --certbot-authenticator *
-        Available value: digitalocean, nginx.
+    --tls-certificate *
+        TLS Certificate.
+        Populate value from variable TLS_CERTIFICATE.
+    --tls-certificate-key *
+        TLS Certificate.
+        Populate value from variable TLS_CERTIFICATE_KEY.
 
 Global Options:
    --fast
@@ -68,9 +71,9 @@ Global Options:
    --help
         Show this help.
 
-Dependency:
-   rcm-certbot-obtain-authenticator-nginx
-   rcm-certbot-obtain-authenticator-digitalocean
+Environment Variables:
+   POSTFIX_CONFIG_DIR
+        Default to $POSTFIX_CONFIG_DIR
 EOF
 }
 
@@ -215,89 +218,116 @@ link_symbolic() {
     fi
     ____
 }
-isDirExists() {
+fileMustExists() {
     # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -d "$1" ];then
-        __ Direktori '`'$(basename "$1")'`' ditemukan.
-        found=1
+    # global modified:
+    # function used: __, success, error, x
+    if [ -f "$1" ];then
+        __; green File '`'$(basename "$1")'`' ditemukan.; _.
     else
-        __ Direktori '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
+        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
     fi
+}
+verifyKey() {
+    local key=$1
+    local output=$2
+    case "$key" in
+        smtpd_tls_cert_file)
+            if [[ "$output" == "smtpd_tls_cert_file = ${smtpd_tls_cert_file}" ]];then
+                return 0
+            fi
+            ;;
+        smtpd_tls_key_file)
+            if [[ "$output" == "smtpd_tls_key_file = ${smtpd_tls_key_file}" ]];then
+                return 0
+            fi
+            ;;
+    esac
+    return 1
 }
 
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-if [ -z "$fqdn" ];then
-    error "Argument --fqdn required."; x
+# If not set in argument, try load from environment.
+[ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"
+[ -z "$tls_certificate_key" ] && tls_certificate_key="$TLS_CERTIFICATE_KEY"
+if [ -z "$tls_certificate" ];then
+    error "Argument --tls-certificate or variable TLS_CERTIFICATE required."; x
 fi
-code 'fqdn="'$fqdn'"'
-if [ -n "$certbot_authenticator" ];then
-    case "$certbot_authenticator" in
-        digitalocean|nginx) ;;
-        *) error "Argument --certbot-authenticator not valid."; x ;;
-    esac
+code tls_certificate="$tls_certificate"
+if [ -z "$tls_certificate_key" ];then
+    error "Argument --tls-certificate-key or variable TLS_CERTIFICATE_KEY required."; x
 fi
-if [ -z "$certbot_authenticator" ];then
-    error "Argument --certbot-authenticator required."; x
-fi
-code 'certbot_authenticator="'$certbot_authenticator'"'
-certbot_certificate_name="$fqdn"
-code 'certbot_certificate_name="'$certbot_certificate_name'"'
+code tls_certificate_key="$tls_certificate_key"
+[ -f "$tls_certificate" ] || fileMustExists "$tls_certificate"
+[ -f "$tls_certificate_key" ] || fileMustExists "$tls_certificate_key"
+smtpd_tls_cert_file=$(postconf -n smtpd_tls_cert_file | grep -o -P '^smtpd_tls_cert_file\s+=\s+\K([^;]+)')
+smtpd_tls_key_file=$(postconf -n smtpd_tls_key_file | grep -o -P '^smtpd_tls_key_file\s+=\s+\K([^;]+)')
+code smtpd_tls_cert_file="$smtpd_tls_cert_file"
+code smtpd_tls_key_file="$smtpd_tls_key_file"
+[ -z "$smtpd_tls_cert_file" ] && smtpd_tls_cert_file="${POSTFIX_CONFIG_DIR}/smtpd.cert"
+[ -z "$smtpd_tls_key_file" ] && smtpd_tls_key_file="${POSTFIX_CONFIG_DIR}/smtpd.key"
+code smtpd_tls_cert_file="$smtpd_tls_cert_file"
+code smtpd_tls_key_file="$smtpd_tls_key_file"
 ____
 
-path="/etc/letsencrypt/live/${certbot_certificate_name}"
-chapter Mengecek direktori certbot '`'$path'`'.
-isDirExists "$path"
-____
+link_symbolic "$tls_certificate" "$smtpd_tls_cert_file" - absolute
+link_symbolic "$tls_certificate_key" "$smtpd_tls_key_file" - absolute
 
-if [ -n "$notfound" ];then
-    chapter Mengecek '$PATH'.
-    code PATH="$PATH"
-    if grep -q '/snap/bin' <<< "$PATH";then
-        __ '$PATH' sudah lengkap.
-    else
-        __ '$PATH' belum lengkap.
-        __ Memperbaiki '$PATH'
-        PATH=/snap/bin:$PATH
-        if grep -q '/snap/bin' <<< "$PATH";then
-            __; green '$PATH' sudah lengkap.; _.
-            __; magenta PATH="$PATH"; _.
+path="${POSTFIX_CONFIG_DIR}/smtpd.key"
+[ -f $path ] || fileMustExists $path
+path="${POSTFIX_CONFIG_DIR}/smtpd.cert"
+[ -f $path ] || fileMustExists $path
+tempfile_error=$(mktemp -p /dev/shm -t rcm-postfix-multiple-certificate.XXXXXX)
+tempfile_output=$(mktemp -p /dev/shm -t rcm-postfix-multiple-certificate.XXXXXX)
+
+restart=
+for key in smtpd_tls_cert_file smtpd_tls_key_file; do
+    chapter Memastikan key '`'$key'`' enabled.
+    postconf -n $key 2> $tempfile_error > $tempfile_output
+    error="$(<"$tempfile_error")"
+    if [ -n "$error" ];then
+        error "$error"; rm $tempfile_error; rm $tempfile_output; x
+    fi
+    output="$(<"$tempfile_output")"
+    found=
+
+    if [ -n "$output" ];then
+        __ Key ditemukan.
+        e "$output"; _.
+        __ Verifikasi.
+        if verifyKey "$key" "$output";then
+            found=1
+            __ Key ditemukan, dan value cocok.
         else
-            __; red '$PATH' belum lengkap.; x
+            __ Key ditemukan, namun value tidak cocok.
+            __ Disable and create new one.
+            code "postconf -# ${key}"
+            postconf -# $key
         fi
     fi
     ____
 
-    if [[ "$certbot_authenticator" == 'digitalocean' ]]; then
-        INDENT+="    " \
-        PATH=$PATH \
-        rcm-certbot-obtain-authenticator-digitalocean $isfast \
-            --certbot-dns-digitalocean-sure \
-            --domain="$fqdn" \
-            ; [ ! $? -eq 0 ] && x
-        # @todo, cek harusnya parent sudah validate certbot-dns-digitalocean
-        # sehingga bisa kita kasih option --certbot-dns-digitalocean-sure
-    elif [[ "$certbot_authenticator" == 'nginx' ]]; then
-        INDENT+="    " \
-        PATH=$PATH \
-        rcm-certbot-obtain-authenticator-nginx $isfast \
-            --domain="$fqdn" \
-            ; [ ! $? -eq 0 ] && x
+    if [ -z "$found" ];then
+        __ Set value of key '`'$key'`'
+        postconf "${key}=${!key}"
+        __ Verifikasi.
+        if verifyKey "$key" "$(postconf -n $key)";then
+            __ Verifikasi berhasil.
+            restart=1
+        else
+            error Verifikasi gagal.; rm $tempfile_error; rm $tempfile_output; x
+        fi
+
     fi
+done
+
+if [ -n "$restart" ];then
+    chapter Restart Postfix
+    code systemctl restart postfix
+    systemctl restart postfix
 fi
-
-link_symbolic "/etc/letsencrypt/live/${certbot_certificate_name}/fullchain.pem" /etc/postfix/smtpd.cert - absolute
-link_symbolic "/etc/letsencrypt/live/${certbot_certificate_name}/privkey.pem" /etc/postfix/smtpd.key - absolute
-
-chapter Restart Postfix
-code systemctl restart postfix
-systemctl restart postfix
 ____
 
 exit 0
@@ -316,8 +346,8 @@ exit 0
 # --help
 # )
 # VALUE=(
-# --fqdn
-# --certbot-authenticator
+# --tls-certificate
+# --tls-certificate-key
 # )
 # MULTIVALUE=(
 # )
