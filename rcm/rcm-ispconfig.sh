@@ -135,18 +135,8 @@ Global Options.
    --
         Every arguments after double dash will pass to rcm-ispconfig-setup-variation-* command.
 
-Methods dns interface:
-   prompt: rcm-ispconfig(helper do-nothing)
-   fqdn_exists_pre: rcm-ispconfig(helper dns-plugin-fqdn-exists-pre)
-   fqdn_exists: rcm-ispconfig(helper dns-plugin-fqdn-exists)
-   server_setup_post: rcm-ispconfig(helper do-nothing)
-
-Methods tls interface:
-   prompt: rcm(nginx-variables-export tls-certificate)
-   server_setup_post: rcm-ispconfig(helper do-nothing)
-
 Dependency:
-   rcm:0.18.0-alpha.1
+   rcm:0.18.0-alpha.2
    rcm-dig-apt
    rcm-dig-is-record-exists
 
