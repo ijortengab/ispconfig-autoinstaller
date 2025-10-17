@@ -42,7 +42,7 @@ MYSQL_ROOT_PASSWD_INI=${MYSQL_ROOT_PASSWD_INI:=[HOME]/.mysql-root-passwd.ini}
 
 # Functions.
 printVersion() {
-    echo '0.10.0-alpha.2'
+    echo '0.10.0-alpha.3'
 }
 printHelp() {
     title RCM MariaDB Setup

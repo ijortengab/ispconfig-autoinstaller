@@ -98,7 +98,7 @@ SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
 
 # Functions.
 printVersion() {
-    echo '0.10.0-alpha.2'
+    echo '0.10.0-alpha.3'
 }
 printHelp() {
     title ISPConfig Setup

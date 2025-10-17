@@ -94,7 +94,7 @@ userInputBooleanDefaultYes() {
 
 # Functions.
 printVersion() {
-    echo '0.10.0-alpha.2'
+    echo '0.10.0-alpha.3'
 }
 printHelp() {
     title RCM ISPConfig Control
