@@ -408,15 +408,21 @@ helper-mode-available() {
         echo $each
     done
 }
-helper-tls-plugin-prompt() {
-    local tls_plugin=$1
-    [ "$tls_plugin" == - ] && tls_plugin=
+command-plugin() {
+    local interface=$1 name=$2 method=$3
+    local function="plugin-${interface}-${name}-$method"
+    if [[ $(type -t "${function}") == function ]];then
+        title "rcm-ispconfig::plugin-${interface}-${name}-${method}()"
+        ____
 
-    if [ -n "$tls_plugin" ];then
-        rcm-plugin $isfast execute --interface=tls --name="$tls_plugin" \
-            --method='prompt' \
-            ; [ ! $? -eq 0 ] && x
+        ${function}
+        exit 0
+    else
+        error The function of method '`'"$function"'`' has not yet defined.; x
     fi
+}
+plugin-dns-manual-prompt() {
+    return 0
 }
 plugin-dns-manual-fqdn_exists_pre() {
     INDENT+='    ' \
@@ -448,46 +454,11 @@ plugin-dns-manual-fqdn_exists() {
         --ip-address="$ip_address" \
         ; [ ! $? -eq 0 ] && x
 }
-command-plugin() {
-    local interface=$1 name=$2 method=$3
-    case "$interface" in
-        dns)
-            case "$name" in
-                manual)
-                    case "$method" in
-                        prompt)
-                            ;;
-
-                        fqdn_exists_pre)
-
-                            title rcm-ispconfig::plugin::"$interface"::"$name"::"$method"
-                            ____
-
-                            plugin-dns-manual-fqdn_exists_pre
-                            ;;
-
-                        fqdn_exists)
-
-                            title rcm-ispconfig::plugin::"$interface"::"$name"::"$method"
-                            ____
-
-                            plugin-dns-manual-fqdn_exists
-                            ;;
-
-                        server_setup_post)
-                            ;;
-
-                        *)  error Method has not been defined.; x
-                            ;;
-                    esac
-                    ;;
-
-                *) error Plugin Name has not been defined.; x
-            esac
-            ;;
-
-        *) error Interface has not been defined.; x
-    esac
+plugin-dns-manual-server_setup_post() {
+    return 0
+}
+plugin-tls-manual-prompt() {
+    return 0
 }
 
 # Execute command.
