@@ -136,7 +136,7 @@ Global Options.
         Every arguments after double dash will pass to rcm-ispconfig-setup-variation-* command.
 
 Dependency:
-   rcm:0.18.0-alpha.2
+   rcm:0.18.0-alpha.3
    rcm-dig-apt
    rcm-dig-is-record-exists
 
