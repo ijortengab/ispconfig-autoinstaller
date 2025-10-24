@@ -31,6 +31,7 @@ while [[ $# -gt 0 ]]; do
         --mode=*) mode="${1#*=}"; shift ;;
         --mode) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mode="$2"; shift; fi; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
+        -[^-]*) _new_arguments+=("$1"); shift ;;
         --)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
@@ -39,14 +40,13 @@ while [[ $# -gt 0 ]]; do
             done
             ;;
         --[^-]*) shift ;;
-        helper|plugin)
+        *)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
                 esac
             done
             ;;
-        *) _new_arguments+=("$1"); shift ;;
     esac
 done
 set -- "${_new_arguments[@]}"
@@ -77,14 +77,13 @@ while [[ $# -gt 0 ]]; do
                 esac
             done
             ;;
-        helper|plugin)
+        *)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
                 esac
             done
             ;;
-        *) _new_arguments+=("$1"); shift ;;
     esac
 done
 set -- "${_new_arguments[@]}"
@@ -119,9 +118,7 @@ printHelp() {
     cat << EOF
 Usage: rcm-ispconfig [options]
 
-Options:
-   --mode *
-        Select the setup mode. Values available from command: rcm-ispconfig(helper mode-available).
+Available subcommands from command: rcm-ispconfig(helper mode-available).
 
 Global Options.
    --fast
@@ -148,8 +145,13 @@ Download:
    [rcm-ispconfig-setup-mode-website-phpmyadmin](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-website-phpmyadmin.sh)
    [rcm-ispconfig-setup-mode-bundle](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-bundle.sh)
 
-Mapping Operand:
-   --mode
+Subcommand Substitute:
+   init: rcm-ispconfig-setup-mode-init
+   mail-domain: rcm-ispconfig-setup-mode-mail-domain
+   website-ispconfig: rcm-ispconfig-setup-mode-website-ispconfig
+   website-roundcube: rcm-ispconfig-setup-mode-website-roundcube
+   website-phpmyadmin: rcm-ispconfig-setup-mode-website-phpmyadmin
+   bundle: rcm-ispconfig-setup-mode-bundle
 
 RCM Config:
    --no-timer
@@ -471,11 +473,34 @@ if [ -n "$command" ];then
     fi
 fi
 
+# Functions.
+Rcm_subcommand_substitute() {
+    # global isfast isverbose subcommand_substitute
+    local subcommand="$1"; shift
+    subcommand_substitute=`printHelp 2>/dev/null | sed -n '/^Subcommand Substitute[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
+    if [ -n "$subcommand_substitute" ];then
+        # Trim.
+        subcommand_substitute=`echo "$subcommand_substitute" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+        if grep -E -q "^${subcommand}:\s+" <<< "$subcommand_substitute";then
+            subcommand_substitute=`grep -o -P "^${subcommand}:\s+\K(.*)" <<< "$subcommand_substitute" | tail -1`
+            if [ -n "$subcommand_substitute" ];then
+                chapter Execute:
+                words_array=($subcommand_substitute $isfast $isverbose "$@")
+                wordWrapCommand
+                ____
+
+                INDENT+="    " $subcommand_substitute $isfast $isverbose "$@"
+
+            fi
+        fi
+    fi
+}
+
 # Title.
 title rcm-ispconfig
 ____
 
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
+# [ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -492,51 +517,18 @@ chapter Dump variable.
     done
 } || isverbose=
 
-if [ -z "$mode" ];then
-    error "Argument --mode required."; x
+command="$1"
+if [ -z "$command" ];then
+    error "Argument <command> required."; x
 else
     mode-available
-    if ! ArraySearch "$mode" mode_available[@];then
-        error "Argument --mode not valid."; x
+    if ! ArraySearch "$command" mode_available[@];then
+        error "Argument <command> not valid."; x
     fi
 fi
-code 'mode="'$mode'"'
-print_version=`printVersion`
 ____
 
-case "$mode" in
-    init)               extension=ispconfig-setup-mode-init ;;
-    mail-domain)        extension=ispconfig-setup-mode-mail-domain ;;
-    website-ispconfig)  extension=ispconfig-setup-mode-website-ispconfig ;;
-    website-roundcube)  extension=ispconfig-setup-mode-website-roundcube ;;
-    website-phpmyadmin) extension=ispconfig-setup-mode-website-phpmyadmin ;;
-    bundle)             extension=ispconfig-setup-mode-bundle ;;
-esac
-
-chapter Execute:
-case "$extension" in
-    *)
-        words_array=(rcm ${isfast} ${isnoninteractive} ${isverbose} $extension:$print_version -- "$@")
-esac
-wordWrapCommand
-____
-
-_help=$(printHelp 2>/dev/null)
-_download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
-if [ -n "$_download" ];then
-    while IFS= read -r _line; do
-        if ! grep -q -F -- "$_line" <<< "$table_downloads";then
-            [ -n "$_line" ] && table_downloads+="$_line"$'\n'
-        fi
-    done <<< "$_download"
-fi
-export RCM_TABLE_DOWNLOADS="$table_downloads"
-
-case "$extension" in
-    *)
-        INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" rcm${isfast}${isnoninteractive}${isverbose} $extension:$print_version -- "$@"
-esac
-____
+Rcm_subcommand_substitute "$@"
 
 exit 0
 
@@ -546,7 +538,7 @@ exit 0
 # --no-hash-bang \
 # --no-original-arguments \
 # --no-error-invalid-options \
-# --with-end-options-specific-operand \
+# --with-end-options-first-operand \
 # --no-error-require-arguments << EOF | clip
 # INCREMENT=(
 #     '--verbose|-v'
