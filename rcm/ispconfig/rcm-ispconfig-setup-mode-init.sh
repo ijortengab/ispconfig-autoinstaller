@@ -991,8 +991,8 @@ fi
 INDENT+='    ' \
 RCM_PROMPT_CHAIN_APPEND= \
 RCM_ENVIRONMENT_VARIABLES= \
-rcm $operand_setup_basic -- \
-    $isfast \
+rcm $isfast \
+    $operand_setup_basic \
     $is_update_system \
     $is_upgrade_system \
     --timezone="$timezone" \
