@@ -136,6 +136,7 @@ Dependency:
    rcm:0.18.0-alpha.4
    rcm-dig-apt
    rcm-dig-is-record-exists
+   rcm-nginx-variables-export
 
 Download:
    [rcm-ispconfig-setup-mode-init](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-init.sh)
@@ -460,6 +461,14 @@ plugin-dns-manual-server_setup_post() {
     return 0
 }
 plugin-tls-manual-prompt() {
+    INDENT+='    ' \
+    rcm nginx-variables-export tls-certificate \
+        ; [ ! $? -eq 0 ] && x
+}
+plugin-tls-manual-server_setup_post() {
+    return 0
+}
+plugin-tls-manual-obtain_certificate() {
     return 0
 }
 
