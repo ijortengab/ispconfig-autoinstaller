@@ -942,7 +942,7 @@ ____
 
 # Prepare for anything including setup required application.
 INDENT+='    ' \
-rcm-plugin $isfast execute --interface=dns --name="$dns_plugin" --method='fqdn_exists_pre' \
+rcm-plugin $isfast execute --interface=dns --name="$dns_plugin" --method='server_setup_pre' \
     ; [ ! $? -eq 0 ] && x
 ____
 
@@ -950,7 +950,7 @@ export RCM_HOSTNAME="$hostname"
 export RCM_DOMAIN="$domain"
 export RCM_IP_ADDRESS="$ip_address"
 INDENT+='    ' \
-rcm-plugin $isfast execute --interface=dns --name="$dns_plugin" --method='fqdn_exists' \
+rcm-plugin $isfast execute --interface=dns --name="$dns_plugin" --method='is_a_record_exists_not_cname' \
     ; [ ! $? -eq 0 ] && x
 ____
 
