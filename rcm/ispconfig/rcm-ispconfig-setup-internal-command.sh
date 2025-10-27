@@ -305,11 +305,13 @@ if [ -n "$found" ];then
     "$fullpath" --version 2>&1 &> $mktemp
     while IFS= read line; do e "$line"; _.; done < $mktemp
     old_version=$(head -1 $mktemp)
-    if [[ "$old_version" =~ [^0-9\.]+ ]];then
-        old_version=0
-    fi
-    vercomp $NEW_VERSION $old_version
-    if [[ $? -eq 1 ]];then
+    # if [[ "$old_version" =~ [^0-9\.]+ ]];then
+        # old_version=0
+    # fi
+    # vercomp $NEW_VERSION $old_version
+    # if [[ $? -eq 1 ]];then
+    # @todo, gunakan rcm-semver.
+    if [[ ! $NEW_VERSION == $old_version ]];then
         __ Command perlu diupdate. Versi saat ini ${NEW_VERSION}.
         found=
         notfound=1
