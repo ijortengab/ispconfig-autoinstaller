@@ -140,7 +140,7 @@ Dependency:
 
 Download:
    [rcm-ispconfig-setup-mode-init](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-init.sh)
-   [rcm-ispconfig-setup-mode-mail-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mail-domain.sh)
+   [rcm-ispconfig-setup-mode-mail-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-mail-domain.sh)
    [rcm-ispconfig-setup-mode-website-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-website-ispconfig.sh)
    [rcm-ispconfig-setup-mode-website-roundcube](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-website-roundcube.sh)
    [rcm-ispconfig-setup-mode-website-phpmyadmin](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-website-phpmyadmin.sh)
@@ -427,12 +427,12 @@ command-plugin() {
 plugin-dns-manual-prompt() {
     return 0
 }
-plugin-dns-manual-fqdn_exists_pre() {
+plugin-dns-manual-server_setup_pre() {
     INDENT+='    ' \
     rcm-dig-apt $isfast \
         ; [ ! $? -eq 0 ] && x
 }
-plugin-dns-manual-fqdn_exists() {
+plugin-dns-manual-is_a_record_exists_not_cname() {
     [ -n "$RCM_DOMAIN" ] || { error Environment Variable RCM_DOMAIN required; x; }
     [ -n "$RCM_HOSTNAME" ] || { error Environment Variable RCM_HOSTNAME required; x; }
     [ -n "$RCM_IP_ADDRESS" ] || { error Environment Variable RCM_IP_ADDRESS required; x; }
