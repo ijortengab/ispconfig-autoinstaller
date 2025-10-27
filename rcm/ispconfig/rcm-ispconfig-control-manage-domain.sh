@@ -428,7 +428,6 @@ code 'target="'$target'"'
 ____
 
 link_symbolic "$source" "$target" - absolute
-____
 
 # Bedanya command get-domain-id dengan --get-domain-id
 # Command get-domain-id jika tidak exists, maka null.
