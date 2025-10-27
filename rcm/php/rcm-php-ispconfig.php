@@ -93,6 +93,10 @@ switch ($command) {
         foreach ($arguments_value as $key => $value) {
             $shift = false;
             switch ($value) {
+                case '--version':
+                    $shift = true;
+                    $version = true;
+                    break;
                 case '--empty-array-is-false':
                     $shift = true;
                     $empty_array_is_false = true;
@@ -116,6 +120,10 @@ switch ($command) {
                 $arguments_count--;
                 $reset = true;
             }
+        }
+        # Help and Version.
+        if (isset($version)) {
+            printVersion(); echo PHP_EOL; exit(0);
         }
         if ($reset) {
             array_values($arguments_value);
