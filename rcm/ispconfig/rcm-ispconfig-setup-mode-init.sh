@@ -35,8 +35,6 @@ while [[ $# -gt 0 ]]; do
         --fast) fast=1; shift ;;
         --hostname=*) hostname="${1#*=}"; shift ;;
         --hostname) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then hostname="$2"; shift; fi; shift ;;
-        --ip-address=*) ip_address="${1#*=}"; shift ;;
-        --ip-address) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then ip_address="$2"; shift; fi; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
         --timezone) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then timezone="$2"; shift; fi; shift ;;
         --tls-plugin=*) tls_plugin="${1#*=}"; shift ;;
@@ -124,9 +122,6 @@ Options:
         Together with --hostname will make a Fully Qualified Domain Name.
    --hostname *
         Hostname of the server, for example: \`server1\`.
-   --ip-address *
-        Set the IP Address. Used to verify A record in DNS.
-        Value available from command: rcm-ispconfig-setup-mode-init(helper get-ipv4), or others.
    --url-ispconfig
         Add ISPConfig public domain. The value can be domain or URL.
         ISPConfig automatically has address at http://ispconfig.localhost/.
@@ -479,14 +474,6 @@ helper-suggest-url() {
             done
     esac
 }
-helper-get-ipv4() {
-    _ip=`wget -T 3 -t 1 -4qO- "http://ip1.dynupdate.no-ip.com/"`
-    if [ -n "$_ip" ];then
-        echo "$_ip"
-    else
-        ip addr show | grep -o "inet [0-9]*\.[0-9]*\.[0-9]*\.[0-9]*" | grep -o "[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*"
-    fi
-}
 helper-bundle-available() {
     local wrap
     local lines=()
@@ -828,13 +815,6 @@ if [ -z "$hostname" ];then
     error "Argument --hostname required."; x
 fi
 code hostname="$hostname"
-if [ -z "$ip_address" ];then
-    error "Argument --ip-address required."; x
-fi
-code ip_address="$ip_address"
-if ! grep -q -m 1 -oE '^[0-9]{1,3}(\.[0-9]{1,3}){3}$' <<< "$ip_address";then
-    error IP Address version 4 format is not valid; x
-fi
 fqdn="${hostname}.${domain}"
 code fqdn="$fqdn"
 Rcm_parse_url "$fqdn"
@@ -916,7 +896,6 @@ ____
 
 export RCM_HOSTNAME="$hostname"
 export RCM_DOMAIN="$domain"
-export RCM_IP_ADDRESS="$ip_address"
 INDENT+='    ' \
 rcm-plugin $isfast execute --interface=dns --name="$dns_plugin" --method='is_a_record_exists_not_cname' \
     ; [ ! $? -eq 0 ] && x
@@ -1148,7 +1127,6 @@ exit 0
 # --timezone
 # --hostname
 # --domain
-# --ip-address
 # --url-ispconfig
 # --url-phpmyadmin
 # --url-roundcube
