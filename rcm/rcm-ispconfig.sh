@@ -435,10 +435,8 @@ plugin-dns-manual-server_setup_pre() {
 plugin-dns-manual-is_a_record_exists_not_cname() {
     [ -n "$RCM_DOMAIN" ] || { error Environment Variable RCM_DOMAIN required; x; }
     [ -n "$RCM_HOSTNAME" ] || { error Environment Variable RCM_HOSTNAME required; x; }
-    [ -n "$RCM_IP_ADDRESS" ] || { error Environment Variable RCM_IP_ADDRESS required; x; }
     local domain="$RCM_DOMAIN"
     local hostname="$RCM_HOSTNAME"
-    local ip_address="$RCM_IP_ADDRESS"
     [ $hostname == - ] && hostname=
     local fqdn="$domain"
     [ -n "$hostname" ] && fqdn="${hostname}.${domain}"
@@ -454,7 +452,7 @@ plugin-dns-manual-is_a_record_exists_not_cname() {
     rcm-dig-is-record-exists $isfast --name-exists-sure \
         --domain="$fqdn" \
         --type=a \
-        --ip-address="$ip_address" \
+        --ip-address="*" \
         ; [ ! $? -eq 0 ] && x
 }
 plugin-dns-manual-server_setup_post() {
