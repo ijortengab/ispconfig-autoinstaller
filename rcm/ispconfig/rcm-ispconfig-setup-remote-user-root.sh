@@ -41,7 +41,7 @@ ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
 
 # Functions.
 printVersion() {
-    echo '0.10.0-alpha.4'
+    echo '0.10.0-alpha.5'
 }
 printHelp() {
     title RCM ISPConfig Setup

@@ -77,7 +77,7 @@ MAILBOX_POST=${MAILBOX_POST:=postmaster}
 
 # Functions.
 printVersion() {
-    echo '0.10.0-alpha.4'
+    echo '0.10.0-alpha.5'
 }
 printHelp() {
     title ISPConfig Setup

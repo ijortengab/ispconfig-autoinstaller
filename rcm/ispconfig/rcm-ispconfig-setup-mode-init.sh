@@ -98,7 +98,7 @@ SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
 
 # Functions.
 printVersion() {
-    echo '0.10.0-alpha.4'
+    echo '0.10.0-alpha.5'
 }
 printHelp() {
     title ISPConfig Setup
@@ -606,22 +606,6 @@ if [ -z "$bypass_validation_is_installed" ];then
 fi
 
 # Functions.
-ArrayUnique() {
-    local e source=("${!1}")
-    # inArray is alternative of ArraySearch.
-    inArray () {
-        local e match="$1"
-        shift
-        for e; do [[ "$e" == "$match" ]] && return 0; done
-        return 1
-    }
-    _return=()
-    for e in "${source[@]}";do
-        if ! inArray "$e" "${_return[@]}";then
-            _return+=("$e")
-        fi
-    done
-}
 ArraySearch() {
     local index match="$1"
     local source=("${!2}")
@@ -674,22 +658,6 @@ fileMustExists() {
     else
         __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
     fi
-}
-userInputBooleanDefaultNo() {
-    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
-    __;  _, '['; yellow Y; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
-    boolean=
-    while true; do
-        __; read -rsn 1 -p "Select: " char
-        if [ -z "$char" ];then
-            char=n
-        fi
-        case $char in
-            y|Y) echo "$char"; boolean=1; break;;
-            n|N) echo "$char"; break ;;
-            *) echo
-        esac
-    done
 }
 sleepExtended() {
     local countdown=$1
