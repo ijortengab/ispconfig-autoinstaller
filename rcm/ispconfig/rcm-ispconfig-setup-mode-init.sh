@@ -119,19 +119,19 @@ Options:
         Select the variation bundle setup. Values available from command: rcm-ispconfig-setup-mode-init(helper bundle-available).
    --domain *
         Domain name of the server.
-        Together with --hostname will make a Fully Qualified Domain Name.
+        Together with --hostname will make a Fully Qualified Domain Name (FQDN).
    --hostname *
         Hostname of the server, for example: \`server1\`.
    --url-ispconfig
-        Add ISPConfig public domain. The value can be domain or URL.
+        Add ISPConfig public domain. The value can be domain or URL and must be part of FQDN.
         ISPConfig automatically has address at http://ispconfig.localhost/.
         Value available from command: rcm-ispconfig-setup-mode-init(helper suggest-url ispconfig [--domain] [--hostname]), or other.
    --url-phpmyadmin
-        Add PHPMyAdmin public domain. The value can be domain or URL.
+        Add PHPMyAdmin public domain. The value can be domain or URL and must be part of FQDN.
         PHPMyAdmin automatically has address at http://phpmyadmin.localhost/.
         Value available from command: rcm-ispconfig-setup-mode-init(helper suggest-url phpmyadmin [--domain] [--hostname] [--url-ispconfig]), or other.
    --url-roundcube
-        Add Roundcube public domain. The value can be domain or URL.
+        Add Roundcube public domain. The value can be domain or URL and must be part of FQDN.
         Roundcube automatically has address at http://roundcube.localhost/.
         Value available from command: rcm-ispconfig-setup-mode-init(helper suggest-url roundcube [--domain] [--hostname] [--url-ispconfig]), or other.
    --timezone
