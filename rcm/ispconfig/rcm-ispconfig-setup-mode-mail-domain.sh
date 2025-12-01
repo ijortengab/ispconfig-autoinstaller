@@ -49,23 +49,11 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Command.
-if [ -n "$1" ];then
-    command=
-    case "$1" in
-        helper) command="$1"; shift ;;
-    esac
-    if [ -z "$command" ];then
-        error Command unknown: '`'"$1"'`'.; x
-    fi
-fi
-
 # Define variables and constants.
 [ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
-RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
 
 MAILBOX_ADMIN=${MAILBOX_ADMIN:=admin}
 MAILBOX_SUPPORT=${MAILBOX_SUPPORT:=support}
@@ -156,182 +144,7 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
-green2() {
-    local word=$1
-    hN "$word" green
-}
-hN() {
-    # hightlightNumber
-    local other=$2 i
-    [ -z "$other" ] && other=_,
-    local number=yellow
-    local word=$1 segment
-    local current last
-    for ((i = 0 ; i < ${#word} ; i++)); do
-        if [[ ${word:$i:1} =~ ^[0-9]+$ ]];then
-            current=number
-        else
-            current=other
-        fi
-        if [[ -n "$last" && ! "$last" == "$current" ]];then
-            ${!last} $segment
-            segment=
-        fi
-        last="$current"
-        segment+=${word:$i:1}
-    done
-    ${!last} $segment
-}
-
 # Functions.
-ArrayDiff() {
-    # Computes the difference of arrays.
-    #
-    # Globals:
-    #   Modified: _return
-    #
-    # Arguments:
-    #   1 = Parameter of the array to compare from.
-    #   2 = Parameter of the array to compare against.
-    #
-    # Returns:
-    #   None
-    #
-    # Example:
-    #   ```
-    #   my=("cherry" "manggo" "blackberry" "manggo" "blackberry")
-    #   yours=("cherry" "blackberry")
-    #   ArrayDiff my[@] yours[@]
-    #   # Get result in variable `$_return`.
-    #   # _return=("manggo" "manggo")
-    #   ```
-    local e
-    local source=("${!1}")
-    local reference=("${!2}")
-    _return=()
-    # inArray is alternative of ArraySearch.
-    inArray () {
-        local e match="$1"
-        shift
-        for e; do [[ "$e" == "$match" ]] && return 0; done
-        return 1
-    }
-    if [[ "${#reference[@]}" -gt 0 ]];then
-        for e in "${source[@]}";do
-            if ! inArray "$e" "${reference[@]}";then
-                _return+=("$e")
-            fi
-        done
-    else
-        _return=("${source[@]}")
-    fi
-}
-green2() {
-    local word=$1
-    hN "$word" green
-}
-hN() {
-    # hightlightNumber
-    local other=$2
-    [ -z "$other" ] && other=_,
-    local number=yellow
-    local word=$1 segment
-    local current last
-    for ((i = 0 ; i < ${#word} ; i++)); do
-        if [[ ${word:$i:1} =~ ^[0-9]+$ ]];then
-            current=number
-        else
-            current=other
-        fi
-        if [[ -n "$last" && ! "$last" == "$current" ]];then
-            ${!last} $segment
-            segment=
-        fi
-        last="$current"
-        segment+=${word:$i:1}
-    done
-    ${!last} $segment
-}
-Rcm_parse_url() {
-    # Reset
-    PHP_URL_SCHEME=
-    PHP_URL_HOST=
-    PHP_URL_PORT=
-    PHP_URL_USER=
-    PHP_URL_PASS=
-    PHP_URL_PATH=
-    PHP_URL_QUERY=
-    PHP_URL_FRAGMENT=
-    PHP_URL_SCHEME="$(echo "$1" | grep :// | sed -e's,^\(.*\)://.*,\1,g')"
-    _PHP_URL_SCHEME_SLASH="${PHP_URL_SCHEME}://"
-    _PHP_URL_SCHEME_REVERSE="$(echo ${1/${_PHP_URL_SCHEME_SLASH}/})"
-    if grep -q '#' <<< "$_PHP_URL_SCHEME_REVERSE";then
-        PHP_URL_FRAGMENT=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d# -f2)
-        _PHP_URL_SCHEME_REVERSE=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d# -f1)
-    fi
-    if grep -q '\?' <<< "$_PHP_URL_SCHEME_REVERSE";then
-        PHP_URL_QUERY=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d? -f2)
-        _PHP_URL_SCHEME_REVERSE=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d? -f1)
-    fi
-    _PHP_URL_USER_PASS="$(echo $_PHP_URL_SCHEME_REVERSE | grep @ | cut -d@ -f1)"
-    PHP_URL_PASS=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f2`
-    if [ -n "$PHP_URL_PASS" ]; then
-        PHP_URL_USER=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f1`
-    else
-        PHP_URL_USER=$_PHP_URL_USER_PASS
-    fi
-    _PHP_URL_HOST_PORT="$(echo ${_PHP_URL_SCHEME_REVERSE/$_PHP_URL_USER_PASS@/} | cut -d/ -f1)"
-    PHP_URL_HOST="$(echo $_PHP_URL_HOST_PORT | sed -e 's,:.*,,g')"
-    if grep -q -E ':[0-9]+$' <<< "$_PHP_URL_HOST_PORT";then
-        PHP_URL_PORT="$(echo $_PHP_URL_HOST_PORT | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
-    fi
-    _PHP_URL_HOST_PORT_LENGTH=${#_PHP_URL_HOST_PORT}
-    _LENGTH="$_PHP_URL_HOST_PORT_LENGTH"
-    if [ -n "$_PHP_URL_USER_PASS" ];then
-        _PHP_URL_USER_PASS_LENGTH=${#_PHP_URL_USER_PASS}
-        _LENGTH=$((_LENGTH + 1 + _PHP_URL_USER_PASS_LENGTH))
-    fi
-    PHP_URL_PATH="${_PHP_URL_SCHEME_REVERSE:$_LENGTH}"
-
-    # Debug
-    # e '"$PHP_URL_SCHEME"' "$PHP_URL_SCHEME"
-    # e '"$PHP_URL_HOST"' "$PHP_URL_HOST"
-    # e '"$PHP_URL_PORT"' "$PHP_URL_PORT"
-    # e '"$PHP_URL_USER"' "$PHP_URL_USER"
-    # e '"$PHP_URL_PASS"' "$PHP_URL_PASS"
-    # e '"$PHP_URL_PATH"' "$PHP_URL_PATH"
-    # e '"$PHP_URL_QUERY"' "$PHP_URL_QUERY"
-    # e '"$PHP_URL_FRAGMENT"' "$PHP_URL_FRAGMENT"
-}
-urlAlternative() {
-    [[ $(type -t Rcm_parse_url) == function ]] || { error Function Rcm_parse_url not found.; x; }
-    local url=$1 port=$2 path=$3
-    local PHP_URL_SCHEME PHP_URL_USER PHP_URL_PASS PHP_URL_HOST PHP_URL_PORT PHP_URL_PATH
-    local scheme
-    Rcm_parse_url $url
-    if [ "$port" == - ];then
-        port="$PHP_URL_PORT"
-    fi
-    [ -z "$port" ] && port=8080
-    [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
-    local hostname=$(echo "$PHP_URL_HOST" | sed -E 's|^([^\.]+)\..*|\1|g')
-    local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
-    if [ "$hostname" == "$SUBDOMAIN_ISPCONFIG" ];then
-        echo "${scheme}://${domain}:${port}${path}"
-    else
-        echo "${scheme}://${PHP_URL_HOST}:${port}${path}"
-    fi
-}
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
 
 # Title.
 title rcm-ispconfig-setup-mode-mail-domain
@@ -342,7 +155,7 @@ while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
-# [ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Source: ISPConfigDebianOS::runPerfectSetup()
 if [ -z "$bypass_validation_is_installed" ];then
@@ -360,22 +173,6 @@ if [ -z "$bypass_validation_is_installed" ];then
 fi
 
 # Functions.
-ArrayUnique() {
-    local e source=("${!1}")
-    # inArray is alternative of ArraySearch.
-    inArray () {
-        local e match="$1"
-        shift
-        for e; do [[ "$e" == "$match" ]] && return 0; done
-        return 1
-    }
-    _return=()
-    for e in "${source[@]}";do
-        if ! inArray "$e" "${_return[@]}";then
-            _return+=("$e")
-        fi
-    done
-}
 ArraySearch() {
     local index match="$1"
     local source=("${!2}")
@@ -385,154 +182,6 @@ ArraySearch() {
        fi
     done
     return 1
-}
-backupFile() {
-    local mode="$1"
-    local oldpath="$2" i newpath
-    local target_dir="$3"
-    i=1
-    dirname=$(dirname "$oldpath")
-    basename=$(basename "$oldpath")
-    if [ -n "$target_dir" ];then
-        case "$target_dir" in
-            parent) dirname=$(dirname "$dirname") ;;
-            *) dirname="$target_dir"
-        esac
-    fi
-    [ -d "$dirname" ] || { echo 'Directory is not exists.' >&2; return 1; }
-    newpath="${dirname}/${basename}.${i}"
-    if [ -f "$newpath" ]; then
-        let i++
-        newpath="${dirname}/${basename}.${i}"
-        while [ -f "$newpath" ] ; do
-            let i++
-            newpath="${dirname}/${basename}.${i}"
-        done
-    fi
-    case $mode in
-        move)
-            mv "$oldpath" "$newpath" ;;
-        copy)
-            local user=$(stat -c "%U" "$oldpath")
-            local group=$(stat -c "%G" "$oldpath")
-            cp "$oldpath" "$newpath"
-            chown ${user}:${group} "$newpath"
-    esac
-}
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
-userInputBooleanDefaultNo() {
-    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
-    __;  _, '['; yellow Y; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
-    boolean=
-    while true; do
-        __; read -rsn 1 -p "Select: " char
-        if [ -z "$char" ];then
-            char=n
-        fi
-        case $char in
-            y|Y) echo "$char"; boolean=1; break;;
-            n|N) echo "$char"; break ;;
-            *) echo
-        esac
-    done
-}
-sleepExtended() {
-    local countdown=$1
-    local width=$2
-    if [ -z "$width" ];then
-        width=80
-    fi
-    if [ "$countdown" -gt 0 ];then
-        dikali10=$((countdown*10))
-        _dikali10=$dikali10
-        _dotLength=$(( ( width * _dikali10 ) / dikali10 ))
-        printf "\r\033[K" >&2
-        e; printf %"$_dotLength"s | tr " " "." >&2
-        printf "\r"
-        while [ "$_dikali10" -ge 0 ]; do
-            dotLength=$(( ( width * _dikali10 ) / dikali10 ))
-            if [[ ! "$dotLength" == "$_dotLength" ]];then
-                _dotLength="$dotLength"
-                printf "\r\033[K" >&2
-                e; printf %"$dotLength"s | tr " " "." >&2
-                printf "\r"
-            fi
-            _dikali10=$((_dikali10 - 1))
-            sleep .1
-        done
-    fi
-}
-urlCompleteComponent() {
-    local tld_special _url_port _tld _url_path_correct
-    [[ $(type -t Rcm_parse_url) == function ]] || { error Function Rcm_parse_url not found.; x; }
-    [[ $(type -t ArraySearch) == function ]] || { error Function ArraySearch not found.; x; }
-    [[ -n "$url" ]] || { error Global variable url is not found or empty value.; x; }
-    [[ -n "$RCM_TLD_SPECIAL" ]] || { error Global variable RCM_TLD_SPECIAL is not found or empty value.; x; }
-    Rcm_parse_url "$url"
-    if [ -z "$PHP_URL_HOST" ];then
-        error Argument --url is not valid: '`'"$url"'`'.; x
-    fi
-    [ -n "$PHP_URL_SCHEME" ] && url_scheme="$PHP_URL_SCHEME" || url_scheme=https
-    if [ -z "$PHP_URL_PORT" ];then
-        case "$url_scheme" in
-            http) url_port=80;;
-            https) url_port=443;;
-        esac
-    else
-        url_port="$PHP_URL_PORT"
-    fi
-    url_host="$PHP_URL_HOST"
-    url_path="$PHP_URL_PATH"
-    url_path_clean=
-    url_path_clean_trailing=
-    if [[ "$url_path" == '/' ]];then
-        url_path=
-    fi
-    if [ -n "$url_path" ];then
-        # Trim leading and trailing slash.
-        url_path_clean=$(echo "$url_path" | sed -E 's|(^/+\|/+$)||g')
-        url_path_clean_trailing=$(echo "$url_path" | sed -E 's|/+$||g')
-        # Must leading with slash.
-        # Karena akan digunakan pada nginx configuration.
-        _url_path_correct="/${url_path_clean}"
-        if [ ! "$url_path_clean_trailing" == "$_url_path_correct" ];then
-            error "Argument --url-path not valid."; x
-        fi
-    fi
-    _tld="${url_host##*.}"
-    # Explode by space.
-    read -ra tld_special -d '' <<< "$RCM_TLD_SPECIAL"
-    is_tld_special=
-    if ArraySearch "$_tld" tld_special[@];then
-        # Paksa menjadi http.
-        url_scheme=http
-        if [ -z "$PHP_URL_PORT" ];then
-            url_port=80
-        fi
-        is_tld_special=1
-    fi
-    _url_port=
-    if [ -n "$url_port" ];then
-        if [[ "$url_scheme" == https && "$url_port" == 443 ]];then
-            _url_port=
-        elif [[ "$url_scheme" == http && "$url_port" == 80 ]];then
-            _url_port=
-        else
-            _url_port=":${url_port}"
-        fi
-    fi
-    # Modify variable url, auto add scheme.
-    # Modify variable url, auto trim trailing slash, auto add port.
-    url="${url_scheme}://${url_host}${_url_port}${url_path_clean_trailing}"
 }
 
 # Require, validate, and populate value.
@@ -648,10 +297,18 @@ if [ -n "$tls_plugin" ];then
         ; [ ! $? -eq 0 ] && x
 fi
 
+chapter Send Welcome email.
+code postqueue -f
+postqueue -f
+command -v run-getmail.sh >/dev/null && {
+    code run-getmail.sh
+    run-getmail.sh
+}
+____
+
 INDENT+="    " \
 rcm-ispconfig-setup-dump-variables-addon $isfast \
     --domain="$domain" \
-    --ip-address="$ip_address" \
     ; [ ! $? -eq 0 ] && x
 
 chapter Finish
