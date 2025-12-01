@@ -136,7 +136,6 @@ Dependency:
    rcm:0.18.0-alpha.5
    rcm-dig-apt
    rcm-dig-is-record-exists
-   rcm-nginx-variables-export
 
 Download:
    [rcm-ispconfig-setup-mode-init](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-init.sh)
@@ -457,6 +456,14 @@ plugin-dns-manual-is_a_record_exists_not_cname() {
 }
 plugin-dns-manual-server_setup_post() {
     return 0
+}
+plugin-dns-manual-is_domain_exists() {
+    [ -n "$RCM_DOMAIN" ] || { error Environment Variable RCM_DOMAIN required; x; }
+    local domain="$RCM_DOMAIN"
+    INDENT+="    " \
+    rcm-dig-watch-domain-exists $isfast \
+        --domain="$domain" \
+        --waiting-time="60"
 }
 plugin-tls-manual-prompt() {
     INDENT+='    ' \
