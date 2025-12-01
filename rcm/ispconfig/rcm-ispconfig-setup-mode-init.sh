@@ -202,33 +202,6 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
-green2() {
-    local word=$1
-    hN "$word" green
-}
-hN() {
-    # hightlightNumber
-    local other=$2 i
-    [ -z "$other" ] && other=_,
-    local number=yellow
-    local word=$1 segment
-    local current last
-    for ((i = 0 ; i < ${#word} ; i++)); do
-        if [[ ${word:$i:1} =~ ^[0-9]+$ ]];then
-            current=number
-        else
-            current=other
-        fi
-        if [[ -n "$last" && ! "$last" == "$current" ]];then
-            ${!last} $segment
-            segment=
-        fi
-        last="$current"
-        segment+=${word:$i:1}
-    done
-    ${!last} $segment
-}
-
 # Functions.
 ArrayDiff() {
     # Computes the difference of arrays.
@@ -368,16 +341,6 @@ urlAlternative() {
         echo "${scheme}://${PHP_URL_HOST}:${port}${path}"
     fi
 }
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
 command-helper() {
     local helper=$1; shift
     if [ "$helper" == do-nothing ];then
@@ -427,13 +390,9 @@ helper-suggest-url() {
             _; _.
             ___; yellow Attention; _, . ISPConfig cannot install inside subpath.; _.
             local fqdn=$3.$2
-            # Rcm_parse_url $fqdn
-            # local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
-            # siblingHost "$domain" $SUBDOMAIN_ISPCONFIG
             urlAlternative "$fqdn" 8080
             urlAlternative "$fqdn" 8081
             urlAlternative "$fqdn" 8443
-            # echo "https://${PHP_URL_HOST}:8080"
             ;;
         phpmyadmin)
             local fqdn=$3.$2 url_ispconfig=$4
@@ -562,21 +521,6 @@ done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/
 
 [ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
-# Code dibawah ini diganti
-# 20250916
-# if [ -z "$bypass_validation_is_installed" ];then
-#     chapter Mengecek ISPConfig User.
-#     php_fpm_user=ispconfig
-#     code id -u '"'$php_fpm_user'"'
-#     if id "$php_fpm_user" >/dev/null 2>&1; then
-#         __ User '`'$php_fpm_user'`' found.
-#         error Setup terminated. ISPConfig already installed.; x
-#     else
-#         __ User '`'$php_fpm_user'`' not found.;
-#     fi
-#     ____
-# fi
-
 # Source: ISPConfigDebianOS::runPerfectSetup()
 if [ -z "$bypass_validation_is_installed" ];then
     chapter Mengecek existing ISPConfig.
@@ -602,39 +546,6 @@ ArraySearch() {
        fi
     done
     return 1
-}
-backupFile() {
-    local mode="$1"
-    local oldpath="$2" i newpath
-    local target_dir="$3"
-    i=1
-    dirname=$(dirname "$oldpath")
-    basename=$(basename "$oldpath")
-    if [ -n "$target_dir" ];then
-        case "$target_dir" in
-            parent) dirname=$(dirname "$dirname") ;;
-            *) dirname="$target_dir"
-        esac
-    fi
-    [ -d "$dirname" ] || { echo 'Directory is not exists.' >&2; return 1; }
-    newpath="${dirname}/${basename}.${i}"
-    if [ -f "$newpath" ]; then
-        let i++
-        newpath="${dirname}/${basename}.${i}"
-        while [ -f "$newpath" ] ; do
-            let i++
-            newpath="${dirname}/${basename}.${i}"
-        done
-    fi
-    case $mode in
-        move)
-            mv "$oldpath" "$newpath" ;;
-        copy)
-            local user=$(stat -c "%U" "$oldpath")
-            local group=$(stat -c "%G" "$oldpath")
-            cp "$oldpath" "$newpath"
-            chown ${user}:${group} "$newpath"
-    esac
 }
 fileMustExists() {
     # global used:
@@ -935,10 +846,17 @@ if [[ -n "$adjust" ]];then
     ____
 fi
 
+if command -v rcm-$operand_setup_basic >/dev/null;then
+    is_with_resolve_dependencies=
+else
+    is_with_resolve_dependencies=' --with-resolve-dependencies'
+fi
+
 INDENT+='    ' \
-RCM_PROMPT_CHAIN_APPEND= \
+RCM_PROMPT_CHAIN= \
 RCM_ENVIRONMENT_VARIABLES= \
 rcm $isfast \
+    $is_with_resolve_dependencies \
     $operand_setup_basic \
     $is_update_system \
     $is_upgrade_system \
