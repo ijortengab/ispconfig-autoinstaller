@@ -60,7 +60,7 @@ ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 
 # Functions.
 printVersion() {
-    echo '0.10.0-alpha.5'
+    echo '0.10.0-alpha.6'
 }
 printHelp() {
     title ISPConfig Setup
