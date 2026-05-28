@@ -207,7 +207,7 @@ backupDir() {
 }
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 rcm_nginx_reload=
 ____
 

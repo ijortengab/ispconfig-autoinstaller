@@ -89,7 +89,7 @@ done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/
 # Functions.
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 code 'MYSQL_ROOT_PASSWD="'$MYSQL_ROOT_PASSWD'"'
 find='[HOME]'
 replace="$HOME"

@@ -249,7 +249,7 @@ verifyKey() {
 }
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 # If not set in argument, try load from environment.
 [ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"

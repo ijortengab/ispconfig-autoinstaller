@@ -309,7 +309,7 @@ sleepExtended() {
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 code 'DKIM_SELECTOR="'$DKIM_SELECTOR'"'
 code 'MAILBOX_POST="'$MAILBOX_POST'"'
 if [ -z "$domain" ];then

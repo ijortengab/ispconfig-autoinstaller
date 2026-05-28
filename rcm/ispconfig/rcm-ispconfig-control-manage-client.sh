@@ -250,7 +250,7 @@ create() {
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 if [ -z "$username" ];then
     error "Argument --username required."; x
 fi

@@ -276,7 +276,7 @@ isFileExists() {
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 __FILE__=$(resolve_relative_path "$0")
 __DIR__=$(dirname "$__FILE__")
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'

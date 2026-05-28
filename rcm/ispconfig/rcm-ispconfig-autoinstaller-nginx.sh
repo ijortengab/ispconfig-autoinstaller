@@ -448,7 +448,7 @@ isDirExists() {
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
 code 'MYSQL_ROOT_PASSWD="'$MYSQL_ROOT_PASSWD'"'

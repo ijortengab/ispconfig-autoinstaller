@@ -122,7 +122,7 @@ isDirExists() {
 }
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
 code 'DOVECOT_CONFIG_DIR="'$DOVECOT_CONFIG_DIR'"'

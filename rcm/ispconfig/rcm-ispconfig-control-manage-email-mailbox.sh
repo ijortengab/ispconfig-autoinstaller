@@ -179,7 +179,7 @@ create() {
 }
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 if [ -z "$domain" ];then
     error "Argument --domain required."; x

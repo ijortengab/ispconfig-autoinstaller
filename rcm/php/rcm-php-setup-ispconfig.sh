@@ -119,7 +119,7 @@ validateApplication() {
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
-chapter Dump variable.
+chapter Variable dump.
 code 'php_version="'$php_version'"'
 ____
 

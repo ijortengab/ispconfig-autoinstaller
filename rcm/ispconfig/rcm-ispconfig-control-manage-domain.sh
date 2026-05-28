@@ -359,7 +359,7 @@ create() {
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 code 'MAILBOX_ADMIN="'$MAILBOX_ADMIN'"'
 code 'DKIM_SELECTOR="'$DKIM_SELECTOR'"'

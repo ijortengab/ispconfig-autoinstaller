@@ -312,7 +312,7 @@ postfixConfigEditor() {
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 code 'POSTFIX_CONFIG_FILE_MASTER="'$POSTFIX_CONFIG_FILE_MASTER'"'
 ____
 

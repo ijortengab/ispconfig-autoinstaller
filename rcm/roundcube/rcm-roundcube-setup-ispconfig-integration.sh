@@ -275,7 +275,7 @@ isDirExists() {
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 code 'ROUNDCUBE_FQDN_LOCALHOST="'$ROUNDCUBE_FQDN_LOCALHOST'"'
 code 'ISPCONFIG_REMOTE_USER_ROUNDCUBE="'$ISPCONFIG_REMOTE_USER_ROUNDCUBE'"'
 code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'

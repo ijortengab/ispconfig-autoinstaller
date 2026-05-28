@@ -185,7 +185,7 @@ ArraySearch() {
 }
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 if [ -z "$dns_plugin" ];then
     error "Argument --dns-plugin required."; x
