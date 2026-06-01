@@ -109,7 +109,7 @@ DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
 
 # Functions.
-printHelp() {
+usage() {
     title ISPConfig Auto-Installer
     _ 'Homepage '; yellow https://github.com/ijortengab/ispconfig-autoinstaller; _.
     _.
@@ -158,7 +158,7 @@ EOF
 }
 
 # Help and Version.
-[ -n "$help" ] && { printHelp; exit 1; }
+[ -n "$help" ] && { usage; exit 1; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Functions.
@@ -489,7 +489,7 @@ fi
 Rcm_subcommand_substitute() {
     # global isfast isverbose subcommand_substitute
     local subcommand="$1"; shift
-    subcommand_substitute=`printHelp 2>/dev/null | sed -n '/^Subcommand Substitute[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
+    subcommand_substitute=`usage 2>/dev/null | sed -n '/^Subcommand Substitute[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
     if [ -n "$subcommand_substitute" ];then
         # Trim.
         subcommand_substitute=`echo "$subcommand_substitute" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
@@ -517,7 +517,7 @@ ____
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
-done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
+done <<< `usage 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Require, validate, and populate value.
 chapter Variable dump.
