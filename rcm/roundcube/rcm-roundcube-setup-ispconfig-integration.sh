@@ -1,5 +1,7 @@
 #!/bin/bash
 
+RCM_EXTENSION_VERSION=0.10.0-alpha.6
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -42,13 +44,9 @@ ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 ISPCONFIG_REMOTE_USER_ROUNDCUBE=${ISPCONFIG_REMOTE_USER_ROUNDCUBE:=roundcube}
 
 # Functions.
-printVersion() {
-    echo '0.10.0-alpha.6'
-}
 printHelp() {
     title RCM Roundcube Setup
     _ 'Variation '; yellow ISPConfig Integration; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-roundcube-setup-ispconfig-integration [options]
@@ -79,7 +77,7 @@ EOF
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
-[ -n "$version" ] && { printVersion; exit 1; }
+[ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Title.
 title rcm-roundcube-setup-ispconfig-integration

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+RCM_EXTENSION_VERSION=0.10.0-alpha.6
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -93,13 +95,9 @@ userInputBooleanDefaultYes() {
 }
 
 # Functions.
-printVersion() {
-    echo '0.10.0-alpha.6'
-}
 printHelp() {
     title RCM ISPConfig Control
     _ 'Variation '; yellow Manage Client; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-ispconfig-control-manage-client [command] [options]
@@ -138,7 +136,7 @@ Global Options:
 
 Dependency:
    pwgen
-   rcm-php-ispconfig:`printVersion`
+   rcm-php-ispconfig:$RCM_EXTENSION_VERSION
 
 Download:
    [rcm-php-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/php/rcm-php-ispconfig.php)
@@ -147,7 +145,7 @@ EOF
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
-[ -n "$version" ] && { printVersion; exit 1; }
+[ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Functions before execute command.
 command-get-client-id() {

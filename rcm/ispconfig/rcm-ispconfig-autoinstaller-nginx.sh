@@ -1,5 +1,7 @@
 #!/bin/bash
 
+RCM_EXTENSION_VERSION=0.10.0-alpha.6
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -61,13 +63,9 @@ MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 
 # Functions.
-printVersion() {
-    echo '0.10.0-alpha.6'
-}
 printHelp() {
     title RCM ISPConfig Auto-Installer
     _ 'Variation '; yellow Nginx; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-ispconfig-autoinstaller-nginx [options]
@@ -121,11 +119,11 @@ Dependency:
    php
    curl
    nginx
-   rcm-mariadb-setup-ispconfig:`printVersion`
-   rcm-nginx-setup-ispconfig:`printVersion`
-   rcm-php-setup-ispconfig:`printVersion`
-   rcm-postfix-setup-ispconfig:`printVersion`
-   rcm-ispconfig-setup-smtpd-certificate:`printVersion`
+   rcm-mariadb-setup-ispconfig:$RCM_EXTENSION_VERSION
+   rcm-nginx-setup-ispconfig:$RCM_EXTENSION_VERSION
+   rcm-php-setup-ispconfig:$RCM_EXTENSION_VERSION
+   rcm-postfix-setup-ispconfig:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-setup-smtpd-certificate:$RCM_EXTENSION_VERSION
    rcm-phpmyadmin-autoinstaller-nginx
    rcm-roundcube-autoinstaller-nginx
    rcm-mariadb-setup-project-database
@@ -144,7 +142,7 @@ EOF
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
-[ -n "$version" ] && { printVersion; exit 1; }
+[ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Title.
 title rcm-ispconfig-autoinstaller-nginx

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+RCM_EXTENSION_VERSION=0.10.0-alpha.6
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -40,13 +42,9 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 
 # Functions.
-printVersion() {
-    echo '0.10.0-alpha.6'
-}
 printHelp() {
     title RCM ISPConfig Setup
     _ 'Variation '; yellow Internal Command; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-ispconfig-setup-internal-command [options]
@@ -72,7 +70,7 @@ EOF
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
-[ -n "$version" ] && { printVersion; exit 1; }
+[ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Title.
 title rcm-ispconfig-setup-internal-command
@@ -284,7 +282,7 @@ find='[__DIR__]'
 replace="$__DIR__"
 BINARY_DIRECTORY="${BINARY_DIRECTORY/"$find"/"$replace"}"
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
-NEW_VERSION=`printVersion`
+NEW_VERSION=$RCM_EXTENSION_VERSION
 code 'NEW_VERSION="'$NEW_VERSION'"'
 mktemp=
 ____
@@ -370,6 +368,8 @@ if [ -n "$notfound" ];then
     chmod a+x "$fullpath"
     cat << 'EOF' > "$fullpath"
 #!/bin/bash
+
+RCM_EXTENSION_VERSION=0.10.0-alpha.6
 _soap_ispconfig() {
     local cur prev
     cur=${COMP_WORDS[COMP_CWORD]}

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+RCM_EXTENSION_VERSION=0.10.0-alpha.6
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -64,13 +66,9 @@ MAILBOX_POST=${MAILBOX_POST:=postmaster}
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 
 # Functions.
-printVersion() {
-    echo '0.10.0-alpha.6'
-}
 printHelp() {
     title ISPConfig Setup
     _ 'Mode '; yellow mail-domain; _, .; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-ispconfig-setup-mode-mail-domain [command] [options]
@@ -98,16 +96,16 @@ RCM Config:
    --no-timer
 
 Dependency:
-   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:`printVersion`
-   rcm-ispconfig-control-manage-domain:`printVersion`
-   rcm-ispconfig-control-manage-email-mailbox:`printVersion`
-   rcm-ispconfig-control-manage-email-alias:`printVersion`
-   rcm-ispconfig-setup-dump-variables-addon:`printVersion`
-   rcm-ispconfig-setup-internal-command:`printVersion`
-   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root:`printVersion`
-   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:`printVersion`
-   rcm-postfix-multiple-certificate-ispconfig:`printVersion`
-   rcm-dovecot-multiple-certificate-ispconfig:`printVersion`
+   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-control-manage-domain:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-control-manage-email-mailbox:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-control-manage-email-alias:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-setup-dump-variables-addon:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-setup-internal-command:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:$RCM_EXTENSION_VERSION
+   rcm-postfix-multiple-certificate-ispconfig:$RCM_EXTENSION_VERSION
+   rcm-dovecot-multiple-certificate-ispconfig:$RCM_EXTENSION_VERSION
    rcm-dig-is-name-exists
    rcm-dig-is-record-exists
    rcm-dig-watch-domain-exists
@@ -131,8 +129,8 @@ Download:
 Pre Prompt:
    rcm-plugin(init --interface=dns)
    rcm-plugin(init --interface=tls)
-   rcm-plugin(add --interface=dns --name=manual --command=rcm-ispconfig --version=`printVersion` --temporary)
-   rcm-plugin(add --interface=tls --name=manual --command=rcm-ispconfig --version=`printVersion` --temporary)
+   rcm-plugin(add --interface=dns --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
+   rcm-plugin(add --interface=tls --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
 
 Post Prompt:
    rcm-plugin(execute --interface=dns --name=[--dns-plugin] --method=prompt)
@@ -142,7 +140,7 @@ EOF
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
-[ -n "$version" ] && { printVersion; exit 1; }
+[ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Functions.
 

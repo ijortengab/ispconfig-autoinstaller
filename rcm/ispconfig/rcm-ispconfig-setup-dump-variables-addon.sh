@@ -1,5 +1,7 @@
 #!/bin/bash
 
+RCM_EXTENSION_VERSION=0.10.0-alpha.6
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -54,13 +56,9 @@ MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 
 # Functions.
-printVersion() {
-    echo '0.10.0-alpha.6'
-}
 printHelp() {
     title RCM ISPConfig Setup
     _ 'Variation '; yellow Dump Variables; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 rcm-ispconfig-setup-dump-variables-addon [options]
@@ -96,7 +94,7 @@ Environment Variables:
         Default to $DKIM_SELECTOR
 
 Dependency:
-   rcm-ispconfig-control-manage-domain:`printVersion`
+   rcm-ispconfig-control-manage-domain:$RCM_EXTENSION_VERSION
    php
 
 Download:
@@ -106,7 +104,7 @@ EOF
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
-[ -n "$version" ] && { printVersion; exit 1; }
+[ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Title.
 title rcm-ispconfig-setup-dump-variables-addon

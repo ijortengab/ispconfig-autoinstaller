@@ -1,5 +1,7 @@
 #!/bin/bash
 
+RCM_EXTENSION_VERSION=0.10.0-alpha.6
+
 if [[ "$EUID" -ne 0 ]]; then
     echo This script needs to be run with superuser privileges
     exit

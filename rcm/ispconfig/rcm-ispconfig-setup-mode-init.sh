@@ -1,5 +1,7 @@
 #!/bin/bash
 
+RCM_EXTENSION_VERSION=0.10.0-alpha.6
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -95,13 +97,9 @@ SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 
 # Functions.
-printVersion() {
-    echo '0.10.0-alpha.6'
-}
 printHelp() {
     title ISPConfig Setup
     _ 'Mode '; yellow init; _, .; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-ispconfig-setup-mode-init [command] [options]
@@ -155,14 +153,14 @@ RCM Config:
    --no-timer
 
 Dependency:
-   rcm-ispconfig:`printVersion`
-   rcm-ispconfig-autoinstaller-nginx:`printVersion`
-   rcm-ispconfig-setup-remote-user-root:`printVersion`
-   rcm-roundcube-setup-ispconfig-integration:`printVersion`
-   rcm-amavis-setup-ispconfig:`printVersion`
-   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:`printVersion`
-   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root:`printVersion`
-   rcm-ispconfig-setup-dump-variables-init:`printVersion`
+   rcm-ispconfig:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-autoinstaller-nginx:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-setup-remote-user-root:$RCM_EXTENSION_VERSION
+   rcm-roundcube-setup-ispconfig-integration:$RCM_EXTENSION_VERSION
+   rcm-amavis-setup-ispconfig:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-setup-dump-variables-init:$RCM_EXTENSION_VERSION
    rcm-plugin
    rcm-dig-apt
    rcm-dig-has-address
@@ -185,8 +183,8 @@ Download:
 Pre Prompt:
    rcm-plugin(init --interface=dns)
    rcm-plugin(init --interface=tls)
-   rcm-plugin(add --interface=dns --name=manual --command=rcm-ispconfig --version=`printVersion` --temporary)
-   rcm-plugin(add --interface=tls --name=manual --command=rcm-ispconfig --version=`printVersion` --temporary)
+   rcm-plugin(add --interface=dns --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
+   rcm-plugin(add --interface=tls --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
 
 Post Prompt:
    rcm-plugin(execute --interface=dns --name=[--dns-plugin] --method=prompt)
@@ -200,7 +198,7 @@ EOF
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
-[ -n "$version" ] && { printVersion; exit 1; }
+[ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Functions.
 ArrayDiff() {

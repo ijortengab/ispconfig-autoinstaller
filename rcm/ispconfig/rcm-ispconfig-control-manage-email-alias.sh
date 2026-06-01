@@ -1,5 +1,7 @@
 #!/bin/bash
 
+RCM_EXTENSION_VERSION=0.10.0-alpha.6
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -58,13 +60,9 @@ MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 
 # Functions.
-printVersion() {
-    echo '0.10.0-alpha.6'
-}
 printHelp() {
     title RCM ISPConfig Control
     _ 'Variation '; yellow Manage Email Alias; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-ispconfig-control-manage-email-alias [options]
@@ -98,8 +96,8 @@ Environment Variables:
         Default to $MARIADB_USERS_CONTAINER_MASTER
 
 Dependency:
-   rcm-ispconfig-control-manage-domain:`printVersion`
-   rcm-php-ispconfig:`printVersion`
+   rcm-ispconfig-control-manage-domain:$RCM_EXTENSION_VERSION
+   rcm-php-ispconfig:$RCM_EXTENSION_VERSION
    php
    mysql
 
@@ -111,7 +109,7 @@ EOF
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
-[ -n "$version" ] && { printVersion; exit 1; }
+[ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Title.
 title rcm-ispconfig-control-manage-email-alias

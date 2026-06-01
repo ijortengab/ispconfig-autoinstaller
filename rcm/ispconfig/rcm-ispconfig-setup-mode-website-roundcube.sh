@@ -1,5 +1,7 @@
 #!/bin/bash
 
+RCM_EXTENSION_VERSION=0.10.0-alpha.6
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -81,13 +83,9 @@ ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 
 # Functions.
-printVersion() {
-    echo '0.10.0-alpha.6'
-}
 printHelp() {
     title ISPConfig Setup
     _ 'Mode '; yellow init; _, .; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-ispconfig-setup-mode-website-roundcube [command] [options]
@@ -119,7 +117,7 @@ RCM Config:
    --no-timer
 
 Dependency:
-   rcm-ispconfig:`printVersion`
+   rcm-ispconfig:$RCM_EXTENSION_VERSION
    rcm-dig-apt
    rcm-dig-has-address
 
@@ -131,8 +129,8 @@ Download:
 Pre Prompt:
    rcm-plugin(init --interface=dns)
    rcm-plugin(init --interface=tls)
-   rcm-plugin(add --interface=dns --name=manual --command=rcm-ispconfig --version=`printVersion` --temporary)
-   rcm-plugin(add --interface=tls --name=manual --command=rcm-ispconfig --version=`printVersion` --temporary)
+   rcm-plugin(add --interface=dns --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
+   rcm-plugin(add --interface=tls --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
 
 Post Prompt:
    rcm-plugin(execute --interface=dns --name=[--dns-plugin] --method=prompt)
@@ -143,7 +141,7 @@ EOF
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
-[ -n "$version" ] && { printVersion; exit 1; }
+[ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Functions.
 ArrayDiff() {
