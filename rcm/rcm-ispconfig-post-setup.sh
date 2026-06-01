@@ -44,11 +44,8 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 MAILBOX_POST=${MAILBOX_POST:=postmaster}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title ISPConfig Auto-Installer
-    _ 'Variation '; yellow Post Setup; _.
-    _.
     cat << EOF
 Usage: rcm-ispconfig-post-setup [command] [options]
 
@@ -84,8 +81,6 @@ EOF
 # Title.
 title rcm-ispconfig-post-setup
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

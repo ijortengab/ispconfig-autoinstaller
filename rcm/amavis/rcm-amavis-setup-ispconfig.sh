@@ -40,10 +40,8 @@ unset _new_arguments
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM Amavis Setup
-    _ 'Variation '; yellow ISPConfig; _.
     cat << EOF
 
 Troubleshooter for Amavis that not running Port 10026.
@@ -74,8 +72,6 @@ EOF
 # Title.
 title rcm-amavis-setup-ispconfig
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

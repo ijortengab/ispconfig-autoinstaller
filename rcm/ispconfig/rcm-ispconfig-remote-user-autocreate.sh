@@ -47,11 +47,8 @@ unset _new_arguments
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM ISPConfig Setup
-    _ 'Variation '; yellow Internal Command; _.
-    _.
     cat << EOF
 Usage: rcm-ispconfig-remote-user-autocreate [options]
 
@@ -85,8 +82,6 @@ EOF
 # Title.
 title rcm-ispconfig-remote-user-autocreate
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

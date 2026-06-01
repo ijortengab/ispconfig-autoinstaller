@@ -55,11 +55,8 @@ MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM ISPConfig Setup
-    _ 'Variation '; yellow Dump Variables; _.
-    _.
     cat << EOF
 Usage: rcm-ispconfig-setup-dump-variables [options]
 
@@ -106,8 +103,6 @@ EOF
 # Title.
 title rcm-ispconfig-setup-dump-variables
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

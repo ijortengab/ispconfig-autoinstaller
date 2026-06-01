@@ -53,11 +53,8 @@ ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 PHPMYADMIN_FQDN_LOCALHOST=${PHPMYADMIN_FQDN_LOCALHOST:=phpmyadmin.localhost}
 RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM ISPConfig Setup Wrapper
-    _ 'Variation '; yellow Nginx Virtual Host Autocreate PHP-FPM; _.
-    _.
     cat << EOF
 Usage: rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php [options]
 
@@ -97,8 +94,6 @@ EOF
 # Title.
 title rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

@@ -40,11 +40,8 @@ unset _new_arguments
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM Nginx Setup
-    _ 'Variation '; yellow ISPConfig Default; _.
-    _.
     cat << 'EOF'
 Usage: rcm-nginx-setup-ispconfig [options]
 
@@ -69,8 +66,6 @@ EOF
 # Title.
 title rcm-nginx-setup-ispconfig
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

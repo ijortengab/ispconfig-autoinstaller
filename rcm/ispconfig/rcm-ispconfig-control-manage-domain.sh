@@ -54,11 +54,8 @@ DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 MAILBOX_ADMIN=${MAILBOX_ADMIN:=admin}
 MAILBOX_WEB=${MAILBOX_WEB:=webmaster}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM ISPConfig Control
-    _ 'Variation '; yellow Manage Domain; _.
-    _.
     cat << EOF
 Usage: rcm-ispconfig-control-manage-domain [command] [options]
 

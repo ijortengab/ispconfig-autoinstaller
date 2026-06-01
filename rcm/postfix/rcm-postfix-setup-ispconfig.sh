@@ -41,11 +41,8 @@ RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 POSTFIX_CONFIG_FILE_MASTER=${POSTFIX_CONFIG_FILE_MASTER:=/etc/postfix/master.cf}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM Postfix Setup
-    _ 'Variation '; yellow ISPConfig; _.
-    _.
     cat << EOF
 Usage: rcm-postfix-setup-ispconfig [options]
 
@@ -73,8 +70,6 @@ EOF
 # Title.
 title rcm-postfix-setup-ispconfig
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

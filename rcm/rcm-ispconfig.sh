@@ -108,11 +108,8 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
 
-# Functions.
+# Usage Functions.
 usage() {
-    title ISPConfig Auto-Installer
-    _ 'Homepage '; yellow https://github.com/ijortengab/ispconfig-autoinstaller; _.
-    _.
     cat << EOF
 Usage: rcm-ispconfig [options]
 

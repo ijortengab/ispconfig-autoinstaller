@@ -58,11 +58,8 @@ RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM ISPConfig Setup
-    _ 'Variation '; yellow Wrapper DigitalOcean; _.
-    _.
     cat << EOF
 Usage: rcm-ispconfig-setup-wrapper-digitalocean [options]
 
@@ -116,8 +113,6 @@ EOF
 title rcm-ispconfig-setup-wrapper-digitalocean
 ____
 
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
-
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
@@ -168,8 +163,6 @@ code 'domain="'$domain'"'
 code 'digitalocean_domain_exists_sure="'$digitalocean_domain_exists_sure'"'
 code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 if [ -z "$ispconfig_domain_exists_sure" ];then
     INDENT+="    " \

@@ -42,11 +42,8 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 MYSQL_ROOT_PASSWD=${MYSQL_ROOT_PASSWD:=[HOME]/.mysql-root-passwd.txt}
 MYSQL_ROOT_PASSWD_INI=${MYSQL_ROOT_PASSWD_INI:=[HOME]/.mysql-root-passwd.ini}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM MariaDB Setup
-    _ 'Variation '; yellow ISPConfig; _.
-    _.
     cat << EOF
 Usage: rcm-mariadb-setup-ispconfig [options]
 
@@ -76,8 +73,6 @@ EOF
 # Title.
 title rcm-mariadb-setup-ispconfig
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

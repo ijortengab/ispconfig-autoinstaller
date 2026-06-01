@@ -43,11 +43,8 @@ ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 ISPCONFIG_REMOTE_USER_ROUNDCUBE=${ISPCONFIG_REMOTE_USER_ROUNDCUBE:=roundcube}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM Roundcube Setup
-    _ 'Variation '; yellow ISPConfig Integration; _.
-    _.
     cat << EOF
 Usage: rcm-roundcube-setup-ispconfig-integration [options]
 
@@ -82,8 +79,6 @@ EOF
 # Title.
 title rcm-roundcube-setup-ispconfig-integration
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

@@ -65,11 +65,8 @@ MAILBOX_POST=${MAILBOX_POST:=postmaster}
 
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 
-# Functions.
+# Usage Functions.
 usage() {
-    title ISPConfig Setup
-    _ 'Mode '; yellow mail-domain; _, .; _.
-    _.
     cat << EOF
 Usage: rcm-ispconfig-setup-mode-mail-domain [command] [options]
 
@@ -152,8 +149,6 @@ ____
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
 done <<< `usage 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Source: ISPConfigDebianOS::runPerfectSetup()
 if [ -z "$bypass_validation_is_installed" ];then

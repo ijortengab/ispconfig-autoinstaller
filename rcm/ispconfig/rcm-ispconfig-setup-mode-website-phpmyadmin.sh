@@ -61,11 +61,8 @@ PHP_FPM_USER=${PHP_FPM_USER:=ispconfig}
 ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 PHPMYADMIN_FQDN_LOCALHOST=${PHPMYADMIN_FQDN_LOCALHOST:=phpmyadmin.localhost}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title ISPConfig Setup
-    _ 'Mode '; yellow init; _, .; _.
-    _.
     cat << EOF
 Usage: rcm-ispconfig-setup-mode-website-phpmyadmin [command] [options]
 
@@ -180,8 +177,6 @@ ____
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
 done <<< `usage 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Source: ISPConfigDebianOS::runPerfectSetup()
 if [ -z "$bypass_validation_is_installed" ];then

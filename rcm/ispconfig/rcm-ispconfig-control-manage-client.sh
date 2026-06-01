@@ -94,11 +94,8 @@ userInputBooleanDefaultYes() {
     done
 }
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM ISPConfig Control
-    _ 'Variation '; yellow Manage Client; _.
-    _.
     cat << EOF
 Usage: rcm-ispconfig-control-manage-client [command] [options]
        rcm-ispconfig-control-manage-client get-client-id --username=<username>
@@ -179,8 +176,6 @@ fi
 # Title.
 title rcm-ispconfig-control-manage-client
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

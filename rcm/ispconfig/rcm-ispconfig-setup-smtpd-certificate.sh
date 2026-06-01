@@ -45,11 +45,8 @@ RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 POSTFIX_CONFIG_DIR=${POSTFIX_CONFIG_DIR:=/etc/postfix}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM ISPConfig Setup
-    _ 'Variation '; yellow SMTPD Certificate; _.
-    _.
     cat << EOF
 Usage: rcm-ispconfig-setup-smtpd-certificate [options]
 
@@ -82,8 +79,6 @@ EOF
 # Title.
 title rcm-ispconfig-setup-smtpd-certificate
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

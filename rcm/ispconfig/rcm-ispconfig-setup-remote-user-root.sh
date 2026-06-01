@@ -41,11 +41,8 @@ RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM ISPConfig Setup
-    _ 'Variation '; yellow Internal Command; _.
-    _.
     cat << EOF
 Usage: rcm-ispconfig-setup-remote-user-root [options]
 
@@ -77,8 +74,6 @@ EOF
 # Title.
 title rcm-ispconfig-setup-remote-user-root
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

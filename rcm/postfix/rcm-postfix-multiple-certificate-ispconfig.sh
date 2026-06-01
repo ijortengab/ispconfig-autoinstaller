@@ -49,11 +49,8 @@ POSTFIX_CONFIG_DIR=${POSTFIX_CONFIG_DIR:=/etc/postfix}
 POSTFIX_CONFIG_FILE_VMAIL_SSL=${POSTFIX_CONFIG_FILE_VMAIL_SSL:=${POSTFIX_CONFIG_DIR}/vmail_ssl.map}
 MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM Postfix Multiple Certificate
-    _ 'Variation '; yellow ISPConfig; _.
-    _.
     cat << EOF
 Usage: rcm-postfix-multiple-certificate-ispconfig [options]
 
@@ -95,8 +92,6 @@ EOF
 # Title.
 title rcm-postfix-multiple-certificate-ispconfig
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
