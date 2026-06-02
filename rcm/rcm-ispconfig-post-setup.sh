@@ -12,8 +12,6 @@ Options:
         Set the domain to control. Values available from command: soap-ispconfig(mail_domain).
 
 Global Options:
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -43,7 +41,6 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -52,7 +49,6 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 MAILBOX_POST=${MAILBOX_POST:=postmaster}
 
@@ -430,7 +426,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # )

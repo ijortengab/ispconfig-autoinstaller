@@ -45,8 +45,6 @@ Other Options (For expert only):
         Execute upgrade system. Default to --without-upgrade-system.
 
 Global Options.
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -109,7 +107,6 @@ while [[ $# -gt 0 ]]; do
         --dns-plugin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then dns_plugin="$2"; shift; fi; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --hostname=*) hostname="${1#*=}"; shift ;;
         --hostname) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then hostname="$2"; shift; fi; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
@@ -161,7 +158,6 @@ if [ -n "$1" ];then
 fi
 
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
 SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
@@ -1009,7 +1005,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # --bypass-validation-is-installed

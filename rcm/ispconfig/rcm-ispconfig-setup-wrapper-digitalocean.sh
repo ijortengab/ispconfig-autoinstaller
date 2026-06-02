@@ -28,8 +28,6 @@ Options:
         Bypass domain exists checking by DigitalOcean API.
 
 Global Options:
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -66,7 +64,6 @@ while [[ $# -gt 0 ]]; do
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --email=*) email="${1#*=}"; shift ;;
         --email) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then email="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --hostname=*) hostname="${1#*=}"; shift ;;
         --hostname) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then hostname="$2"; shift; fi; shift ;;
         --ip-address=*) ip_address="${1#*=}"; shift ;;
@@ -84,7 +81,6 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 
 # Help and Version.
@@ -241,7 +237,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # --ispconfig-domain-exists-sure

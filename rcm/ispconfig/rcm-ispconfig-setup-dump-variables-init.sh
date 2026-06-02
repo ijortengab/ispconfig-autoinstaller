@@ -10,8 +10,6 @@ Usage: rcm-ispconfig-setup-dump-variables-init [options]
 Options:
 
 Global Options:
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -34,7 +32,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --fast) fast=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -43,7 +40,6 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 
@@ -187,7 +183,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # )

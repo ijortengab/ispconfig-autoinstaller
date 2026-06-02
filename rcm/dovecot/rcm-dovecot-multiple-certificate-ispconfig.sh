@@ -18,8 +18,6 @@ Options:
         Populate value from variable TLS_CERTIFICATE_KEY.
 
 Global Options:
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -47,7 +45,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --fast) fast=1; shift ;;
         --fqdn=*) fqdn="${1#*=}"; shift ;;
         --fqdn) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fqdn="$2"; shift; fi; shift ;;
         --tls-certificate-key=*) tls_certificate_key="${1#*=}"; shift ;;
@@ -62,7 +59,6 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 DOVECOT_CONFIG_DIR=${DOVECOT_CONFIG_DIR:=/etc/dovecot}
 DOVECOT_CONFIG_FILE_ISPCONFIG=${DOVECOT_CONFIG_FILE_ISPCONFIG:=${DOVECOT_CONFIG_DIR}/conf.d/99-ispconfig-custom-config.conf}
 MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
@@ -140,7 +136,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # )

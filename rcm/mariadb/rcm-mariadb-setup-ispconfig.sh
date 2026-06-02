@@ -8,8 +8,6 @@ usage() {
 Usage: rcm-mariadb-setup-ispconfig [options]
 
 Global Options:
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -35,7 +33,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --fast) fast=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -44,7 +41,6 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 MYSQL_ROOT_PASSWD=${MYSQL_ROOT_PASSWD:=[HOME]/.mysql-root-passwd.txt}
 MYSQL_ROOT_PASSWD_INI=${MYSQL_ROOT_PASSWD_INI:=[HOME]/.mysql-root-passwd.ini}
 
@@ -183,7 +179,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # )

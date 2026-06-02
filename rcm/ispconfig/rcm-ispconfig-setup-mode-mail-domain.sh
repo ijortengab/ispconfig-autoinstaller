@@ -19,8 +19,6 @@ Options:
         Set the domain name.
 
 Global Options.
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -86,7 +84,6 @@ while [[ $# -gt 0 ]]; do
         --dns-plugin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then dns_plugin="$2"; shift; fi; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --tls-plugin=*) tls_plugin="${1#*=}"; shift ;;
         --tls-plugin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_plugin="$2"; shift; fi; shift ;;
         --) shift
@@ -104,7 +101,6 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 
 MAILBOX_ADMIN=${MAILBOX_ADMIN:=admin}
@@ -299,7 +295,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # --bypass-validation-is-installed

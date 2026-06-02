@@ -23,8 +23,6 @@ Options:
         Value available from command: rcm-ispconfig-setup-mode-website-roundcube(helper suggest-url [--domain]), or other.
 
 Global Options.
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -70,7 +68,6 @@ while [[ $# -gt 0 ]]; do
         --dns-plugin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then dns_plugin="$2"; shift; fi; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --tls-plugin=*) tls_plugin="${1#*=}"; shift ;;
         --tls-plugin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_plugin="$2"; shift; fi; shift ;;
         --url=*) url="${1#*=}"; shift ;;
@@ -108,7 +105,6 @@ if [ -n "$1" ];then
 fi
 
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
 SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
 
@@ -711,7 +707,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # --bypass-validation-is-installed

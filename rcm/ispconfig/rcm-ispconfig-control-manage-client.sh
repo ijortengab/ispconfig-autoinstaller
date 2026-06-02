@@ -32,8 +32,6 @@ Options for command get-client-id:
         Set the username.
 
 Global Options:
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -59,7 +57,6 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --email=*) email="${1#*=}"; shift ;;
         --email) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then email="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --get-client-id) get_client_id=1; shift ;;
         --ispconfig-soap-exists-sure) ispconfig_soap_exists_sure=1; shift ;;
         --password=*) password="${1#*=}"; shift ;;
@@ -81,7 +78,6 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 
 # Command.
 if [ -n "$1" ];then
@@ -287,7 +283,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # --ispconfig-soap-exists-sure

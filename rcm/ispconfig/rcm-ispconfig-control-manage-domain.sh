@@ -14,8 +14,6 @@ Options:
         Set the domain to control.
 
 Global Options:
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -52,7 +50,6 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --get-domain-id) get_domain_id=1; shift ;;
         --ispconfig-soap-exists-sure) ispconfig_soap_exists_sure=1; shift ;;
         --[^-]*) shift ;;
@@ -70,7 +67,6 @@ if [ -n "$1" ];then
 fi
 
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 MAILBOX_ADMIN=${MAILBOX_ADMIN:=admin}
 MAILBOX_WEB=${MAILBOX_WEB:=webmaster}
@@ -426,7 +422,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # --ispconfig-soap-exists-sure

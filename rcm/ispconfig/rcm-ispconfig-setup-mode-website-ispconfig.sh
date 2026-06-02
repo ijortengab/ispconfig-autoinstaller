@@ -20,8 +20,6 @@ Options:
         Add ISPConfig public domain. The value can be domain or URL.
 
 Global Options.
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -65,7 +63,6 @@ while [[ $# -gt 0 ]]; do
         --bypass-validation-is-installed) bypass_validation_is_installed=1; shift ;;
         --dns-plugin=*) dns_plugin="${1#*=}"; shift ;;
         --dns-plugin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then dns_plugin="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --tls-plugin=*) tls_plugin="${1#*=}"; shift ;;
         --tls-plugin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_plugin="$2"; shift; fi; shift ;;
         --url=*) url="${1#*=}"; shift ;;
@@ -85,7 +82,6 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
 
 PHP_FPM_USER=${PHP_FPM_USER:=ispconfig}
@@ -394,7 +390,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # --bypass-validation-is-installed

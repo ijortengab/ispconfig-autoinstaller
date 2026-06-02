@@ -10,8 +10,6 @@ Usage: rcm-ispconfig [options]
 Available subcommands from command: rcm-ispconfig(helper mode-available).
 
 Global Options.
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -58,7 +56,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --fast) fast=1; shift ;;
         --mode=*) mode="${1#*=}"; shift ;;
         --mode) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mode="$2"; shift; fi; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
@@ -131,7 +128,6 @@ if [ -n "$1" ];then
 fi
 
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
 
@@ -534,7 +530,6 @@ exit 0
 #     '--verbose|-v'
 # )
 # FLAG=(
-# --fast
 # --version
 # --help
 # )

@@ -16,8 +16,6 @@ Options:
         Every arguments after double dash will pass to \`rcm-php-ispconfig soap mail_user_add\` command.
 
 Global Options:
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -48,7 +46,6 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --ispconfig-domain-exists-sure) ispconfig_domain_exists_sure=1; shift ;;
         --ispconfig-soap-exists-sure) ispconfig_soap_exists_sure=1; shift ;;
         --name=*) name="${1#*=}"; shift ;;
@@ -68,7 +65,6 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }
@@ -218,7 +214,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # --ispconfig-domain-exists-sure
