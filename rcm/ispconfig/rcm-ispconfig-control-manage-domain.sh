@@ -71,7 +71,6 @@ fi
 
 # Define variables and constants.
 [ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
-RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 MAILBOX_ADMIN=${MAILBOX_ADMIN:=admin}
 MAILBOX_WEB=${MAILBOX_WEB:=webmaster}

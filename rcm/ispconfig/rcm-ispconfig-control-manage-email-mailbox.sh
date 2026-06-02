@@ -69,7 +69,6 @@ unset _new_arguments
 
 # Define variables and constants.
 [ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
-RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }

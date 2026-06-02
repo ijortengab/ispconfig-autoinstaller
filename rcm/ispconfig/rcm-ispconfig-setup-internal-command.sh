@@ -45,7 +45,6 @@ unset _new_arguments
 
 # Define variables and constants.
 [ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
-RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 
 # Help and Version.
