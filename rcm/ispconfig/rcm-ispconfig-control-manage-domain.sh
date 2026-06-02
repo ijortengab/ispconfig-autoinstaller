@@ -126,7 +126,6 @@ ____
 # Dependency.
 
 # Validation and bypass validation. Validation after title.
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Functions. Functions after title. For main command.
 backupFile() {

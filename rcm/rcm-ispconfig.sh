@@ -488,8 +488,6 @@ Rcm_subcommand_substitute() {
 title rcm-ispconfig
 ____
 
-# [ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
-
 # Dependency.
 
 # Require, validate, and populate value.
