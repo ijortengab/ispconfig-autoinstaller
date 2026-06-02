@@ -2,6 +2,99 @@
 
 RCM_EXTENSION_VERSION=0.10.0-alpha.6
 
+# Usage Functions.
+usage() {
+    cat << EOF
+Usage: rcm-ispconfig-setup-mode-init [command] [options]
+
+Options:
+   --dns-plugin *
+        Select how to create the DNS record.
+        Values available from command: rcm-plugin(list --interface=dns).
+   --tls-plugin
+        Select how to obtain TLS Certificate for https protocol.
+        if the URL doesn't clearly contain https, it means it's using https.
+        if left blank, it means the certificate will not be obtained or set in web server configuration.
+        Values available from command: rcm-plugin(list --interface=tls).
+   --variation *
+        Select the variation bundle setup. Values available from command: rcm-ispconfig-setup-mode-init(helper bundle-available).
+   --domain *
+        Domain name of the server.
+        Together with --hostname will make a Fully Qualified Domain Name (FQDN).
+   --hostname *
+        Hostname of the server, for example: \`server1\`.
+   --url-ispconfig
+        Add ISPConfig public domain. The value can be domain or URL and must be part of FQDN.
+        ISPConfig automatically has address at http://ispconfig.localhost/.
+        Value available from command: rcm-ispconfig-setup-mode-init(helper suggest-url ispconfig [--domain] [--hostname]), or other.
+   --url-phpmyadmin
+        Add PHPMyAdmin public domain. The value can be domain or URL and must be part of FQDN.
+        PHPMyAdmin automatically has address at http://phpmyadmin.localhost/.
+        Value available from command: rcm-ispconfig-setup-mode-init(helper suggest-url phpmyadmin [--domain] [--hostname] [--url-ispconfig]), or other.
+   --url-roundcube
+        Add Roundcube public domain. The value can be domain or URL and must be part of FQDN.
+        Roundcube automatically has address at http://roundcube.localhost/.
+        Value available from command: rcm-ispconfig-setup-mode-init(helper suggest-url roundcube [--domain] [--hostname] [--url-ispconfig]), or other.
+   --timezone
+        Set the timezone of this machine. Available values: Asia/Gaza, Asia/Ujung_Pandang, Asia/Jakarta, Asia/Makassar, Asia/Pontianak, Asia/Jayapura, or other.
+
+Other Options (For expert only):
+   --without-update-system ^
+        Skip execute update system. Default to --with-update-system.
+   --with-upgrade-system ^
+        Execute upgrade system. Default to --without-upgrade-system.
+
+Global Options.
+   --fast
+        No delay every subtask.
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+
+RCM Config:
+   --no-timer
+
+Dependency:
+   rcm-ispconfig:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-autoinstaller-nginx:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-setup-remote-user-root:$RCM_EXTENSION_VERSION
+   rcm-roundcube-setup-ispconfig-integration:$RCM_EXTENSION_VERSION
+   rcm-amavis-setup-ispconfig:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-setup-dump-variables-init:$RCM_EXTENSION_VERSION
+   rcm-plugin
+   rcm-dig-apt
+   rcm-dig-has-address
+   rcm-nginx-apt
+   rcm-mariadb-apt
+   rcm-php-apt
+   rcm-php-setup-adjust-cli-version
+   rcm-postfix-apt
+
+Download:
+   [rcm-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/rcm-ispconfig.sh)
+   [rcm-ispconfig-autoinstaller-nginx](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-autoinstaller-nginx.sh)
+   [rcm-ispconfig-setup-remote-user-root](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-remote-user-root.sh)
+   [rcm-roundcube-setup-ispconfig-integration](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/roundcube/rcm-roundcube-setup-ispconfig-integration.sh)
+   [rcm-amavis-setup-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/amavis/rcm-amavis-setup-ispconfig.sh)
+   [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php.sh)
+   [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root.sh)
+   [rcm-ispconfig-setup-dump-variables-init](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-dump-variables-init.sh)
+
+Pre Prompt:
+   rcm-plugin(init --interface=dns)
+   rcm-plugin(init --interface=tls)
+   rcm-plugin(add --interface=dns --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
+   rcm-plugin(add --interface=tls --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
+
+Post Prompt:
+   rcm-plugin(execute --interface=dns --name=[--dns-plugin] --method=prompt)
+   rcm-plugin(execute --interface=tls --name=[--tls-plugin] --method=prompt --ignore-fail-on-empty-name)
+EOF
+}
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -95,99 +188,6 @@ SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
 SUBDOMAIN_PHPMYADMIN=${SUBDOMAIN_PHPMYADMIN:=db}
 SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-
-# Usage Functions.
-usage() {
-    cat << EOF
-Usage: rcm-ispconfig-setup-mode-init [command] [options]
-
-Options:
-   --dns-plugin *
-        Select how to create the DNS record.
-        Values available from command: rcm-plugin(list --interface=dns).
-   --tls-plugin
-        Select how to obtain TLS Certificate for https protocol.
-        if the URL doesn't clearly contain https, it means it's using https.
-        if left blank, it means the certificate will not be obtained or set in web server configuration.
-        Values available from command: rcm-plugin(list --interface=tls).
-   --variation *
-        Select the variation bundle setup. Values available from command: rcm-ispconfig-setup-mode-init(helper bundle-available).
-   --domain *
-        Domain name of the server.
-        Together with --hostname will make a Fully Qualified Domain Name (FQDN).
-   --hostname *
-        Hostname of the server, for example: \`server1\`.
-   --url-ispconfig
-        Add ISPConfig public domain. The value can be domain or URL and must be part of FQDN.
-        ISPConfig automatically has address at http://ispconfig.localhost/.
-        Value available from command: rcm-ispconfig-setup-mode-init(helper suggest-url ispconfig [--domain] [--hostname]), or other.
-   --url-phpmyadmin
-        Add PHPMyAdmin public domain. The value can be domain or URL and must be part of FQDN.
-        PHPMyAdmin automatically has address at http://phpmyadmin.localhost/.
-        Value available from command: rcm-ispconfig-setup-mode-init(helper suggest-url phpmyadmin [--domain] [--hostname] [--url-ispconfig]), or other.
-   --url-roundcube
-        Add Roundcube public domain. The value can be domain or URL and must be part of FQDN.
-        Roundcube automatically has address at http://roundcube.localhost/.
-        Value available from command: rcm-ispconfig-setup-mode-init(helper suggest-url roundcube [--domain] [--hostname] [--url-ispconfig]), or other.
-   --timezone
-        Set the timezone of this machine. Available values: Asia/Gaza, Asia/Ujung_Pandang, Asia/Jakarta, Asia/Makassar, Asia/Pontianak, Asia/Jayapura, or other.
-
-Other Options (For expert only):
-   --without-update-system ^
-        Skip execute update system. Default to --with-update-system.
-   --with-upgrade-system ^
-        Execute upgrade system. Default to --without-upgrade-system.
-
-Global Options.
-   --fast
-        No delay every subtask.
-   --version
-        Print version of this script.
-   --help
-        Show this help.
-
-RCM Config:
-   --no-timer
-
-Dependency:
-   rcm-ispconfig:$RCM_EXTENSION_VERSION
-   rcm-ispconfig-autoinstaller-nginx:$RCM_EXTENSION_VERSION
-   rcm-ispconfig-setup-remote-user-root:$RCM_EXTENSION_VERSION
-   rcm-roundcube-setup-ispconfig-integration:$RCM_EXTENSION_VERSION
-   rcm-amavis-setup-ispconfig:$RCM_EXTENSION_VERSION
-   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:$RCM_EXTENSION_VERSION
-   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root:$RCM_EXTENSION_VERSION
-   rcm-ispconfig-setup-dump-variables-init:$RCM_EXTENSION_VERSION
-   rcm-plugin
-   rcm-dig-apt
-   rcm-dig-has-address
-   rcm-nginx-apt
-   rcm-mariadb-apt
-   rcm-php-apt
-   rcm-php-setup-adjust-cli-version
-   rcm-postfix-apt
-
-Download:
-   [rcm-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/rcm-ispconfig.sh)
-   [rcm-ispconfig-autoinstaller-nginx](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-autoinstaller-nginx.sh)
-   [rcm-ispconfig-setup-remote-user-root](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-remote-user-root.sh)
-   [rcm-roundcube-setup-ispconfig-integration](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/roundcube/rcm-roundcube-setup-ispconfig-integration.sh)
-   [rcm-amavis-setup-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/amavis/rcm-amavis-setup-ispconfig.sh)
-   [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php.sh)
-   [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root.sh)
-   [rcm-ispconfig-setup-dump-variables-init](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-dump-variables-init.sh)
-
-Pre Prompt:
-   rcm-plugin(init --interface=dns)
-   rcm-plugin(init --interface=tls)
-   rcm-plugin(add --interface=dns --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
-   rcm-plugin(add --interface=tls --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
-
-Post Prompt:
-   rcm-plugin(execute --interface=dns --name=[--dns-plugin] --method=prompt)
-   rcm-plugin(execute --interface=tls --name=[--tls-plugin] --method=prompt --ignore-fail-on-empty-name)
-EOF
-}
 
 # @todo
 # hapus dependency rcm-amavis-setup-ispconfig, karena by plugin.

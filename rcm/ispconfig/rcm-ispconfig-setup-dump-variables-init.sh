@@ -2,6 +2,29 @@
 
 RCM_EXTENSION_VERSION=0.10.0-alpha.6
 
+# Usage Functions.
+usage() {
+    cat << EOF
+Usage: rcm-ispconfig-setup-dump-variables-init [options]
+
+Options:
+
+Global Options:
+   --fast
+        No delay every subtask.
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+
+Environment Variables:
+   MARIADB_PREFIX_MASTER
+        Default to $MARIADB_PREFIX_MASTER
+   MARIADB_USERS_CONTAINER_MASTER
+        Default to $MARIADB_USERS_CONTAINER_MASTER
+EOF
+}
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -41,29 +64,6 @@ RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
-
-# Usage Functions.
-usage() {
-    cat << EOF
-Usage: rcm-ispconfig-setup-dump-variables-init [options]
-
-Options:
-
-Global Options:
-   --fast
-        No delay every subtask.
-   --version
-        Print version of this script.
-   --help
-        Show this help.
-
-Environment Variables:
-   MARIADB_PREFIX_MASTER
-        Default to $MARIADB_PREFIX_MASTER
-   MARIADB_USERS_CONTAINER_MASTER
-        Default to $MARIADB_USERS_CONTAINER_MASTER
-EOF
-}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }

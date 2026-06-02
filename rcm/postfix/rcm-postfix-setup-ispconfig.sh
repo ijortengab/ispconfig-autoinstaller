@@ -2,6 +2,28 @@
 
 RCM_EXTENSION_VERSION=0.10.0-alpha.6
 
+# Usage Functions.
+usage() {
+    cat << EOF
+Usage: rcm-postfix-setup-ispconfig [options]
+
+Global Options:
+   --fast
+        No delay every subtask.
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+
+Environment Variables:
+   POSTFIX_CONFIG_FILE_MASTER
+        Default to $POSTFIX_CONFIG_FILE_MASTER
+
+Dependency:
+   systemctl
+EOF
+}
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -40,28 +62,6 @@ unset _new_arguments
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 POSTFIX_CONFIG_FILE_MASTER=${POSTFIX_CONFIG_FILE_MASTER:=/etc/postfix/master.cf}
-
-# Usage Functions.
-usage() {
-    cat << EOF
-Usage: rcm-postfix-setup-ispconfig [options]
-
-Global Options:
-   --fast
-        No delay every subtask.
-   --version
-        Print version of this script.
-   --help
-        Show this help.
-
-Environment Variables:
-   POSTFIX_CONFIG_FILE_MASTER
-        Default to $POSTFIX_CONFIG_FILE_MASTER
-
-Dependency:
-   systemctl
-EOF
-}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }

@@ -2,6 +2,31 @@
 
 RCM_EXTENSION_VERSION=0.10.0-alpha.6
 
+# Usage Functions.
+usage() {
+    cat << EOF
+
+Troubleshooter for Amavis that not running Port 10026.
+Reference: https://www.howtoforge.com/community/threads/bullseye-for-ispconfig.87450/page-2#post-427169
+
+EOF
+    cat << 'EOF'
+Usage: rcm-amavis-setup-ispconfig [options]
+
+Global Options:
+   --fast
+        No delay every subtask.
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+
+Dependency:
+   systemctl
+   netstat
+EOF
+}
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -39,31 +64,6 @@ unset _new_arguments
 [ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
-
-# Usage Functions.
-usage() {
-    cat << EOF
-
-Troubleshooter for Amavis that not running Port 10026.
-Reference: https://www.howtoforge.com/community/threads/bullseye-for-ispconfig.87450/page-2#post-427169
-
-EOF
-    cat << 'EOF'
-Usage: rcm-amavis-setup-ispconfig [options]
-
-Global Options:
-   --fast
-        No delay every subtask.
-   --version
-        Print version of this script.
-   --help
-        Show this help.
-
-Dependency:
-   systemctl
-   netstat
-EOF
-}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }

@@ -2,6 +2,34 @@
 
 RCM_EXTENSION_VERSION=0.10.0-alpha.6
 
+# Usage Functions.
+usage() {
+    cat << EOF
+Usage: rcm-ispconfig-remote-user-autocreate [options]
+
+Options:
+   --phpmyadmin-version
+        Set the version of PHPMyAdmin
+   --roundcube-version
+        Set the version of RoundCube
+   --ispconfig-version
+        Set the version of ISPConfig.
+
+Global Options:
+   --fast
+        No delay every subtask.
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+
+Dependency:
+   mysql
+   pwgen
+   php
+EOF
+}
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -46,34 +74,6 @@ unset _new_arguments
 [ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
-
-# Usage Functions.
-usage() {
-    cat << EOF
-Usage: rcm-ispconfig-remote-user-autocreate [options]
-
-Options:
-   --phpmyadmin-version
-        Set the version of PHPMyAdmin
-   --roundcube-version
-        Set the version of RoundCube
-   --ispconfig-version
-        Set the version of ISPConfig.
-
-Global Options:
-   --fast
-        No delay every subtask.
-   --version
-        Print version of this script.
-   --help
-        Show this help.
-
-Dependency:
-   mysql
-   pwgen
-   php
-EOF
-}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }

@@ -2,6 +2,53 @@
 
 RCM_EXTENSION_VERSION=0.10.0-alpha.6
 
+# Usage Functions.
+usage() {
+    cat << EOF
+Usage: rcm-ispconfig-setup-wrapper-digitalocean [options]
+
+Options:
+   --domain
+        Set the domain name.
+   --hostname
+        Set the hostname.
+   --type
+        Available value: spf, dkim, dmarc.
+   --mail-provider
+        Required by SPF.
+   --email
+        Required by DMARC.
+   --dns-record
+        Required by DKIM.
+   --dns-record-auto ^
+        Get DNS record automatically.
+   --ispconfig-domain-exists-sure ^
+        Bypass domain exists checking by ISPConfig SOAP.
+   --digitalocean-domain-exists-sure ^
+        Bypass domain exists checking by DigitalOcean API.
+
+Global Options:
+   --fast
+        No delay every subtask.
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+
+Environment Variables:
+   DKIM_SELECTOR
+        Default to $DKIM_SELECTOR
+
+Dependency:
+   rcm-ispconfig-control-manage-domain:$RCM_EXTENSION_VERSION
+   rcm-digitalocean-api-manage-domain
+   php
+
+Download:
+   [rcm-ispconfig-control-manage-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-domain.sh)
+EOF
+}
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -57,53 +104,6 @@ unset _new_arguments
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
-
-# Usage Functions.
-usage() {
-    cat << EOF
-Usage: rcm-ispconfig-setup-wrapper-digitalocean [options]
-
-Options:
-   --domain
-        Set the domain name.
-   --hostname
-        Set the hostname.
-   --type
-        Available value: spf, dkim, dmarc.
-   --mail-provider
-        Required by SPF.
-   --email
-        Required by DMARC.
-   --dns-record
-        Required by DKIM.
-   --dns-record-auto ^
-        Get DNS record automatically.
-   --ispconfig-domain-exists-sure ^
-        Bypass domain exists checking by ISPConfig SOAP.
-   --digitalocean-domain-exists-sure ^
-        Bypass domain exists checking by DigitalOcean API.
-
-Global Options:
-   --fast
-        No delay every subtask.
-   --version
-        Print version of this script.
-   --help
-        Show this help.
-
-Environment Variables:
-   DKIM_SELECTOR
-        Default to $DKIM_SELECTOR
-
-Dependency:
-   rcm-ispconfig-control-manage-domain:$RCM_EXTENSION_VERSION
-   rcm-digitalocean-api-manage-domain
-   php
-
-Download:
-   [rcm-ispconfig-control-manage-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-domain.sh)
-EOF
-}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }

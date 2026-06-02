@@ -2,6 +2,52 @@
 
 RCM_EXTENSION_VERSION=0.10.0-alpha.6
 
+# Usage Functions.
+usage() {
+    cat << EOF
+Usage: rcm-ispconfig [options]
+
+Available subcommands from command: rcm-ispconfig(helper mode-available).
+
+Global Options.
+   --fast
+        No delay every subtask.
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+   --non-interactive
+        Skip prompt for every options.
+   --
+        Every arguments after double dash will pass to rcm-ispconfig-setup-variation-* command.
+
+Dependency:
+   rcm:0.18.0-alpha.6
+   rcm-dig-apt
+   rcm-dig-is-record-exists
+
+Download:
+   [rcm-ispconfig-setup-mode-init](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-init.sh)
+   [rcm-ispconfig-setup-mode-mail-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-mail-domain.sh)
+   [rcm-ispconfig-setup-mode-website-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-website-ispconfig.sh)
+   [rcm-ispconfig-setup-mode-website-roundcube](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-website-roundcube.sh)
+   [rcm-ispconfig-setup-mode-website-phpmyadmin](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-website-phpmyadmin.sh)
+   [rcm-ispconfig-setup-mode-bundle](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-bundle.sh)
+
+Subcommand Substitute:
+   init: rcm-ispconfig-setup-mode-init
+   mail-domain: rcm-ispconfig-setup-mode-mail-domain
+   website-ispconfig: rcm-ispconfig-setup-mode-website-ispconfig
+   website-roundcube: rcm-ispconfig-setup-mode-website-roundcube
+   website-phpmyadmin: rcm-ispconfig-setup-mode-website-phpmyadmin
+   bundle: rcm-ispconfig-setup-mode-bundle
+
+RCM Config:
+   --no-timer
+   --no-confirmation
+EOF
+}
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -107,52 +153,6 @@ RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
-
-# Usage Functions.
-usage() {
-    cat << EOF
-Usage: rcm-ispconfig [options]
-
-Available subcommands from command: rcm-ispconfig(helper mode-available).
-
-Global Options.
-   --fast
-        No delay every subtask.
-   --version
-        Print version of this script.
-   --help
-        Show this help.
-   --non-interactive
-        Skip prompt for every options.
-   --
-        Every arguments after double dash will pass to rcm-ispconfig-setup-variation-* command.
-
-Dependency:
-   rcm:0.18.0-alpha.6
-   rcm-dig-apt
-   rcm-dig-is-record-exists
-
-Download:
-   [rcm-ispconfig-setup-mode-init](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-init.sh)
-   [rcm-ispconfig-setup-mode-mail-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-mail-domain.sh)
-   [rcm-ispconfig-setup-mode-website-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-website-ispconfig.sh)
-   [rcm-ispconfig-setup-mode-website-roundcube](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-website-roundcube.sh)
-   [rcm-ispconfig-setup-mode-website-phpmyadmin](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-website-phpmyadmin.sh)
-   [rcm-ispconfig-setup-mode-bundle](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-mode-bundle.sh)
-
-Subcommand Substitute:
-   init: rcm-ispconfig-setup-mode-init
-   mail-domain: rcm-ispconfig-setup-mode-mail-domain
-   website-ispconfig: rcm-ispconfig-setup-mode-website-ispconfig
-   website-roundcube: rcm-ispconfig-setup-mode-website-roundcube
-   website-phpmyadmin: rcm-ispconfig-setup-mode-website-phpmyadmin
-   bundle: rcm-ispconfig-setup-mode-bundle
-
-RCM Config:
-   --no-timer
-   --no-confirmation
-EOF
-}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }

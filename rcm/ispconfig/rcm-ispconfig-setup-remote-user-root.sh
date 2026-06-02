@@ -2,6 +2,32 @@
 
 RCM_EXTENSION_VERSION=0.10.0-alpha.6
 
+# Usage Functions.
+usage() {
+    cat << EOF
+Usage: rcm-ispconfig-setup-remote-user-root [options]
+
+Global Options:
+   --fast
+        No delay every subtask.
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+
+Environment Variables:
+   ISPCONFIG_REMOTE_USER_ROOT
+        Default to $ISPCONFIG_REMOTE_USER_ROOT
+
+Dependency:
+   pwgen
+   rcm-ispconfig-remote-user-autocreate:$RCM_EXTENSION_VERSION
+
+Download:
+   [rcm-ispconfig-remote-user-autocreate](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-remote-user-autocreate.sh)
+EOF
+}
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -40,32 +66,6 @@ unset _new_arguments
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
-
-# Usage Functions.
-usage() {
-    cat << EOF
-Usage: rcm-ispconfig-setup-remote-user-root [options]
-
-Global Options:
-   --fast
-        No delay every subtask.
-   --version
-        Print version of this script.
-   --help
-        Show this help.
-
-Environment Variables:
-   ISPCONFIG_REMOTE_USER_ROOT
-        Default to $ISPCONFIG_REMOTE_USER_ROOT
-
-Dependency:
-   pwgen
-   rcm-ispconfig-remote-user-autocreate:$RCM_EXTENSION_VERSION
-
-Download:
-   [rcm-ispconfig-remote-user-autocreate](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-remote-user-autocreate.sh)
-EOF
-}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }

@@ -2,6 +2,30 @@
 
 RCM_EXTENSION_VERSION=0.10.0-alpha.6
 
+# Usage Functions.
+usage() {
+    cat << EOF
+Usage: rcm-ispconfig-setup-internal-command [options]
+
+Options:
+
+Global Options:
+   --fast
+        No delay every subtask.
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+
+Environment Variables:
+   BINARY_DIRECTORY
+        Default to $BINARY_DIRECTORY
+
+Dependency:
+   php
+EOF
+}
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -40,30 +64,6 @@ unset _new_arguments
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
-
-# Usage Functions.
-usage() {
-    cat << EOF
-Usage: rcm-ispconfig-setup-internal-command [options]
-
-Options:
-
-Global Options:
-   --fast
-        No delay every subtask.
-   --version
-        Print version of this script.
-   --help
-        Show this help.
-
-Environment Variables:
-   BINARY_DIRECTORY
-        Default to $BINARY_DIRECTORY
-
-Dependency:
-   php
-EOF
-}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }

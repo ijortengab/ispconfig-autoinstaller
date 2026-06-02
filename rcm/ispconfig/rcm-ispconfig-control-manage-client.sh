@@ -2,6 +2,52 @@
 
 RCM_EXTENSION_VERSION=0.10.0-alpha.6
 
+# Usage Functions.
+usage() {
+    cat << EOF
+Usage: rcm-ispconfig-control-manage-client [command] [options]
+       rcm-ispconfig-control-manage-client get-client-id --username=<username>
+
+Available commands: get-client-id.
+
+Options:
+   --username *
+        Set the username.
+   --email *
+        Set the email.
+   --password
+        Set the password.
+        Leave blank to autogenerate password.
+   --
+        Every arguments after double dash will pass to \`rcm-php-ispconfig soap client_add\` command.
+
+Other Options:
+   --ispconfig-soap-exists-sure
+        By pass test connect to the SOAP server.
+   --get-client-id
+        Print client_id to STDOUT.
+
+Options for command get-client-id:
+   --username *
+        Set the username.
+
+Global Options:
+   --fast
+        No delay every subtask.
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+
+Dependency:
+   pwgen
+   rcm-php-ispconfig:$RCM_EXTENSION_VERSION
+
+Download:
+   [rcm-php-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/php/rcm-php-ispconfig.php)
+EOF
+}
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -92,52 +138,6 @@ userInputBooleanDefaultYes() {
             *) echo
         esac
     done
-}
-
-# Usage Functions.
-usage() {
-    cat << EOF
-Usage: rcm-ispconfig-control-manage-client [command] [options]
-       rcm-ispconfig-control-manage-client get-client-id --username=<username>
-
-Available commands: get-client-id.
-
-Options:
-   --username *
-        Set the username.
-   --email *
-        Set the email.
-   --password
-        Set the password.
-        Leave blank to autogenerate password.
-   --
-        Every arguments after double dash will pass to \`rcm-php-ispconfig soap client_add\` command.
-
-Other Options:
-   --ispconfig-soap-exists-sure
-        By pass test connect to the SOAP server.
-   --get-client-id
-        Print client_id to STDOUT.
-
-Options for command get-client-id:
-   --username *
-        Set the username.
-
-Global Options:
-   --fast
-        No delay every subtask.
-   --version
-        Print version of this script.
-   --help
-        Show this help.
-
-Dependency:
-   pwgen
-   rcm-php-ispconfig:$RCM_EXTENSION_VERSION
-
-Download:
-   [rcm-php-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/php/rcm-php-ispconfig.php)
-EOF
 }
 
 # Help and Version.

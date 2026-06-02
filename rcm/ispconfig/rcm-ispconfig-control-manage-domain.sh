@@ -2,6 +2,45 @@
 
 RCM_EXTENSION_VERSION=0.10.0-alpha.6
 
+# Usage Functions.
+usage() {
+    cat << EOF
+Usage: rcm-ispconfig-control-manage-domain [command] [options]
+
+Available commands: get-dns-record.
+
+Options:
+   --domain
+        Set the domain to control.
+
+Global Options:
+   --fast
+        No delay every subtask.
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+
+Environment Variables:
+   DKIM_SELECTOR
+        Default to $DKIM_SELECTOR
+   MAILBOX_ADMIN
+        Default to $MAILBOX_ADMIN
+   MAILBOX_WEB
+        Default to $MAILBOX_WEB
+
+Dependency:
+   rcm-ispconfig:$RCM_EXTENSION_VERSION
+   rcm-php-ispconfig:$RCM_EXTENSION_VERSION
+   rcm-ispconfig-control-manage-client:$RCM_EXTENSION_VERSION
+
+Download:
+   [rcm-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/rcm-ispconfig.sh)
+   [rcm-php-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/php/rcm-php-ispconfig.php)
+   [rcm-ispconfig-control-manage-client](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-client.sh)
+EOF
+}
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -53,45 +92,6 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 MAILBOX_ADMIN=${MAILBOX_ADMIN:=admin}
 MAILBOX_WEB=${MAILBOX_WEB:=webmaster}
-
-# Usage Functions.
-usage() {
-    cat << EOF
-Usage: rcm-ispconfig-control-manage-domain [command] [options]
-
-Available commands: get-dns-record.
-
-Options:
-   --domain
-        Set the domain to control.
-
-Global Options:
-   --fast
-        No delay every subtask.
-   --version
-        Print version of this script.
-   --help
-        Show this help.
-
-Environment Variables:
-   DKIM_SELECTOR
-        Default to $DKIM_SELECTOR
-   MAILBOX_ADMIN
-        Default to $MAILBOX_ADMIN
-   MAILBOX_WEB
-        Default to $MAILBOX_WEB
-
-Dependency:
-   rcm-ispconfig:$RCM_EXTENSION_VERSION
-   rcm-php-ispconfig:$RCM_EXTENSION_VERSION
-   rcm-ispconfig-control-manage-client:$RCM_EXTENSION_VERSION
-
-Download:
-   [rcm-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/rcm-ispconfig.sh)
-   [rcm-php-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/php/rcm-php-ispconfig.php)
-   [rcm-ispconfig-control-manage-client](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-client.sh)
-EOF
-}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }

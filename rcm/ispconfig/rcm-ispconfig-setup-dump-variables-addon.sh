@@ -2,6 +2,50 @@
 
 RCM_EXTENSION_VERSION=0.10.0-alpha.6
 
+# Usage Functions.
+usage() {
+    cat << EOF
+rcm-ispconfig-setup-dump-variables-addon [options]
+
+Options:
+
+Global Options:
+   --fast
+        No delay every subtask.
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+
+Environment Variables:
+   SUBDOMAIN_ISPCONFIG
+        Default to $SUBDOMAIN_ISPCONFIG
+   SUBDOMAIN_PHPMYADMIN
+        Default to $SUBDOMAIN_PHPMYADMIN
+   SUBDOMAIN_ROUNDCUBE
+        Default to $SUBDOMAIN_ROUNDCUBE
+   MAILBOX_ADMIN
+        Default to $MAILBOX_ADMIN
+   MAILBOX_SUPPORT
+        Default to $MAILBOX_SUPPORT
+   MAILBOX_POST
+        Default to $MAILBOX_POST
+   MARIADB_PREFIX_MASTER
+        Default to $MARIADB_PREFIX_MASTER
+   MARIADB_USERS_CONTAINER_MASTER
+        Default to $MARIADB_USERS_CONTAINER_MASTER
+   DKIM_SELECTOR
+        Default to $DKIM_SELECTOR
+
+Dependency:
+   rcm-ispconfig-control-manage-domain:$RCM_EXTENSION_VERSION
+   php
+
+Download:
+   [rcm-ispconfig-control-manage-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-domain.sh)
+EOF
+}
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -54,50 +98,6 @@ MAILBOX_POST=${MAILBOX_POST:=postmaster}
 MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
-
-# Usage Functions.
-usage() {
-    cat << EOF
-rcm-ispconfig-setup-dump-variables-addon [options]
-
-Options:
-
-Global Options:
-   --fast
-        No delay every subtask.
-   --version
-        Print version of this script.
-   --help
-        Show this help.
-
-Environment Variables:
-   SUBDOMAIN_ISPCONFIG
-        Default to $SUBDOMAIN_ISPCONFIG
-   SUBDOMAIN_PHPMYADMIN
-        Default to $SUBDOMAIN_PHPMYADMIN
-   SUBDOMAIN_ROUNDCUBE
-        Default to $SUBDOMAIN_ROUNDCUBE
-   MAILBOX_ADMIN
-        Default to $MAILBOX_ADMIN
-   MAILBOX_SUPPORT
-        Default to $MAILBOX_SUPPORT
-   MAILBOX_POST
-        Default to $MAILBOX_POST
-   MARIADB_PREFIX_MASTER
-        Default to $MARIADB_PREFIX_MASTER
-   MARIADB_USERS_CONTAINER_MASTER
-        Default to $MARIADB_USERS_CONTAINER_MASTER
-   DKIM_SELECTOR
-        Default to $DKIM_SELECTOR
-
-Dependency:
-   rcm-ispconfig-control-manage-domain:$RCM_EXTENSION_VERSION
-   php
-
-Download:
-   [rcm-ispconfig-control-manage-domain](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-control-manage-domain.sh)
-EOF
-}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }

@@ -2,6 +2,42 @@
 
 RCM_EXTENSION_VERSION=0.10.0-alpha.6
 
+# Usage Functions.
+usage() {
+    cat << EOF
+Usage: rcm-dovecot-multiple-certificate-ispconfig [options]
+
+Options:
+   --fqdn *
+        Fully Qualified Domain Name of the certificate, for example: \`server1.example.org\`.
+    --tls-certificate *
+        TLS Certificate.
+        Populate value from variable TLS_CERTIFICATE.
+    --tls-certificate-key *
+        TLS Certificate.
+        Populate value from variable TLS_CERTIFICATE_KEY.
+
+Global Options:
+   --fast
+        No delay every subtask.
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+
+Environment Variables:
+   MAILBOX_HOST
+        Default to $MAILBOX_HOST
+   DOVECOT_CONFIG_DIR
+        Default to $DOVECOT_CONFIG_DIR
+   DOVECOT_CONFIG_FILE_ISPCONFIG
+        Default to $DOVECOT_CONFIG_FILE_ISPCONFIG
+
+Dependency:
+   rcm-dovecot-multiple-certificate
+EOF
+}
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -48,42 +84,6 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 DOVECOT_CONFIG_DIR=${DOVECOT_CONFIG_DIR:=/etc/dovecot}
 DOVECOT_CONFIG_FILE_ISPCONFIG=${DOVECOT_CONFIG_FILE_ISPCONFIG:=${DOVECOT_CONFIG_DIR}/conf.d/99-ispconfig-custom-config.conf}
 MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
-
-# Usage Functions.
-usage() {
-    cat << EOF
-Usage: rcm-dovecot-multiple-certificate-ispconfig [options]
-
-Options:
-   --fqdn *
-        Fully Qualified Domain Name of the certificate, for example: \`server1.example.org\`.
-    --tls-certificate *
-        TLS Certificate.
-        Populate value from variable TLS_CERTIFICATE.
-    --tls-certificate-key *
-        TLS Certificate.
-        Populate value from variable TLS_CERTIFICATE_KEY.
-
-Global Options:
-   --fast
-        No delay every subtask.
-   --version
-        Print version of this script.
-   --help
-        Show this help.
-
-Environment Variables:
-   MAILBOX_HOST
-        Default to $MAILBOX_HOST
-   DOVECOT_CONFIG_DIR
-        Default to $DOVECOT_CONFIG_DIR
-   DOVECOT_CONFIG_FILE_ISPCONFIG
-        Default to $DOVECOT_CONFIG_FILE_ISPCONFIG
-
-Dependency:
-   rcm-dovecot-multiple-certificate
-EOF
-}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }

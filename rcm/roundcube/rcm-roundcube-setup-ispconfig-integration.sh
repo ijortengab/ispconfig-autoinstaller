@@ -2,6 +2,35 @@
 
 RCM_EXTENSION_VERSION=0.10.0-alpha.6
 
+# Usage Functions.
+usage() {
+    cat << EOF
+Usage: rcm-roundcube-setup-ispconfig-integration [options]
+
+Global Options:
+   --fast
+        No delay every subtask.
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+
+Environment Variables:
+   ISPCONFIG_REMOTE_USER_ROUNDCUBE
+        Default to $ISPCONFIG_REMOTE_USER_ROUNDCUBE
+   ISPCONFIG_FQDN_LOCALHOST
+        Default to $ISPCONFIG_FQDN_LOCALHOST
+   ROUNDCUBE_FQDN_LOCALHOST
+        Default to $ROUNDCUBE_FQDN_LOCALHOST
+
+Dependency:
+   mysql
+   pwgen
+   php
+   unzip
+EOF
+}
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -42,35 +71,6 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 ISPCONFIG_REMOTE_USER_ROUNDCUBE=${ISPCONFIG_REMOTE_USER_ROUNDCUBE:=roundcube}
-
-# Usage Functions.
-usage() {
-    cat << EOF
-Usage: rcm-roundcube-setup-ispconfig-integration [options]
-
-Global Options:
-   --fast
-        No delay every subtask.
-   --version
-        Print version of this script.
-   --help
-        Show this help.
-
-Environment Variables:
-   ISPCONFIG_REMOTE_USER_ROUNDCUBE
-        Default to $ISPCONFIG_REMOTE_USER_ROUNDCUBE
-   ISPCONFIG_FQDN_LOCALHOST
-        Default to $ISPCONFIG_FQDN_LOCALHOST
-   ROUNDCUBE_FQDN_LOCALHOST
-        Default to $ROUNDCUBE_FQDN_LOCALHOST
-
-Dependency:
-   mysql
-   pwgen
-   php
-   unzip
-EOF
-}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }

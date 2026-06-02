@@ -2,6 +2,57 @@
 
 RCM_EXTENSION_VERSION=0.10.0-alpha.6
 
+# Usage Functions.
+usage() {
+    cat << EOF
+Usage: rcm-ispconfig-setup-mode-website-ispconfig [command] [options]
+
+Options:
+   --dns-plugin *
+        Select how to create the DNS record.
+        Values available from command: rcm-plugin(list --interface=dns).
+   --tls-plugin
+        Select how to obtain TLS Certificate for https protocol.
+        if the URL doesn't clearly contain https, it means it's using https.
+        if left blank, it means the certificate will not be obtained or set in web server configuration.
+        Values available from command: rcm-plugin(list --interface=tls).
+   --url *
+        Add ISPConfig public domain. The value can be domain or URL.
+
+Global Options.
+   --fast
+        No delay every subtask.
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+
+RCM Config:
+   --no-timer
+
+Dependency:
+   rcm-ispconfig:$RCM_EXTENSION_VERSION
+   rcm-dig-apt
+   rcm-dig-has-address
+
+Download:
+   [rcm-ispconfig-setup-variation-bundle](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-bundle.sh)
+   [rcm-ispconfig-setup-variation-mailbox](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-mailbox.sh)
+   [rcm-nginx-plugin-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/nginx/rcm-nginx-plugin-ispconfig.sh)
+
+Pre Prompt:
+   rcm-plugin(init --interface=dns)
+   rcm-plugin(init --interface=tls)
+   rcm-plugin(add --interface=dns --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
+   rcm-plugin(add --interface=tls --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
+
+Post Prompt:
+   rcm-plugin(execute --interface=dns --name=[--dns-plugin] --method=prompt)
+   rcm-plugin(execute --interface=tls --name=[--tls-plugin] --method=prompt --ignore-fail-on-empty-name)
+
+EOF
+}
+
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -59,57 +110,6 @@ RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost al
 
 PHP_FPM_USER=${PHP_FPM_USER:=ispconfig}
 ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
-
-# Usage Functions.
-usage() {
-    cat << EOF
-Usage: rcm-ispconfig-setup-mode-website-ispconfig [command] [options]
-
-Options:
-   --dns-plugin *
-        Select how to create the DNS record.
-        Values available from command: rcm-plugin(list --interface=dns).
-   --tls-plugin
-        Select how to obtain TLS Certificate for https protocol.
-        if the URL doesn't clearly contain https, it means it's using https.
-        if left blank, it means the certificate will not be obtained or set in web server configuration.
-        Values available from command: rcm-plugin(list --interface=tls).
-   --url *
-        Add ISPConfig public domain. The value can be domain or URL.
-
-Global Options.
-   --fast
-        No delay every subtask.
-   --version
-        Print version of this script.
-   --help
-        Show this help.
-
-RCM Config:
-   --no-timer
-
-Dependency:
-   rcm-ispconfig:$RCM_EXTENSION_VERSION
-   rcm-dig-apt
-   rcm-dig-has-address
-
-Download:
-   [rcm-ispconfig-setup-variation-bundle](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-bundle.sh)
-   [rcm-ispconfig-setup-variation-mailbox](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-variation-mailbox.sh)
-   [rcm-nginx-plugin-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/nginx/rcm-nginx-plugin-ispconfig.sh)
-
-Pre Prompt:
-   rcm-plugin(init --interface=dns)
-   rcm-plugin(init --interface=tls)
-   rcm-plugin(add --interface=dns --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
-   rcm-plugin(add --interface=tls --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
-
-Post Prompt:
-   rcm-plugin(execute --interface=dns --name=[--dns-plugin] --method=prompt)
-   rcm-plugin(execute --interface=tls --name=[--tls-plugin] --method=prompt --ignore-fail-on-empty-name)
-
-EOF
-}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }
