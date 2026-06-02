@@ -64,17 +64,16 @@ DOVECOT_CONFIG_FILE_ISPCONFIG=${DOVECOT_CONFIG_FILE_ISPCONFIG:=${DOVECOT_CONFIG_
 MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 
 # Help and Version.
-[ -n "$help" ] && { usage; exit 1; }
+[ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
+
+# ------------------------------------------------------------------------------
 
 # Title.
 title rcm-dovecot-multiple-certificate-ispconfig
 ____
 
 # Dependency.
-while IFS= read -r line; do
-    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
-done <<< `usage 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
 isDirExists() {

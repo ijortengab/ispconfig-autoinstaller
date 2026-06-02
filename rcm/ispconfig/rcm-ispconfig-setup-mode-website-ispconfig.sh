@@ -88,7 +88,7 @@ PHP_FPM_USER=${PHP_FPM_USER:=ispconfig}
 ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 
 # Help and Version.
-[ -n "$help" ] && { usage; exit 1; }
+[ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Functions.
@@ -144,14 +144,13 @@ Rcm_parse_url() {
     # e '"$PHP_URL_FRAGMENT"' "$PHP_URL_FRAGMENT"
 }
 
+# ------------------------------------------------------------------------------
+
 # Title.
 title rcm-ispconfig-setup-mode-website-ispconfig
 ____
 
 # Dependency.
-while IFS= read -r line; do
-    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
-done <<< `usage 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Source: ISPConfigDebianOS::runPerfectSetup()
 if [ -z "$bypass_validation_is_installed" ];then

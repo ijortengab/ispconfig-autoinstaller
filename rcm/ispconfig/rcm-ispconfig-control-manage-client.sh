@@ -119,7 +119,7 @@ userInputBooleanDefaultYes() {
 }
 
 # Help and Version.
-[ -n "$help" ] && { usage; exit 1; }
+[ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Functions before execute command.
@@ -151,14 +151,13 @@ if [[ -n "$command" && $(type -t "command-${command}") == function ]];then
     exit 0
 fi
 
+# ------------------------------------------------------------------------------
+
 # Title.
 title rcm-ispconfig-control-manage-client
 ____
 
 # Dependency.
-while IFS= read -r line; do
-    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
-done <<< `usage 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
 websiteCredentialIspconfig() {

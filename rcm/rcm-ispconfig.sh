@@ -132,7 +132,7 @@ DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
 
 # Help and Version.
-[ -n "$help" ] && { usage; exit 1; }
+[ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Functions.
@@ -482,6 +482,8 @@ Rcm_subcommand_substitute() {
     fi
 }
 
+# ------------------------------------------------------------------------------
+
 # Title.
 title rcm-ispconfig
 ____
@@ -489,9 +491,6 @@ ____
 # [ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
-while IFS= read -r line; do
-    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
-done <<< `usage 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Require, validate, and populate value.
 chapter Variable dump.

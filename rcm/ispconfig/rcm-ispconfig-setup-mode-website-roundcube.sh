@@ -113,7 +113,7 @@ ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 
 # Help and Version.
-[ -n "$help" ] && { usage; exit 1; }
+[ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Functions.
@@ -264,14 +264,13 @@ if [ -n "$command" ];then
     fi
 fi
 
+# ------------------------------------------------------------------------------
+
 # Title.
 title rcm-ispconfig-setup-mode-website-roundcube
 ____
 
 # Dependency.
-while IFS= read -r line; do
-    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
-done <<< `usage 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Source: ISPConfigDebianOS::runPerfectSetup()
 if [ -z "$bypass_validation_is_installed" ];then
