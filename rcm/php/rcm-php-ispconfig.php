@@ -13,7 +13,7 @@ function _die($string='', $code = 1) {
     exit($code);
 }
 function printVersion() {
-    echo '0.11.0-alpha.1';
+    echo '0.11.0-alpha.2';
 }
 // Clone value.
 $arguments_count = $argc;
