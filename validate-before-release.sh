@@ -1,7 +1,5 @@
 #!/bin/bash
 
-RCM_EXTENSION_VERSION=0.11.0-alpha.2
-
 # Common Functions.
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }

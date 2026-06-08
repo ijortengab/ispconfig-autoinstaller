@@ -1,7 +1,5 @@
 #!/bin/bash
 
-RCM_EXTENSION_VERSION=0.11.0-alpha.2
-
 # Functions.
 resolve_relative_path() {
     if [ -d "$1" ];then
