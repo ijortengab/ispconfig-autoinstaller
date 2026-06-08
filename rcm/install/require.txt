@@ -1,1 +1,1 @@
-rcm require ijortengab/rcm-certbot
+ijortengab/rcm-certbot 0.2.0-alpha.1
