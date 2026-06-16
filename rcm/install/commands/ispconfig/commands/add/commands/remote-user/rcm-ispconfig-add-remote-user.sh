@@ -5,26 +5,25 @@ RCM_EXTENSION_VERSION=0.11.0-alpha.3
 # Usage Functions.
 usage() {
     cat << EOF
-Usage: rcm-ispconfig-remote-user-autocreate [options]
+Usage: rcm ispconfig add remote-user [options]
 
 Options:
-   --phpmyadmin-version
-        Set the version of PHPMyAdmin
-   --roundcube-version
-        Set the version of RoundCube
-   --ispconfig-version
-        Set the version of ISPConfig.
+   --username=USERNAME
+        Set the username of remote user.
+   --password=PASSWORD
+        Set the password of remote user.
+   --function=FUNCTION...
+        Add one or more function for the remote user.
+
+Other options:
+   --ispconfig-sure
+        Bypass ISPConfig installation checker.
 
 Global Options:
    --version
         Print version of this script.
    --help
         Show this help.
-
-Dependency:
-   mysql
-   pwgen
-   php
 EOF
 }
 
@@ -51,78 +50,25 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Define variables and constants.
-
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# Require.
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-ispconfig-remote-user-autocreate
+title rcm ispconfig add remote-user
 ____
 
 # Dependency.
+require command mysql
+require command pwgen
+require command php
 
 # Functions.
-backupFile() {
-    local mode="$1"
-    local oldpath="$2" i newpath
-    local target_dir="$3"
-    i=1
-    dirname=$(dirname "$oldpath")
-    basename=$(basename "$oldpath")
-    if [ -n "$target_dir" ];then
-        case "$target_dir" in
-            parent) dirname=$(dirname "$dirname") ;;
-            *) dirname="$target_dir"
-        esac
-    fi
-    [ -d "$dirname" ] || { echo 'Directory is not exists.' >&2; return 1; }
-    newpath="${dirname}/${basename}.${i}"
-    if [ -f "$newpath" ]; then
-        let i++
-        newpath="${dirname}/${basename}.${i}"
-        while [ -f "$newpath" ] ; do
-            let i++
-            newpath="${dirname}/${basename}.${i}"
-        done
-    fi
-    case $mode in
-        move)
-            mv "$oldpath" "$newpath" ;;
-        copy)
-            local user=$(stat -c "%U" "$oldpath")
-            local group=$(stat -c "%G" "$oldpath")
-            cp "$oldpath" "$newpath"
-            chown ${user}:${group} "$newpath"
-    esac
-}
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
-isFileExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
-}
 getRemoteUserIdIspconfigByRemoteUsername() {
     # Get the remote_userid from table remote_user in ispconfig database.
     #
@@ -263,8 +209,7 @@ fi
 chapter Populate variable.
 __ Mencari informasi database dari config.
 path="${prefix}/interface/lib/config.inc.php"
-isFileExists "$path"
-[ -n "$notfound" ] && fileMustExists "$path"
+rcm-file "$path" terminateIfNotExists
 code 'path="'$path'"'
 db_name=$(php -r "include '$path';echo DB_DATABASE;")
 code 'db_name="'$db_name'"'
