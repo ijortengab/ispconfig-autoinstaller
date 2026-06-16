@@ -5,7 +5,7 @@ RCM_EXTENSION_VERSION=0.11.0-alpha.3
 # Usage Functions.
 usage() {
     cat << EOF
-Usage: rcm-ispconfig-setup-remote-user-root [options]
+Usage: rcm ispconfig create remote-user root [options]
 
 Global Options:
    --version
@@ -15,14 +15,7 @@ Global Options:
 
 Environment Variables:
    ISPCONFIG_REMOTE_USER_ROOT
-        Default to $ISPCONFIG_REMOTE_USER_ROOT
-
-Dependency:
-   pwgen
-   rcm-ispconfig-remote-user-autocreate:$RCM_EXTENSION_VERSION
-
-Download:
-   [rcm-ispconfig-remote-user-autocreate](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-remote-user-autocreate.sh)
+        Default to root
 EOF
 }
 
@@ -42,9 +35,6 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Define variables and constants.
-ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
-
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
@@ -52,10 +42,12 @@ ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-ispconfig-setup-remote-user-root
+title rcm ispconfig create remote-user root
 ____
 
 # Dependency.
+require command pwgen
+require rcm ispconfig add remote-user
 
 # Functions.
 Rcm_ispconfig_list_functions() {
@@ -374,6 +366,9 @@ EOF
     fi
 }
 
+# Define variables and constants.
+ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
+
 # Requirement, validate, and populate value.
 chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
@@ -406,11 +401,11 @@ else
     code ispconfig_remote_user_name="$ispconfig_remote_user_name"
     code ispconfig_remote_user_password="$ispconfig_remote_user_password"
 fi
-magenta 'count='$count; _, ' # ${#functions}'; _.
+e; magenta 'count='$count; _, ' # ${#functions}'; _.
 ____
 
 INDENT+="    " \
-rcm-ispconfig-remote-user-autocreate $isfast --ispconfig-sure \
+rcm ispconfig add remote-user --ispconfig-sure \
     --username="$ispconfig_remote_user_name" \
     --password="$ispconfig_remote_user_password" \
     $functions_arg \
