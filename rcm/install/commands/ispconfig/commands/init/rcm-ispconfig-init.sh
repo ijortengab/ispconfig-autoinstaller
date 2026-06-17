@@ -56,7 +56,6 @@ RCM Config:
 Dependency:
    rcm-ispconfig:$RCM_EXTENSION_VERSION
    rcm-ispconfig-autoinstaller-nginx:$RCM_EXTENSION_VERSION
-   rcm-ispconfig-setup-remote-user-root:$RCM_EXTENSION_VERSION
    rcm-roundcube-setup-ispconfig-integration:$RCM_EXTENSION_VERSION
    rcm-amavis-setup-ispconfig:$RCM_EXTENSION_VERSION
    rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:$RCM_EXTENSION_VERSION
@@ -74,7 +73,6 @@ Dependency:
 Download:
    [rcm-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/rcm-ispconfig.sh)
    [rcm-ispconfig-autoinstaller-nginx](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-autoinstaller-nginx.sh)
-   [rcm-ispconfig-setup-remote-user-root](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-remote-user-root.sh)
    [rcm-roundcube-setup-ispconfig-integration](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/roundcube/rcm-roundcube-setup-ispconfig-integration.sh)
    [rcm-amavis-setup-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/amavis/rcm-amavis-setup-ispconfig.sh)
    [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php.sh)
@@ -781,8 +779,6 @@ rcm-ispconfig-autoinstaller-nginx $isfast \
     --php-version="$php_version" \
     --tls-certificate="$tls_certificate" \
     --tls-certificate-key="$tls_certificate_key" \
-    && INDENT+='    ' \
-rcm-ispconfig-setup-remote-user-root $isfast \
     && INDENT+='    ' \
 rcm-roundcube-setup-ispconfig-integration $isfast \
     ; [ ! $? -eq 0 ] && x
