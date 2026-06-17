@@ -69,35 +69,35 @@ helper-bundle-available() {
     else
         wrap=1
     fi
-    a=debian11a b=Debian; c=11; d=7.4; e=3.2.7; f=5.2.0; g=1.6.0
+    a=debian11a b=Debian; c=11; d=7.4; e=3.2.7
     [[ "$ID" == debian && "$VERSION_ID" == 11 ]] && color=green2 || color=red;
-    [ -n "$wrap" ] && lines+=("Variation <${color}>$a</${color}>. -->$b <hN>$c</hN>, -->PHP <hN>$d</hN>, -->ISPConfig <hN>$e</hN>,-->PHPMyAdmin <hN>$f</hN>, -->Roundcube <hN>$g</hN>.")
-    [ -z "$wrap" ] && { ___; _, 'Variation '; $color $a; _, ". $b "; hN $c; _, ',    PHP '; hN $d; _, ', ISPConfig '; hN $e; _, ',    PHPMyAdmin '; hN $f; _, ', Roundcube '; hN $g; _, '.'; _.; }
+    [ -n "$wrap" ] && lines+=("Variation <${color}>$a</${color}>. -->$b <hN>$c</hN>, -->PHP <hN>$d</hN>, -->ISPConfig <hN>$e</hN>.")
+    [ -z "$wrap" ] && { ___; _, 'Variation '; $color $a; _, ". $b "; hN $c; _, ',    PHP '; hN $d; _, ', ISPConfig '; hN $e; _, '.'; _.; }
 
-    a=debian11b b=Debian; c=11; d=8.1; e=3.2.11p2; f=5.2.1; g=1.6.6
+    a=debian11b b=Debian; c=11; d=8.1; e=3.2.11p2
     [[ "$ID" == debian && "$VERSION_ID" == 11 ]] && color=green2 || color=red;
-    [ -n "$wrap" ] && lines+=("Variation <${color}>$a</${color}>. -->$b <hN>$c</hN>, -->PHP <hN>$d</hN>, -->ISPConfig <hN>$e</hN>,-->PHPMyAdmin <hN>$f</hN>, -->Roundcube <hN>$g</hN>.")
-    [ -z "$wrap" ] && { ___; _, 'Variation '; $color $a; _, ". $b "; hN $c; _, ',    PHP '; hN $d; _, ', ISPConfig '; hN $e; _, ', PHPMyAdmin '; hN $f; _, ', Roundcube '; hN $g; _, '.'; _.; }
+    [ -n "$wrap" ] && lines+=("Variation <${color}>$a</${color}>. -->$b <hN>$c</hN>, -->PHP <hN>$d</hN>, -->ISPConfig <hN>$e</hN>.")
+    [ -z "$wrap" ] && { ___; _, 'Variation '; $color $a; _, ". $b "; hN $c; _, ',    PHP '; hN $d; _, ', ISPConfig '; hN $e; _, '.'; _.; }
 
-    a=ubuntu22a b=Ubuntu; c=22.04; d=7.4; e=3.2.7; f=5.2.0; g=1.6.0
+    a=ubuntu22a b=Ubuntu; c=22.04; d=7.4; e=3.2.7
     [[ "$ID" == ubuntu && "$VERSION_ID" == 22.04 ]] && color=green2 || color=red;
-    [ -n "$wrap" ] && lines+=("Variation <${color}>$a</${color}>. -->$b <hN>$c</hN>, -->PHP <hN>$d</hN>, -->ISPConfig <hN>$e</hN>,-->PHPMyAdmin <hN>$f</hN>, -->Roundcube <hN>$g</hN>.")
-    [ -z "$wrap" ] && { ___; _, 'Variation '; $color $a; _, ". $b "; hN $c; _, ', PHP '; hN $d; _, ', ISPConfig '; hN $e; _, ',    PHPMyAdmin '; hN $f; _, ', Roundcube '; hN $g; _, '.'; _.; }
+    [ -n "$wrap" ] && lines+=("Variation <${color}>$a</${color}>. -->$b <hN>$c</hN>, -->PHP <hN>$d</hN>, -->ISPConfig <hN>$e</hN>.")
+    [ -z "$wrap" ] && { ___; _, 'Variation '; $color $a; _, ". $b "; hN $c; _, ', PHP '; hN $d; _, ', ISPConfig '; hN $e; _, '.'; _.; }
 
-    a=debian12a b=Debian; c=12; d=8.1; e=3.2.10; f=5.2.1; g=1.6.2
+    a=debian12a b=Debian; c=12; d=8.1; e=3.2.10
     [[ "$ID" == debian && "$VERSION_ID" == 12 ]] && color=green2 || color=red;
-    [ -n "$wrap" ] && lines+=("Variation <${color}>$a</${color}>. -->$b <hN>$c</hN>, -->PHP <hN>$d</hN>, -->ISPConfig <hN>$e</hN>,-->PHPMyAdmin <hN>$f</hN>, -->Roundcube <hN>$g</hN>.")
-    [ -z "$wrap" ] && { ___; _, 'Variation '; $color $a; _, ". $b "; hN $c; _, ',    PHP '; hN $d; _, ', ISPConfig '; hN $e; _, ',   PHPMyAdmin '; hN $f; _, ', Roundcube '; hN $g; _, '.'; _.; }
+    [ -n "$wrap" ] && lines+=("Variation <${color}>$a</${color}>. -->$b <hN>$c</hN>, -->PHP <hN>$d</hN>, -->ISPConfig <hN>$e</hN>.")
+    [ -z "$wrap" ] && { ___; _, 'Variation '; $color $a; _, ". $b "; hN $c; _, ',    PHP '; hN $d; _, ', ISPConfig '; hN $e; _, '.'; _.; }
 
-    a=debian12b b=Debian; c=12; d=8.3 e=3.2.11p2; f=5.2.1; g=1.6.6
+    a=debian12b b=Debian; c=12; d=8.3 e=3.2.11p2
     [[ "$ID" == debian && "$VERSION_ID" == 12 ]] && color=green2 || color=red;
-    [ -n "$wrap" ] && lines+=("Variation <${color}>$a</${color}>. -->$b <hN>$c</hN>, -->PHP <hN>$d</hN>, -->ISPConfig <hN>$e</hN>,-->PHPMyAdmin <hN>$f</hN>, -->Roundcube <hN>$g</hN>.")
-    [ -z "$wrap" ] && { ___; _, 'Variation '; $color $a; _, ". $b "; hN $c; _, ',    PHP '; hN $d; _, ', ISPConfig '; hN $e; _, ', PHPMyAdmin '; hN $f; _, ', Roundcube '; hN $g; _, '.'; _.; }
+    [ -n "$wrap" ] && lines+=("Variation <${color}>$a</${color}>. -->$b <hN>$c</hN>, -->PHP <hN>$d</hN>, -->ISPConfig <hN>$e</hN>.")
+    [ -z "$wrap" ] && { ___; _, 'Variation '; $color $a; _, ". $b "; hN $c; _, ',    PHP '; hN $d; _, ', ISPConfig '; hN $e; _, '.'; _.; }
 
-    a=ubuntu24a b=Ubuntu; c=24.04; d=8.3; e=3.2.12p1; f=5.2.2; g=1.6.10
+    a=ubuntu24a b=Ubuntu; c=24.04; d=8.3; e=3.2.12p10
     [[ "$ID" == ubuntu && "$VERSION_ID" == 24.04 ]] && color=green2 || color=red;
-    [ -n "$wrap" ] && lines+=("Variation <${color}>$a</${color}>. -->$b <hN>$c</hN>, -->PHP <hN>$d</hN>, -->ISPConfig <hN>$e</hN>,-->PHPMyAdmin <hN>$f</hN>, -->Roundcube <hN>$g</hN>.")
-    [ -z "$wrap" ] && { ___; _, 'Variation '; $color $a; _, ". $b "; hN $c; _, ', PHP '; hN $d; _, ', ISPConfig '; hN $e; _, ', PHPMyAdmin '; hN $f; _, ', Roundcube '; hN $g; _, '.'; _.; }
+    [ -n "$wrap" ] && lines+=("Variation <${color}>$a</${color}>. -->$b <hN>$c</hN>, -->PHP <hN>$d</hN>, -->ISPConfig <hN>$e</hN>.")
+    [ -z "$wrap" ] && { ___; _, 'Variation '; $color $a; _, ". $b "; hN $c; _, ', PHP '; hN $d; _, ', ISPConfig '; hN $e; _, '.'; _.; }
 
     if [ -n "$wrap" ];then
         lines_cloned=("${lines[@]}")
