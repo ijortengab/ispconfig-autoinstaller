@@ -1,16 +1,13 @@
 #!/bin/bash
 
-modifyFileDebian12() {
+modify-file-debian12() {
     local file=/tmp/ispconfig3_install/install/dist/conf/debian120.conf.php
-    isFileExists "$file"
-    [ -n "$notfound" ] && fileMustExists "$file"
-    if [[ ! "$php_version" == 8.2 ]];then
-        sed -i \
-            -e 's,"8\.2","'$php_version'",g' \
-            -e 's,/8\.2/,/'$php_version'/,g' \
-            -e 's,php8\.2,php'$php_version',g' \
-            "$file"
-    fi
+    [ -f "$file" ] || { error File must exists: "$file".; x; }
+    sed -i \
+        -e 's,"8\.2","'$php_version'",g' \
+        -e 's,/8\.2/,/'$php_version'/,g' \
+        -e 's,php8\.2,php'$php_version',g' \
+        "$file"
     # Edit informasi cron dan ufw yang terlewat.
     string="//* cron"
     number_1=$(grep -n -F "$string" "$file" | head -1 | cut -d: -f1)
