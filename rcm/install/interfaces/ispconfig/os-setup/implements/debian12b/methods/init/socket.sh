@@ -1,6 +1,6 @@
 #!/bin/bash
 
-include `rcm plugin extends ispconfig/os-setup debian12 init`
+include `rcm plugin run-parent-method ispconfig/os-setup debian12 init`
 
 # Dependency.
 require command apt-install

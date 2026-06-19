@@ -1,6 +1,6 @@
 #!/bin/bash
 
-RCM_EXTENSION_VERSION=0.11.0-alpha.4
+RCM_EXTENSION_VERSION=0.11.0-alpha.5
 
 # Usage Functions.
 usage() {
@@ -341,7 +341,7 @@ if [ -n "$notfound" ];then
     cat << 'EOF' > "$fullpath"
 #!/bin/bash
 
-RCM_EXTENSION_VERSION=0.11.0-alpha.4
+RCM_EXTENSION_VERSION=0.11.0-alpha.5
 _soap_ispconfig() {
     local cur prev
     cur=${COMP_WORDS[COMP_CWORD]}
