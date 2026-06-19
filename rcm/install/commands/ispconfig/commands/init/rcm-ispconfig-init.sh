@@ -24,15 +24,12 @@ Options:
    --url-ispconfig
         Add ISPConfig public domain. The value can be domain or URL and must be part of FQDN.
         ISPConfig automatically has address at http://ispconfig.localhost/.
-        Value available from command: rcm-ispconfig-setup-mode-init(helper suggest-url ispconfig [--domain] [--hostname]), or other.
    --url-phpmyadmin
         Add PHPMyAdmin public domain. The value can be domain or URL and must be part of FQDN.
         PHPMyAdmin automatically has address at http://phpmyadmin.localhost/.
-        Value available from command: rcm-ispconfig-setup-mode-init(helper suggest-url phpmyadmin [--domain] [--hostname] [--url-ispconfig]), or other.
    --url-roundcube
         Add Roundcube public domain. The value can be domain or URL and must be part of FQDN.
         Roundcube automatically has address at http://roundcube.localhost/.
-        Value available from command: rcm-ispconfig-setup-mode-init(helper suggest-url roundcube [--domain] [--hostname] [--url-ispconfig]), or other.
    --web-server=HTTP
         Select web server to build up virtual host.
         Values available from command: rcm(plugin list ispconfig/web-server).
@@ -154,29 +151,11 @@ while [[ $# -gt 0 ]]; do
             done
             ;;
         --[^-]*) shift ;;
-        helper)
-            while [[ $# -gt 0 ]]; do
-                case "$1" in
-                    *) _new_arguments+=("$1"); shift ;;
-                esac
-            done
-            ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
 done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
-
-# Command.
-if [ -n "$1" ];then
-    command=
-    case "$1" in
-        helper) command="$1"; shift ;;
-    esac
-    if [ -z "$command" ];then
-        error Command unknown: '`'"$1"'`'.; x
-    fi
-fi
 
 # Define variables and constants.
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
@@ -194,196 +173,19 @@ SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
-# Functions.
-ArrayDiff() {
-    # Computes the difference of arrays.
-    #
-    # Globals:
-    #   Modified: _return
-    #
-    # Arguments:
-    #   1 = Parameter of the array to compare from.
-    #   2 = Parameter of the array to compare against.
-    #
-    # Returns:
-    #   None
-    #
-    # Example:
-    #   ```
-    #   my=("cherry" "manggo" "blackberry" "manggo" "blackberry")
-    #   yours=("cherry" "blackberry")
-    #   ArrayDiff my[@] yours[@]
-    #   # Get result in variable `$_return`.
-    #   # _return=("manggo" "manggo")
-    #   ```
-    local e
-    local source=("${!1}")
-    local reference=("${!2}")
-    _return=()
-    # inArray is alternative of ArraySearch.
-    inArray () {
-        local e match="$1"
-        shift
-        for e; do [[ "$e" == "$match" ]] && return 0; done
-        return 1
-    }
-    if [[ "${#reference[@]}" -gt 0 ]];then
-        for e in "${source[@]}";do
-            if ! inArray "$e" "${reference[@]}";then
-                _return+=("$e")
-            fi
-        done
-    else
-        _return=("${source[@]}")
-    fi
-}
-Rcm_parse_url() {
-    # Reset
-    PHP_URL_SCHEME=
-    PHP_URL_HOST=
-    PHP_URL_PORT=
-    PHP_URL_USER=
-    PHP_URL_PASS=
-    PHP_URL_PATH=
-    PHP_URL_QUERY=
-    PHP_URL_FRAGMENT=
-    PHP_URL_SCHEME="$(echo "$1" | grep :// | sed -e's,^\(.*\)://.*,\1,g')"
-    _PHP_URL_SCHEME_SLASH="${PHP_URL_SCHEME}://"
-    _PHP_URL_SCHEME_REVERSE="$(echo ${1/${_PHP_URL_SCHEME_SLASH}/})"
-    if grep -q '#' <<< "$_PHP_URL_SCHEME_REVERSE";then
-        PHP_URL_FRAGMENT=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d# -f2)
-        _PHP_URL_SCHEME_REVERSE=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d# -f1)
-    fi
-    if grep -q '\?' <<< "$_PHP_URL_SCHEME_REVERSE";then
-        PHP_URL_QUERY=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d? -f2)
-        _PHP_URL_SCHEME_REVERSE=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d? -f1)
-    fi
-    _PHP_URL_USER_PASS="$(echo $_PHP_URL_SCHEME_REVERSE | grep @ | cut -d@ -f1)"
-    PHP_URL_PASS=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f2`
-    if [ -n "$PHP_URL_PASS" ]; then
-        PHP_URL_USER=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f1`
-    else
-        PHP_URL_USER=$_PHP_URL_USER_PASS
-    fi
-    _PHP_URL_HOST_PORT="$(echo ${_PHP_URL_SCHEME_REVERSE/$_PHP_URL_USER_PASS@/} | cut -d/ -f1)"
-    PHP_URL_HOST="$(echo $_PHP_URL_HOST_PORT | sed -e 's,:.*,,g')"
-    if grep -q -E ':[0-9]+$' <<< "$_PHP_URL_HOST_PORT";then
-        PHP_URL_PORT="$(echo $_PHP_URL_HOST_PORT | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
-    fi
-    _PHP_URL_HOST_PORT_LENGTH=${#_PHP_URL_HOST_PORT}
-    _LENGTH="$_PHP_URL_HOST_PORT_LENGTH"
-    if [ -n "$_PHP_URL_USER_PASS" ];then
-        _PHP_URL_USER_PASS_LENGTH=${#_PHP_URL_USER_PASS}
-        _LENGTH=$((_LENGTH + 1 + _PHP_URL_USER_PASS_LENGTH))
-    fi
-    PHP_URL_PATH="${_PHP_URL_SCHEME_REVERSE:$_LENGTH}"
-
-    # Debug
-    # e '"$PHP_URL_SCHEME"' "$PHP_URL_SCHEME"
-    # e '"$PHP_URL_HOST"' "$PHP_URL_HOST"
-    # e '"$PHP_URL_PORT"' "$PHP_URL_PORT"
-    # e '"$PHP_URL_USER"' "$PHP_URL_USER"
-    # e '"$PHP_URL_PASS"' "$PHP_URL_PASS"
-    # e '"$PHP_URL_PATH"' "$PHP_URL_PATH"
-    # e '"$PHP_URL_QUERY"' "$PHP_URL_QUERY"
-    # e '"$PHP_URL_FRAGMENT"' "$PHP_URL_FRAGMENT"
-}
-urlAlternative() {
-    [[ $(type -t Rcm_parse_url) == function ]] || { error Function Rcm_parse_url not found.; x; }
-    local url=$1 port=$2 path=$3
-    local PHP_URL_SCHEME PHP_URL_USER PHP_URL_PASS PHP_URL_HOST PHP_URL_PORT PHP_URL_PATH
-    local scheme
-    Rcm_parse_url $url
-    if [ "$port" == - ];then
-        port="$PHP_URL_PORT"
-    fi
-    [ -z "$port" ] && port=8080
-    [ -n "$PHP_URL_SCHEME" ] && scheme="$PHP_URL_SCHEME" || scheme=https
-    local hostname=$(echo "$PHP_URL_HOST" | sed -E 's|^([^\.]+)\..*|\1|g')
-    local domain=$(echo "$PHP_URL_HOST" | cut -d. -f2-)
-    if [ "$hostname" == "$SUBDOMAIN_ISPCONFIG" ];then
-        echo "${scheme}://${domain}:${port}${path}"
-    else
-        echo "${scheme}://${PHP_URL_HOST}:${port}${path}"
-    fi
-}
-command-helper() {
-    local helper=$1; shift
-    if [ "$helper" == do-nothing ];then
-        return
-    fi
-    if [ -n "$helper" ];then
-        if [[ $(type -t "helper-${helper}") == function ]];then
-            helper-${helper} "$@"
-            exit 0
-        else
-            error Helper unknown: '`'"$helper"'`'.; x
-        fi
-    fi
-}
-helper-suggest-url() {
-    [[ $(type -t ArrayDiff) == function ]] || { error Function ArrayDiff not found.; x; }
-    [[ $(type -t urlAlternative) == function ]] || { error Function urlAlternative not found.; x; }
-    local PHP_URL_SCHEME PHP_URL_USER PHP_URL_PASS PHP_URL_HOST PHP_URL_PORT PHP_URL_PATH
-    local which=$1
-    case "$which" in
-        ispconfig)
-            _; _.
-            ___; yellow Attention; _, . ISPConfig cannot install inside subpath.; _.
-            local fqdn=$3.$2
-            urlAlternative "$fqdn" 8080
-            urlAlternative "$fqdn" 8081
-            urlAlternative "$fqdn" 8443
-            ;;
-        phpmyadmin)
-            local fqdn=$3.$2 url_ispconfig=$4
-            [ $url_ispconfig == - ] && url_ispconfig=
-            # Set to skip, return exit code non zero.
-            local array=()
-            for each in 8080 8081 8443; do
-                array+=($(urlAlternative "$fqdn" "$each"))
-                array+=($(urlAlternative "$fqdn" "$each" /phpmyadmin))
-                array+=($(urlAlternative "$fqdn" "$each" "/${SUBDOMAIN_PHPMYADMIN}"))
-            done
-            if [ -n "$url_ispconfig" ];then
-                local _array=("$url_ispconfig")
-                ArrayDiff array[@] _array[@]
-                array=("${_return[@]}")
-            fi
-            for each in "${array[@]}"; do
-                echo "$each"
-            done
-            ;;
-        roundcube)
-            local fqdn=$3.$2 url_ispconfig=$4
-            [ $url_ispconfig == - ] && url_ispconfig=
-            # Set to skip, return exit code non zero.
-            local array=()
-            for each in 8080 8081 8443; do
-                array+=($(urlAlternative "$fqdn" "$each"))
-                array+=($(urlAlternative "$fqdn" "$each" /roundcube))
-                array+=($(urlAlternative "$fqdn" "$each" "/${SUBDOMAIN_ROUNDCUBE}"))
-            done
-            if [ -n "$url_ispconfig" ];then
-                local _array=("$url_ispconfig")
-                ArrayDiff array[@] _array[@]
-                array=("${_return[@]}")
-            fi
-            for each in "${array[@]}"; do
-                echo "$each"
-            done
-    esac
-}
-
-# Execute command.
-if [ -n "$command" ];then
-    if [[ $(type -t "command-${command}") == function ]];then
-        command-${command} "$@"
-        exit 0
-    else
-        error Command unknown: '`'"$command"'`'.; x
-    fi
-fi
+# Require.
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
+require vendor/ijortengab/rcm/functions/utility/find-string.sh
+require vendor/ijortengab/rcm/functions/utility/sleep-extended.sh
+require vendor/ijortengab/rcm/functions/utility/apt-install.sh
+require vendor/ijortengab/rcm/functions/utility/backup-file.sh
+require vendor/ijortengab/rcm/functions/utility/backup-dir.sh
+require vendor/ijortengab/rcm/functions/utility/link-symbolic.sh
+require vendor/ijortengab/bash/functions/array-diff.sh
+require vendor/ijortengab/bash/functions/array-intersect.sh
+require vendor/ijortengab/bash/functions/array-search.sh
+require vendor/ijortengab/bash/functions/array-remove.sh
 
 # ------------------------------------------------------------------------------
 
@@ -407,117 +209,6 @@ if [ -z "$bypass_validation_is_installed" ];then
     fi
     ____
 fi
-
-# Functions.
-ArraySearch() {
-    local index match="$1"
-    local source=("${!2}")
-    for index in "${!source[@]}"; do
-       if [[ "${source[$index]}" == "${match}" ]]; then
-           _return=$index; return 0
-       fi
-    done
-    return 1
-}
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
-sleepExtended() {
-    local countdown=$1
-    local width=$2
-    if [ -z "$width" ];then
-        width=80
-    fi
-    if [ "$countdown" -gt 0 ];then
-        dikali10=$((countdown*10))
-        _dikali10=$dikali10
-        _dotLength=$(( ( width * _dikali10 ) / dikali10 ))
-        printf "\r\033[K" >&2
-        e; printf %"$_dotLength"s | tr " " "." >&2
-        printf "\r"
-        while [ "$_dikali10" -ge 0 ]; do
-            dotLength=$(( ( width * _dikali10 ) / dikali10 ))
-            if [[ ! "$dotLength" == "$_dotLength" ]];then
-                _dotLength="$dotLength"
-                printf "\r\033[K" >&2
-                e; printf %"$dotLength"s | tr " " "." >&2
-                printf "\r"
-            fi
-            _dikali10=$((_dikali10 - 1))
-            sleep .1
-        done
-    fi
-}
-urlCompleteComponent() {
-    local tld_special _url_port _tld _url_path_correct
-    [[ $(type -t Rcm_parse_url) == function ]] || { error Function Rcm_parse_url not found.; x; }
-    [[ $(type -t ArraySearch) == function ]] || { error Function ArraySearch not found.; x; }
-    [[ -n "$url" ]] || { error Global variable url is not found or empty value.; x; }
-    [[ -n "$RCM_TLD_SPECIAL" ]] || { error Global variable RCM_TLD_SPECIAL is not found or empty value.; x; }
-    Rcm_parse_url "$url"
-    if [ -z "$PHP_URL_HOST" ];then
-        error Argument --url is not valid: '`'"$url"'`'.; x
-    fi
-    [ -n "$PHP_URL_SCHEME" ] && url_scheme="$PHP_URL_SCHEME" || url_scheme=https
-    if [ -z "$PHP_URL_PORT" ];then
-        case "$url_scheme" in
-            http) url_port=80;;
-            https) url_port=443;;
-        esac
-    else
-        url_port="$PHP_URL_PORT"
-    fi
-    url_host="$PHP_URL_HOST"
-    url_path="$PHP_URL_PATH"
-    url_path_clean=
-    url_path_clean_trailing=
-    if [[ "$url_path" == '/' ]];then
-        url_path=
-    fi
-    if [ -n "$url_path" ];then
-        # Trim leading and trailing slash.
-        url_path_clean=$(echo "$url_path" | sed -E 's|(^/+\|/+$)||g')
-        url_path_clean_trailing=$(echo "$url_path" | sed -E 's|/+$||g')
-        # Must leading with slash.
-        # Karena akan digunakan pada nginx configuration.
-        _url_path_correct="/${url_path_clean}"
-        if [ ! "$url_path_clean_trailing" == "$_url_path_correct" ];then
-            error "Argument --url-path not valid."; x
-        fi
-    fi
-    _tld="${url_host##*.}"
-    # Explode by space.
-    read -ra tld_special -d '' <<< "$RCM_TLD_SPECIAL"
-    is_tld_special=
-    if ArraySearch "$_tld" tld_special[@];then
-        # Paksa menjadi http.
-        url_scheme=http
-        if [ -z "$PHP_URL_PORT" ];then
-            url_port=80
-        fi
-        is_tld_special=1
-    fi
-    _url_port=
-    if [ -n "$url_port" ];then
-        if [[ "$url_scheme" == https && "$url_port" == 443 ]];then
-            _url_port=
-        elif [[ "$url_scheme" == http && "$url_port" == 80 ]];then
-            _url_port=
-        else
-            _url_port=":${url_port}"
-        fi
-    fi
-    # Modify variable url, auto add scheme.
-    # Modify variable url, auto trim trailing slash, auto add port.
-    url="${url_scheme}://${url_host}${_url_port}${url_path_clean_trailing}"
-}
 
 # Require, validate, and populate value.
 chapter Variable dump.
@@ -876,7 +567,6 @@ exit 0
     # 'long:--without-upgrade-system,parameter:upgrade_system,flag_option:reverse'
 # )
 # OPERAND=(
-# helper
 # )
 # EOF
 # clear
