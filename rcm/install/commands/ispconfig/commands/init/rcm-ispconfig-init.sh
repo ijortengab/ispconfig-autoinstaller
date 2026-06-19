@@ -33,6 +33,19 @@ Options:
         Add Roundcube public domain. The value can be domain or URL and must be part of FQDN.
         Roundcube automatically has address at http://roundcube.localhost/.
         Value available from command: rcm-ispconfig-setup-mode-init(helper suggest-url roundcube [--domain] [--hostname] [--url-ispconfig]), or other.
+   --web-server=HTTP
+        Select web server to build up virtual host.
+        Values available from command: rcm(plugin list ispconfig/web-server).
+   --dbms=DB
+        Select database management system to store the data.
+        Values available from command: rcm(plugin list ispconfig/dbms).
+   --mail-server=SMTP
+        Select the mail transfer agent. Values available from command: rcm(plugin list ispconfig/mail-server).
+   --mailbox-handler=[IMAP]
+        Select the mail delivery agent. Values available from command: rcm(plugin list mailbox-handler).
+   --mail-filtering=SPAM
+        Select the mail filtering daemon. Values available from command: rcm(plugin list mail-filtering).
+        Conditional: Bypass if --mailbox-handler has no value.
    --os-setup=OS
         Select the variation OS setup. Values available from command: rcm(plugin list ispconfig/os-setup).
    --timezone
@@ -101,12 +114,20 @@ while [[ $# -gt 0 ]]; do
         --help) help=1; shift ;;
         --version) version=1; shift ;;
         --bypass-validation-is-installed) bypass_validation_is_installed=1; shift ;;
+        --dbms=*) dbms="${1#*=}"; shift ;;
+        --dbms) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then dbms="$2"; shift; fi; shift ;;
         --dns-plugin=*) dns_plugin="${1#*=}"; shift ;;
         --dns-plugin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then dns_plugin="$2"; shift; fi; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --hostname=*) hostname="${1#*=}"; shift ;;
         --hostname) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then hostname="$2"; shift; fi; shift ;;
+        --mailbox-handler=*) mailbox_handler="${1#*=}"; shift ;;
+        --mailbox-handler) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mailbox_handler="$2"; shift; fi; shift ;;
+        --mail-filtering=*) mail_filtering="${1#*=}"; shift ;;
+        --mail-filtering) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mail_filtering="$2"; shift; fi; shift ;;
+        --mail-server=*) mail_server="${1#*=}"; shift ;;
+        --mail-server) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mail_server="$2"; shift; fi; shift ;;
         --os-setup=*) os_setup="${1#*=}"; shift ;;
         --os-setup) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then os_setup="$2"; shift; fi; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
@@ -123,6 +144,8 @@ while [[ $# -gt 0 ]]; do
         --with-update-system) update_system=1; shift ;;
         --without-upgrade-system) upgrade_system=0; shift ;;
         --with-upgrade-system) upgrade_system=1; shift ;;
+        --web-server=*) web_server="${1#*=}"; shift ;;
+        --web-server) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then web_server="$2"; shift; fi; shift ;;
         --) shift
             while [[ $# -gt 0 ]]; do
                 case "$1" in
@@ -658,22 +681,19 @@ fi
 
 include `rcm plugin get-socket ispconfig/os-setup $os_setup init`
 
-INDENT+='    ' \
-RCM_PROMPT_CHAIN= \
-RCM_ENVIRONMENT_VARIABLES= \
-rcm-nginx-apt $isfast \
-    && INDENT+='    ' \
-rcm-mariadb-apt $isfast \
-    && INDENT+='    ' \
-rcm-php-apt $isfast \
-    --php-version="$php_version" \
-    && INDENT+='    ' \
-rcm-php-setup-adjust-cli-version $isfast \
-    --php-version="$php_version" \
-    && INDENT+='    ' \
-rcm-postfix-apt $isfast \
-    --fqdn="$fqdn" \
-    ; [ ! $? -eq 0 ] && x
+include `rcm plugin run-method ispconfig/web-server $web_server init`
+
+include `rcm plugin run-method ispconfig/dbms $dbms init`
+
+include `rcm plugin run-method ispconfig/mail-server $mail_server init`
+
+if [ -n "$mailbox_handler" ];then
+
+    include `rcm plugin run-method mailbox-handler $mailbox_handler init`
+
+    include `rcm plugin run-method mail-filtering $mail_filtering init`
+
+fi
 
 INDENT+='    ' \
 rcm-plugin $isfast execute --interface=dns --name="$dns_plugin" --method='server_setup_post' \
@@ -717,6 +737,17 @@ fi
 # If not set in argument, try load from environment.
 [ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"
 [ -z "$tls_certificate_key" ] && tls_certificate_key="$TLS_CERTIFICATE_KEY"
+
+chapter Take a break.
+_ Begin to Setup; _.
+sleep-extended 3 30
+____
+
+include `rcm plugin run-method ispconfig/mail-server $mail_server setup`
+
+include `rcm plugin run-method ispconfig/dbms $dbms setup`
+
+include `rcm plugin run-method ispconfig/web-server $web_server setup`
 
 include `rcm plugin run-method ispconfig/os-setup $os_setup setup`
 
@@ -820,6 +851,11 @@ exit 0
 # )
 # VALUE=(
 # --timezone
+# --web-server
+# --mail-server
+# --mailbox-handler
+# --mail-filtering
+# --dbms
 # --hostname
 # --domain
 # --url-ispconfig
