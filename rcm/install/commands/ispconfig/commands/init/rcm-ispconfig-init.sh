@@ -16,8 +16,6 @@ Options:
         if the URL doesn't clearly contain https, it means it's using https.
         if left blank, it means the certificate will not be obtained or set in web server configuration.
         Values available from command: rcm-plugin(list --interface=tls).
-   --variation *
-        Select the variation bundle setup. Values available from command: rcm-ispconfig-setup-mode-init(helper bundle-available).
    --domain *
         Domain name of the server.
         Together with --hostname will make a Fully Qualified Domain Name (FQDN).
@@ -35,6 +33,8 @@ Options:
         Add Roundcube public domain. The value can be domain or URL and must be part of FQDN.
         Roundcube automatically has address at http://roundcube.localhost/.
         Value available from command: rcm-ispconfig-setup-mode-init(helper suggest-url roundcube [--domain] [--hostname] [--url-ispconfig]), or other.
+   --os-setup=OS
+        Select the variation OS setup. Values available from command: rcm(plugin list ispconfig/os-setup).
    --timezone
         Set the timezone of this machine. Available values: Asia/Gaza, Asia/Ujung_Pandang, Asia/Jakarta, Asia/Makassar, Asia/Pontianak, Asia/Jayapura, or other.
 
@@ -107,6 +107,8 @@ while [[ $# -gt 0 ]]; do
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --hostname=*) hostname="${1#*=}"; shift ;;
         --hostname) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then hostname="$2"; shift; fi; shift ;;
+        --os-setup=*) os_setup="${1#*=}"; shift ;;
+        --os-setup) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then os_setup="$2"; shift; fi; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
         --timezone) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then timezone="$2"; shift; fi; shift ;;
         --tls-plugin=*) tls_plugin="${1#*=}"; shift ;;
@@ -117,8 +119,6 @@ while [[ $# -gt 0 ]]; do
         --url-phpmyadmin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_phpmyadmin="$2"; shift; fi; shift ;;
         --url-roundcube=*) url_roundcube="${1#*=}"; shift ;;
         --url-roundcube) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_roundcube="$2"; shift; fi; shift ;;
-        --variation=*) variation="${1#*=}"; shift ;;
-        --variation) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then variation="$2"; shift; fi; shift ;;
         --without-update-system) update_system=0; shift ;;
         --with-update-system) update_system=1; shift ;;
         --without-upgrade-system) upgrade_system=0; shift ;;
@@ -503,45 +503,6 @@ code 'SUBDOMAIN_ISPCONFIG="'$SUBDOMAIN_ISPCONFIG'"'
 code 'SUBDOMAIN_PHPMYADMIN="'$SUBDOMAIN_PHPMYADMIN'"'
 code 'SUBDOMAIN_ROUNDCUBE="'$SUBDOMAIN_ROUNDCUBE'"'
 code 'timezone="'$timezone'"'
-code 'variation="'$variation'"'
-if [ -z "$variation" ];then
-    error "Argument --variation required."; x
-else
-    variation-eligible
-    if ! ArraySearch "$variation" variation_eligible[@];then
-        error "Argument --variation not valid."; x
-    fi
-fi
-code 'variation="'$variation'"'
-case "$variation" in
-    debian11a) os=debian; os_version=11   ; php_version=7.4; ispconfig_version=3.2.7;    phpmyadmin_version=5.2.0; roundcube_version=1.6.0  ;;
-    debian11b) os=debian; os_version=11   ; php_version=8.1; ispconfig_version=3.2.11p2; phpmyadmin_version=5.2.1; roundcube_version=1.6.6  ;;
-    ubuntu22a) os=ubuntu; os_version=22.04; php_version=7.4; ispconfig_version=3.2.7;    phpmyadmin_version=5.2.0; roundcube_version=1.6.0  ;;
-    debian12a) os=debian; os_version=12   ; php_version=8.1; ispconfig_version=3.2.10;   phpmyadmin_version=5.2.1; roundcube_version=1.6.2  ;;
-    debian12b) os=debian; os_version=12   ; php_version=8.3; ispconfig_version=3.2.11p2; phpmyadmin_version=5.2.1; roundcube_version=1.6.6  ;;
-    ubuntu24a) os=ubuntu; os_version=22.04; php_version=8.3; ispconfig_version=3.2.12p1; phpmyadmin_version=5.2.2; roundcube_version=1.6.10 ;;
-    *) error "Argument --variation is not valid."; x;;
-esac
-code 'os="'$os'"'
-code 'os_version="'$os_version'"'
-operand_setup_basic=
-case "$os" in
-    debian)
-        case "$os_version" in
-            11) operand_setup_basic=debian-11-setup-basic ;;
-            12) operand_setup_basic=debian-12-setup-basic ;;
-        esac
-        ;;
-    ubuntu)
-        case "$os_version" in
-            22.04) operand_setup_basic=ubuntu-22.04-setup-basic ;;
-            24.04) operand_setup_basic=ubuntu-24.04-setup-basic ;;
-        esac
-        ;;
-esac
-if [ -z "$operand_setup_basic" ];then
-    error "Operating System is not support."; x
-fi
 code 'php_version="'$php_version'"'
 code 'phpmyadmin_version="'$phpmyadmin_version'"'
 code 'roundcube_version="'$roundcube_version'"'
@@ -695,23 +656,11 @@ if [[ -n "$adjust" ]];then
     ____
 fi
 
-if command -v rcm-$operand_setup_basic >/dev/null;then
-    is_with_resolve_dependencies=
-else
-    is_with_resolve_dependencies=' --with-resolve-dependencies'
-fi
+include `rcm plugin get-socket ispconfig/os-setup $os_setup init`
 
 INDENT+='    ' \
 RCM_PROMPT_CHAIN= \
 RCM_ENVIRONMENT_VARIABLES= \
-rcm $isfast \
-    $is_with_resolve_dependencies \
-    $operand_setup_basic \
-    $is_update_system \
-    $is_upgrade_system \
-    --timezone="$timezone" \
-    -- \
-    && INDENT+='    ' \
 rcm-nginx-apt $isfast \
     && INDENT+='    ' \
 rcm-mariadb-apt $isfast \
@@ -782,16 +731,6 @@ rcm-ispconfig-autoinstaller-nginx $isfast \
     && INDENT+='    ' \
 rcm-roundcube-setup-ispconfig-integration $isfast \
     ; [ ! $? -eq 0 ] && x
-
-case "$os" in
-    debian)
-        case "$os_version" in
-            11)
-                INDENT+='    ' \
-                    rcm-amavis-setup-ispconfig $isfast \
-                    ; [ ! $? -eq 0 ] && x
-        esac
-esac
 
 if [ -n "$url_ispconfig" ];then
     INDENT+="    " \
@@ -894,9 +833,9 @@ exit 0
 # --url-ispconfig
 # --url-phpmyadmin
 # --url-roundcube
-# --variation
 # --dns-plugin
 # --tls-plugin
+# --os-setup
 # )
 # MULTIVALUE=(
 # )
