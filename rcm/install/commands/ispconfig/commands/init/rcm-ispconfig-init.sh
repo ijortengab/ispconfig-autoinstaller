@@ -718,17 +718,9 @@ fi
 [ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"
 [ -z "$tls_certificate_key" ] && tls_certificate_key="$TLS_CERTIFICATE_KEY"
 
+include `rcm plugin run-method ispconfig/os-setup $os_setup setup`
+
 INDENT+='    ' \
-rcm-ispconfig-autoinstaller-nginx $isfast \
-    --domain="$domain" \
-    --hostname="$hostname" \
-    --ispconfig-version="$ispconfig_version" \
-    --roundcube-version="$roundcube_version" \
-    --phpmyadmin-version="$phpmyadmin_version" \
-    --php-version="$php_version" \
-    --tls-certificate="$tls_certificate" \
-    --tls-certificate-key="$tls_certificate_key" \
-    && INDENT+='    ' \
 rcm-roundcube-setup-ispconfig-integration $isfast \
     ; [ ! $? -eq 0 ] && x
 
