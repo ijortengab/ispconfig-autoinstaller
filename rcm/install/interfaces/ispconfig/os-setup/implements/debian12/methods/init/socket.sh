@@ -3,7 +3,7 @@
 # Dependency.
 require command apt-install
 
-include `rcm plugin use-trait os-setup debian12 init`
+include `rcm plugin run-static-method os-setup debian12 init`
 include `rcm plugin run-parent-method ispconfig/os-setup debian init`
 
 # Section first.
