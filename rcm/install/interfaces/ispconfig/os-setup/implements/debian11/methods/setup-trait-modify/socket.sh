@@ -1,6 +1,10 @@
 #!/bin/bash
 
-modifyFileDebian11() {
+
+# @todo, hapus ini.
+
+
+modify-file-debian11() {
     local file=/tmp/ispconfig3_install/install/dist/conf/debian110.conf.php
     isFileExists "$file"
     [ -n "$notfound" ] && fileMustExists "$file"
