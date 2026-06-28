@@ -5,17 +5,12 @@ RCM_EXTENSION_VERSION=0.11.0-alpha.5
 # Usage Functions.
 usage() {
     cat << EOF
-Usage: rcm-ispconfig-setup-mode-init [command] [options]
+Usage: rcm ispconfig init [options]
 
 Options:
    --dns-plugin *
         Select how to create the DNS record.
         Values available from command: rcm-plugin(list --interface=dns).
-   --tls-plugin
-        Select how to obtain TLS Certificate for https protocol.
-        if the URL doesn't clearly contain https, it means it's using https.
-        if left blank, it means the certificate will not be obtained or set in web server configuration.
-        Values available from command: rcm-plugin(list --interface=tls).
    --domain *
         Domain name of the server.
         Together with --hostname will make a Fully Qualified Domain Name (FQDN).
@@ -30,6 +25,12 @@ Options:
    --url-roundcube
         Add Roundcube public domain. The value can be domain or URL and must be part of FQDN.
         Roundcube automatically has address at http://roundcube.localhost/.
+   --public-domain
+        Make sure that --fqdn is public domain, this will trigger TLS request and DNS verification.
+   --acme-client=[TLS]
+        Select acme client to obtain TLS Certificate.
+        Values available from command: rcm(plugin list ispconfig/acme-client).
+        Conditional: Bypass if --public-domain is not added.
    --web-server=HTTP
         Select web server to build up virtual host.
         Values available from command: rcm(plugin list ispconfig/web-server).
@@ -110,6 +111,8 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --acme-client=*) acme_client="${1#*=}"; shift ;;
+        --acme-client) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then acme_client="$2"; shift; fi; shift ;;
         --bypass-validation-is-installed) bypass_validation_is_installed=1; shift ;;
         --dbms=*) dbms="${1#*=}"; shift ;;
         --dbms) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then dbms="$2"; shift; fi; shift ;;
@@ -127,10 +130,9 @@ while [[ $# -gt 0 ]]; do
         --mail-server) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mail_server="$2"; shift; fi; shift ;;
         --os-setup=*) os_setup="${1#*=}"; shift ;;
         --os-setup) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then os_setup="$2"; shift; fi; shift ;;
+        --public-domain) public_domain=1; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
         --timezone) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then timezone="$2"; shift; fi; shift ;;
-        --tls-plugin=*) tls_plugin="${1#*=}"; shift ;;
-        --tls-plugin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_plugin="$2"; shift; fi; shift ;;
         --url-ispconfig=*) url_ispconfig="${1#*=}"; shift ;;
         --url-ispconfig) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_ispconfig="$2"; shift; fi; shift ;;
         --url-phpmyadmin=*) url_phpmyadmin="${1#*=}"; shift ;;
@@ -186,11 +188,12 @@ require vendor/ijortengab/bash/functions/array-diff.sh
 require vendor/ijortengab/bash/functions/array-intersect.sh
 require vendor/ijortengab/bash/functions/array-search.sh
 require vendor/ijortengab/bash/functions/array-remove.sh
+require vendor/ijortengab/ispconfig-autoinstaller/functions/parse-ini-file.sh
 
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-ispconfig-setup-mode-init
+title rcm ispconfig init
 ____
 
 # Dependency.
@@ -232,16 +235,6 @@ else
     fi
 fi
 code 'dns_plugin="'$dns_plugin'"'
-if [ -n "$tls_plugin" ];then
-    tls_plugin_available=()
-    while read line; do
-        tls_plugin_available+=($line)
-    done <<< `rcm-plugin list --interface=tls`
-    if ! ArraySearch "$tls_plugin" tls_plugin_available[@];then
-        error "Argument --tls-plugin not valid."; x
-    fi
-fi
-code 'tls_plugin="'$tls_plugin'"'
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
@@ -372,6 +365,8 @@ fi
 
 include `rcm plugin get-socket ispconfig/os-setup $os_setup init`
 
+include `rcm plugin run-method ispconfig/acme-client $acme_client init`
+
 include `rcm plugin run-method ispconfig/web-server $web_server init`
 
 include `rcm plugin run-method ispconfig/dbms $dbms init`
@@ -390,44 +385,10 @@ INDENT+='    ' \
 rcm-plugin $isfast execute --interface=dns --name="$dns_plugin" --method='server_setup_post' \
     ; [ ! $? -eq 0 ] && x
 
-# TLS Plugin tidak wajib, sehingga kita bisa menggunakan if atau --ignore-fail-on-empty-name.
-INDENT+='    ' \
-rcm-plugin $isfast execute --interface=tls --name="$tls_plugin" --method='server_setup_post' --ignore-fail-on-empty-name \
-    ; [ ! $? -eq 0 ] && x
-
 # chapter Take a break.
 # _ Begin to Install ISPConfig and Friends.; _.
 # sleepExtended 3 30
 ____
-
-# Obtain Certificate.
-# We hope the variable environment of NGINX_SSL_CERTIFICATE and
-# NGINX_SSL_CERTIFICATE_KEY will be defined.
-if [ -n "$tls_plugin" ];then
-    [ -z "$tempfile" ] && tempfile=$(mktemp -p /dev/shm -t rcm-ispconfig-setup-mode-init.XXXXXX)
-    export RCM_FQDN="$fqdn"
-    INDENT+='    ' \
-    rcm-plugin $isfast execute --interface=tls --name="$tls_plugin" \
-        --method='obtain_certificate' \
-        --output-file="$tempfile" \
-        ; [ ! $? -eq 0 ] && x
-    if [ -s "$tempfile" ];then
-        # Tidak gunakan export, cukup gunakan source karena untuk kebutuhan
-        # internal script ini.
-        source "$tempfile"
-        while IFS= read -r line; do
-            code "$line"
-        done < "$tempfile"
-        ____
-    fi
-fi
-
-# todo, seharusnya bisa install ispconfig tanpa tls. sementara anggap lah
-# wajib.
-# Populate value.
-# If not set in argument, try load from environment.
-[ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"
-[ -z "$tls_certificate_key" ] && tls_certificate_key="$TLS_CERTIFICATE_KEY"
 
 chapter Take a break.
 _ Begin to Setup; _.
@@ -439,6 +400,22 @@ include `rcm plugin run-method ispconfig/mail-server $mail_server setup`
 include `rcm plugin run-method ispconfig/dbms $dbms setup`
 
 include `rcm plugin run-method ispconfig/web-server $web_server setup`
+
+if [ -n "$public_domain" ];then
+
+    RCM_FQDN=$(</etc/mailname)
+
+    include `rcm plugin run-method ispconfig/acme-client $acme_client obtain`
+
+    include `rcm plugin run-method ispconfig/acme-client $acme_client define`
+
+    [ -n "$RCM_TLS_CERTIFICATE" ] || { red "Unable to proceed, variable \$RCM_TLS_CERTIFICATE is empty."; x; }
+    [ -n "$RCM_TLS_CERTIFICATE_KEY" ] || { red "Unable to proceed, variable \$RCM_TLS_CERTIFICATE_KEY is empty."; x; }
+
+fi
+
+RCM_WEB_SERVER="$web_server"
+RCM_PUBLIC_DOMAIN="$public_domain"
 
 include `rcm plugin run-method ispconfig/os-setup $os_setup setup`
 
@@ -539,6 +516,7 @@ exit 0
 # --version
 # --help
 # --bypass-validation-is-installed
+# --public-domain
 # )
 # VALUE=(
 # --timezone
@@ -553,8 +531,8 @@ exit 0
 # --url-phpmyadmin
 # --url-roundcube
 # --dns-plugin
-# --tls-plugin
 # --os-setup
+# --acme-client
 # )
 # MULTIVALUE=(
 # )
