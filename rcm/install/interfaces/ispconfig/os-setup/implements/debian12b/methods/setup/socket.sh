@@ -165,7 +165,10 @@ if [ -n "$do_install" ];then
     cd - >/dev/null
     ____
 
-    include `rcm plugin use-trait ispconfig/os-setup debian12 setup-trait-modify`
+    # use-trait utamanya digunakan untuk me-load function-function yang
+    # digunakan bersama-sama.
+    include `rcm plugin use-trait ispconfig/os-setup debian12 setup-modify-trait`
+
     modify-file-debian12
 
     chapter Merakit INI file autoinstaller.
