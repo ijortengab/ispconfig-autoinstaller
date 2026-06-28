@@ -1,0 +1,6 @@
+Usage: rcm certbot obtain [options]
+
+Options:
+   --authenticator-plugin=PLUGIN
+        Select how to authenticate domain.
+        Values available from command: rcm(plugin list certbot/authenticator).
