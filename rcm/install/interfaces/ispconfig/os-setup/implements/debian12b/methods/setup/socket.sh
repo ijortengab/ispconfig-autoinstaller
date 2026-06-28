@@ -1,7 +1,12 @@
 #!/bin/bash
 
 # Dependency.
+[ -v RCM_PUBLIC_DOMAIN ] || { red "Unable to proceed, variable \$RCM_PUBLIC_DOMAIN does not exist."; x; }
+[ -n "$RCM_WEB_SERVER" ] || { red "Unable to proceed, variable \$RCM_WEB_SERVER is empty."; x; }
+[ -n "$RCM_PHP_VERSION" ] || { red "Unable to proceed, variable \$RCM_PHP_VERSION is empty."; x; }
+[ -n "$RCM_ISPCONFIG_VERSION" ] || { red "Unable to proceed, variable \$RCM_ISPCONFIG_VERSION is empty."; x; }
 
+# Inheritance.
 include `rcm plugin run-parent-method ispconfig/os-setup debian12 setup`
 
 # Dependency.
@@ -9,8 +14,10 @@ require rcm mariadb add project
 require rcm nginx reload
 
 # Define variables and constants.
-ispconfig_version=3.2.11p2
-php_version=8.3
+php_version="$RCM_PHP_VERSION"
+ispconfig_version="$RCM_ISPCONFIG_VERSION"
+public_domain="$RCM_PUBLIC_DOMAIN"
+web_server="$RCM_WEB_SERVER"
 php_fpm_user=ispconfig
 pool_name=ispconfig
 ispconfig_install_dir=/usr/local/ispconfig
@@ -24,27 +31,31 @@ rcm_nginx_reload=
 
 # Functions.
 populate-database-user-password() {
-    # global path
-    path="${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/$1"
-    local DB_USER DB_USER_PASSWORD
+    [ -z "$1" ] && x Warning: Missing argument 1 for populate-database-user-password'()'.
+    local path="$1"
+    # Reset.
+    DB_USER=
+    DB_USER_PASSWORD=
     if [ -f "$path" ];then
         . "$path"
-        db_user_password=$DB_USER_PASSWORD
     fi
 }
 website-credential-ispconfig() {
-    if [ -f /usr/local/share/ispconfig/credential/website ];then
-        local ISPCONFIG_WEB_USER_PASSWORD
-        . /usr/local/share/ispconfig/credential/website
-        ispconfig_web_user_password=$ISPCONFIG_WEB_USER_PASSWORD
+    [ -z "$1" ] && x Warning: Missing argument 1 for website-credential-ispconfig'()'.
+    local path="$1"
+    local password
+    # Reset.
+    ISPCONFIG_WEB_USER_PASSWORD=
+    if [ -f "$path" ];then
+        . "$path"
     else
-        ispconfig_web_user_password=$(pwgen 9 -1vA0B)
-        mkdir -p /usr/local/share/ispconfig/credential
-        cat << EOF > /usr/local/share/ispconfig/credential/website
-ISPCONFIG_WEB_USER_PASSWORD=$ispconfig_web_user_password
+        password=$(pwgen 9 -1vA0B)
+        mkdir -p $(dirname "$path")
+        cat << EOF > "$path"
+ISPCONFIG_WEB_USER_PASSWORD=$password
 EOF
-        chmod 0500 /usr/local/share/ispconfig/credential
-        chmod 0400 /usr/local/share/ispconfig/credential/website
+        chmod 0500 $(dirname "$path")
+        chmod 0400 "$path"
     fi
 }
 toggle-mysql-root-password() {
@@ -95,12 +106,12 @@ toggle-mysql-root-password() {
     esac
 }
 configure-php-fpm-systemd-overrides() {
+    # global $php_version
     # Reference:
     # - https://forum.howtoforge.com/threads/ispconfig-3-php-fatal-error-after-deb-sury-org-php-upgrade-ids-temp-folder-becomes-read-only-syst.95140/
     # - https://git.ispconfig.org/ispconfig/ispconfig3/-/commit/cc1c709acd3d851be6147ceb6c895c01a2bdd51d
-    e; tahan; x
-    systemctl list-unit-files "php*-fpm.service" --no-legend 2>/dev/null
-    service_name=php8.3-fpm.service
+    # systemctl list-unit-files "php*-fpm.service" --no-legend 2>/dev/null
+    service_name="php${php_version}-fpm.service"
     override_dir='/etc/systemd/system/'$service_name'.d';
     mkdir -p "$override_dir"
     override_file="${override_dir}/ispconfig.conf"
@@ -129,42 +140,53 @@ fi
 ____
 
 if [ -n "$do_install" ];then
-    chapter Mendownload ISPConfig
-
-    __ Mendownload ISPConfig
+    chapter Get ISPConfig
+    code cd /tmp
     cd /tmp
-    if [ ! -f /tmp/ISPConfig-$ispconfig_version.tar.gz ];then
+    filename="ISPConfig-${ispconfig_version}.tar.gz"
+    rcm-file "$filename" isExists
+    if [ -n "$notfound" ];then
+        __ Downloading ISPConfig
         wget https://www.ispconfig.org/downloads/ISPConfig-$ispconfig_version.tar.gz
+        rcm-file "$filename" mustExists
+    else
+        __ Use downloaded ISPConfig.
     fi
-    [ -f /tmp/ISPConfig-$ispconfig_version.tar.gz ] || { error Failed to download.; x; }
-
-    if [ ! -f /tmp/ispconfig3_install/install/install.php ];then
+    rcm-file "$filename" terminateIfNotExists
+    path=/tmp/ispconfig3_install/install/install.php
+    code 'path="'$path'"'
+    rcm-file "$path" isExists
+    if [ -n "$notfound" ];then
+        __ Extracting downloaded ISPConfig
         tar xfz ISPConfig-$ispconfig_version.tar.gz
+        rcm-file "$path" mustExists
     fi
-    [ -f /tmp/ispconfig3_install/install/install.php ] || { error Failed to extract.; x; }
+    rcm-file "$path" terminateIfNotExists
     cd - >/dev/null
+    ____
 
     include `rcm plugin use-trait ispconfig/os-setup debian12 setup-trait-modify`
     modify-file-debian12
 
+    chapter Merakit INI file autoinstaller.
     source=/tmp/ispconfig3_install/docs/autoinstall_samples/autoinstall.ini.sample
-    path=/tmp/ispconfig3_install/install/autoinstall.ini
-    filename=autoinstall.ini
-    if [ ! -f "$path" ];then
-        __ Membuat file '`'$filename'`'.
+    target=/tmp/ispconfig3_install/install/autoinstall.ini
+    code 'target="'$target'"'
+    rcm-file "$target" isExists
+    if [ -n "$notfound" ];then
         rcm-file "$source" terminateIfNotExists
-        cp "$source" "$path"
-        rcm-file "$path" mustExists
+        cp "$source" "$target"
+        rcm-file "$target" mustExists
         sed -i -E \
             -e ':a;N;$!ba;s|\[expert\]|[expert]\nconfigure_webserver=n|g' \
-            "$path"
+            "$target"
     fi
-    rcm-file "$path" terminateIfNotExists
+    rcm-file "$target" terminateIfNotExists
     ____
 
+    db_user=`parse-ini-file get "$target" expert mysql_ispconfig_user`
+    db_name=`parse-ini-file get "$target" install mysql_database`
 
-    db_user=`php -r "$php" get "$path" mysql_ispconfig_user`
-    db_name=`php -r "$php" get "$path" mysql_database`
     project_name="$db_user"
     INDENT+="    " \
     rcm mariadb add project \
@@ -173,22 +195,25 @@ if [ -n "$do_install" ];then
         ; [ ! $? -eq 0 ] && x
 
     # Get password from mariadb local share.
-    populate-database-user-password "$db_user"
+    path="${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
+    populate-database-user-password "$path"
     chapter Mengecek database credentials: '`'$path'`'.
-    if [[ -z "$db_user_password" ]];then
+    if [[ -z "$DB_USER_PASSWORD" ]];then
         __; red Informasi credentials tidak lengkap: '`'$path'`'.; x
     else
-        code db_user_password="$db_user_password"
+        code db_user_password="$DB_USER_PASSWORD"
+        db_user_password="$DB_USER_PASSWORD"
     fi
     ____
 
     path=/usr/local/share/ispconfig/credential/website
     chapter Mengecek website credentials: '`'$path'`'.
-    website-credential-ispconfig
-    if [[ -z "$ispconfig_web_user_password" ]];then
+    website-credential-ispconfig "$path"
+    if [[ -z "$ISPCONFIG_WEB_USER_PASSWORD" ]];then
         __; red Informasi credentials tidak lengkap: '`'$path'`'.; x
     else
-        code ispconfig_web_user_password="$ispconfig_web_user_password"
+        code ispconfig_web_user_password="$ISPCONFIG_WEB_USER_PASSWORD"
+        ispconfig_web_user_password="$ISPCONFIG_WEB_USER_PASSWORD"
     fi
     ____
 
@@ -210,23 +235,25 @@ if [ -n "$do_install" ];then
     chapter Modifikasi file '`'$filename'`'.
     __; _, Verifikasi file '`'autoinstall.ini'`':' '
     mysql_root_passwd="$(<$MYSQL_ROOT_PASSWD)"
-    reference="$(php -r "echo serialize([
-        'install_mode' => 'expert',
-        'configure_webserver' => 'n',
-        'configure_apache' => 'n',
-        'configure_nginx' => 'n',
-        'configure_firewall' => 'n',
-        'hostname' => '$fqdn',
-        'mysql_root_password' => '$mysql_root_passwd',
-        'http_server' => 'nginx',
-        'ispconfig_use_ssl' => 'n',
-        'mysql_ispconfig_password' => '$db_user_password',
-        'ispconfig_admin_password' => '$ispconfig_web_user_password',
-    ]);")"
+    reference=$(cat << EOF
+[install]
+install_mode=expert
+hostname=$fqdn
+mysql_root_password=$mysql_root_passwd
+http_server=nginx
+ispconfig_use_ssl=n
+ispconfig_admin_password=$ispconfig_web_user_password
+
+[expert]
+configure_webserver=n
+configure_apache=n
+configure_nginx=n
+configure_firewall=n
+mysql_ispconfig_password=$db_user_password
+EOF
+    )
     is_different=
-    if php -r "$php" is_different \
-        /tmp/ispconfig3_install/install/autoinstall.ini \
-        "$reference";then
+    if parse-ini-file is_different "$target" "$reference";then
         is_different=1
         _, diperlukan modifikasi file '`'autoinstall.ini'`'.;_.
     else
@@ -238,21 +265,9 @@ if [ -n "$do_install" ];then
     if [ -n "$is_different" ];then
         __; _, Memodifikasi file '`'autoinstall.ini'`':' '
         backup-file copy /tmp/ispconfig3_install/install/autoinstall.ini
-        sed -e "s,^install_mode=.*$,install_mode=expert," \
-            -e "s,^configure_webserver=.*$,configure_webserver=n," \
-            -e "s,^configure_apache=.*$,configure_apache=n," \
-            -e "s,^configure_nginx=.*$,configure_nginx=n," \
-            -e "s,^configure_firewall=.*$,configure_firewall=n," \
-            -e "s,^hostname=.*$,hostname=${fqdn}," \
-            -e "s,^mysql_root_password=.*$,mysql_root_password=${mysql_root_passwd}," \
-            -e "s,^http_server=.*$,http_server=nginx," \
-            -e "s,^ispconfig_use_ssl=.*$,ispconfig_use_ssl=n," \
-            -e "s,^ispconfig_admin_password=.*$,ispconfig_admin_password=${ispconfig_web_user_password}," \
-            -e "s,^mysql_ispconfig_password=.*$,mysql_ispconfig_password=${db_user_password}," \
-            -i /tmp/ispconfig3_install/install/autoinstall.ini
-        if php -r "$php" is_different \
-            /tmp/ispconfig3_install/install/autoinstall.ini \
-            "$reference";then
+        parse-ini-file merge "$target" "$reference"
+
+        if php -r "$php" is_different "$target" "$reference";then
             red modifikasi file '`'autoinstall.ini'`' gagal.; x
         else
             green modifikasi file '`'autoinstall.ini'`' berhasil.; _.
@@ -260,23 +275,28 @@ if [ -n "$do_install" ];then
     fi
     ____
 
-    path=/tmp/ispconfig3_install/install/install.php
-    filename=install.php
-    chapter Modifikasi file '`'$filename'`'.
-    if grep -q -F '$inst->configure_postfix();' "$path";then
-        __; _, Memodifikasi file '`'$filename'`':' '
-        sed 's|$inst->configure_postfix();|$inst->configure_postfix("dont-create-certs");|' \
-            -i "$path"
-        sleep 1
-        if grep -q -F '$inst->configure_postfix("dont-create-certs");' "$path";then
-            green modifikasi file '`'$filename'`' berhasil.; _.
+    if [ -n "$public_domain" ];then
+
+        path=/tmp/ispconfig3_install/install/install.php
+        filename=install.php
+        chapter Modifikasi file '`'$filename'`'.
+        code 'path="'$path'"'
+        if grep -q -F '$inst->configure_postfix();' "$path";then
+            __; _, Memodifikasi file '`'$filename'`':' '
+            sed 's|$inst->configure_postfix();|$inst->configure_postfix("dont-create-certs");|' \
+                -i "$path"
+            sleep 1
+            if grep -q -F '$inst->configure_postfix("dont-create-certs");' "$path";then
+                green modifikasi file '`'$filename'`' berhasil.; _.
+            else
+                red modifikasi file '`'$filename'`' gagal.; x
+            fi
         else
-            red modifikasi file '`'$filename'`' gagal.; x
+            __ File '`'$filename'`' tidak perlu modifikasi.
         fi
-    else
-        __ File '`'$filename'`' tidak perlu modifikasi.
+        ____
+
     fi
-    ____
 
     chapter Menginstall ISPConfig
     __ Memasang password MySQL untuk root
@@ -284,6 +304,7 @@ if [ -n "$do_install" ];then
 
     __ Mulai autoinstall.
     cd /tmp/ispconfig3_install/install
+    code php install.php --autoinstall=autoinstall.ini
     php install.php --autoinstall=autoinstall.ini
     cd - >/dev/null
     ____
