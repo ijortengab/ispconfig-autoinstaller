@@ -42,6 +42,7 @@ ISPCONFIG_WEB_USER_PASSWORD=$password
 EOF
         chmod 0500 $(dirname "$path")
         chmod 0400 "$path"
+        . "$path"
     fi
 }
 toggle-mysql-root-password() {
