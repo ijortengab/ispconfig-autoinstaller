@@ -11,18 +11,6 @@ Options:
    --fqdn=FQDN
         Fully Qualified Domain Name of this server, for example: \`server1.example.org\`.
         Value available from command: hostname(-f), or other.
-   --dns-plugin *
-        Select how to create the DNS record.
-        Values available from command: rcm-plugin(list --interface=dns).
-   --url-ispconfig
-        Add ISPConfig public domain. The value can be domain or URL and must be part of FQDN.
-        ISPConfig automatically has address at http://ispconfig.localhost/.
-   --url-phpmyadmin
-        Add PHPMyAdmin public domain. The value can be domain or URL and must be part of FQDN.
-        PHPMyAdmin automatically has address at http://phpmyadmin.localhost/.
-   --url-roundcube
-        Add Roundcube public domain. The value can be domain or URL and must be part of FQDN.
-        Roundcube automatically has address at http://roundcube.localhost/.
    --public-domain
         Make sure that --fqdn is public domain, this will trigger TLS request and DNS verification.
    --acme-client=[TLS]
@@ -40,63 +28,34 @@ Options:
    --mailbox-handler=[IMAP]
         Select the mail delivery agent. Values available from command: rcm(plugin list mailbox-handler).
    --mail-filtering=SPAM
-        Select the mail filtering daemon. Values available from command: rcm(plugin list mail-filtering).
+        Select the mail filtering daemon. Values available from command: rcm(plugin list ispconfig/mail-filtering).
         Conditional: Bypass if --mailbox-handler has no value.
    --os-setup=OS
         Select the variation OS setup. Values available from command: rcm(plugin list ispconfig/os-setup).
-   --timezone
+   --timezone=[ZONE]
         Set the timezone of this machine. Available values: Asia/Gaza, Asia/Ujung_Pandang, Asia/Jakarta, Asia/Makassar, Asia/Pontianak, Asia/Jayapura, or other.
 
 Other Options (For expert only):
-   --without-update-system ^
+   --without-update-system
         Skip execute update system. Default to --with-update-system.
-   --with-upgrade-system ^
+   --with-upgrade-system
         Execute upgrade system. Default to --without-upgrade-system.
+
+Additional Options:
+   rcm(-p plugin prompt ispconfig/os-setup [--os-setup] init)
+   rcm(-p plugin prompt ispconfig/acme-client [--acme-client] init)
+   rcm(-p plugin prompt ispconfig/web-server [--web-server] init)
+   rcm(-p plugin prompt ispconfig/dbms [--dbms] init)
+   rcm(-p plugin prompt ispconfig/mail-server [--mail-server] init)
+   rcm(-p plugin prompt mailbox-handler [--mailbox-handler] init)
+   rcm(-p plugin prompt ispconfig/mail-filtering [--mail-filtering] init)
+   rcm(-p plugin prompt ispconfig/acme-client [--acme-client] obtain)
 
 Global Options.
    --version
         Print version of this script.
    --help
         Show this help.
-
-RCM Config:
-   --no-timer
-
-Dependency:
-   rcm-ispconfig:$RCM_EXTENSION_VERSION
-   rcm-ispconfig-autoinstaller-nginx:$RCM_EXTENSION_VERSION
-   rcm-roundcube-setup-ispconfig-integration:$RCM_EXTENSION_VERSION
-   rcm-amavis-setup-ispconfig:$RCM_EXTENSION_VERSION
-   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php:$RCM_EXTENSION_VERSION
-   rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root:$RCM_EXTENSION_VERSION
-   rcm-ispconfig-setup-dump-variables-init:$RCM_EXTENSION_VERSION
-   rcm-plugin
-   rcm-dig-apt
-   rcm-dig-has-address
-   rcm-nginx-apt
-   rcm-mariadb-apt
-   rcm-php-apt
-   rcm-php-setup-adjust-cli-version
-   rcm-postfix-apt
-
-Download:
-   [rcm-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/rcm-ispconfig.sh)
-   [rcm-ispconfig-autoinstaller-nginx](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-autoinstaller-nginx.sh)
-   [rcm-roundcube-setup-ispconfig-integration](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/roundcube/rcm-roundcube-setup-ispconfig-integration.sh)
-   [rcm-amavis-setup-ispconfig](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/amavis/rcm-amavis-setup-ispconfig.sh)
-   [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php.sh)
-   [rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root.sh)
-   [rcm-ispconfig-setup-dump-variables-init](https://github.com/ijortengab/ispconfig-autoinstaller/raw/master/rcm/ispconfig/rcm-ispconfig-setup-dump-variables-init.sh)
-
-Pre Prompt:
-   rcm-plugin(init --interface=dns)
-   rcm-plugin(init --interface=tls)
-   rcm-plugin(add --interface=dns --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
-   rcm-plugin(add --interface=tls --name=manual --command=rcm-ispconfig --version=$RCM_EXTENSION_VERSION --temporary)
-
-Post Prompt:
-   rcm-plugin(execute --interface=dns --name=[--dns-plugin] --method=prompt)
-   rcm-plugin(execute --interface=tls --name=[--tls-plugin] --method=prompt --ignore-fail-on-empty-name)
 EOF
 }
 
@@ -116,8 +75,6 @@ while [[ $# -gt 0 ]]; do
         --dbms) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then dbms="$2"; shift; fi; shift ;;
         --fqdn=*) fqdn="${1#*=}"; shift ;;
         --fqdn) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fqdn="$2"; shift; fi; shift ;;
-        --dns-plugin=*) dns_plugin="${1#*=}"; shift ;;
-        --dns-plugin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then dns_plugin="$2"; shift; fi; shift ;;
         --mailbox-handler=*) mailbox_handler="${1#*=}"; shift ;;
         --mailbox-handler) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mailbox_handler="$2"; shift; fi; shift ;;
         --mail-filtering=*) mail_filtering="${1#*=}"; shift ;;
@@ -129,12 +86,6 @@ while [[ $# -gt 0 ]]; do
         --public-domain) public_domain=1; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
         --timezone) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then timezone="$2"; shift; fi; shift ;;
-        --url-ispconfig=*) url_ispconfig="${1#*=}"; shift ;;
-        --url-ispconfig) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_ispconfig="$2"; shift; fi; shift ;;
-        --url-phpmyadmin=*) url_phpmyadmin="${1#*=}"; shift ;;
-        --url-phpmyadmin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_phpmyadmin="$2"; shift; fi; shift ;;
-        --url-roundcube=*) url_roundcube="${1#*=}"; shift ;;
-        --url-roundcube) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_roundcube="$2"; shift; fi; shift ;;
         --without-update-system) update_system=0; shift ;;
         --with-update-system) update_system=1; shift ;;
         --without-upgrade-system) upgrade_system=0; shift ;;
@@ -154,18 +105,6 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
-
-# Define variables and constants.
-DKIM_SELECTOR=${DKIM_SELECTOR:=default}
-RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
-SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
-SUBDOMAIN_PHPMYADMIN=${SUBDOMAIN_PHPMYADMIN:=db}
-SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
-[ -n "$fast" ] && isfast=' --fast' || isfast=''
-
-# @todo
-# hapus dependency rcm-amavis-setup-ispconfig, karena by plugin.
-# rename rcm-ispconfig-setup-dump-variables-init menjadi mode
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
@@ -192,163 +131,70 @@ require vendor/ijortengab/ispconfig-autoinstaller/functions/parse-ini-file.sh
 title rcm ispconfig init
 ____
 
-# Dependency.
-
-# Source: ISPConfigDebianOS::runPerfectSetup()
-if [ -z "$bypass_validation_is_installed" ];then
-    chapter Mengecek existing ISPConfig.
-    path=/usr/local/ispconfig/server/lib/config.inc.php
-    code 'path="'$path'"'
-    if [ -f "$path" ]; then
-        __ File '`'$path'`' found.
-        error The server already has ISPConfig installed. Aborting.; x
-    else
-        __ File '`'$path'`' not found.;
-        __ Installation is continue.
-    fi
-    ____
+if [ -z "$fqdn" ];then
+    error "Argument --fqdn is required."; x
 fi
 
-# Require, validate, and populate value.
-chapter Variable dump.
-[ -n "$fast" ] && isfast=' --fast' || isfast=''
-code 'SUBDOMAIN_ISPCONFIG="'$SUBDOMAIN_ISPCONFIG'"'
-code 'SUBDOMAIN_PHPMYADMIN="'$SUBDOMAIN_PHPMYADMIN'"'
-code 'SUBDOMAIN_ROUNDCUBE="'$SUBDOMAIN_ROUNDCUBE'"'
-code 'timezone="'$timezone'"'
-code 'php_version="'$php_version'"'
-code 'phpmyadmin_version="'$phpmyadmin_version'"'
-code 'roundcube_version="'$roundcube_version'"'
-if [ -z "$dns_plugin" ];then
-    error "Argument --dns-plugin required."; x
-else
-    dns_plugin_available=()
-    while read line; do
-        dns_plugin_available+=($line)
-    done <<< `rcm-plugin list --interface=dns`
-    if ! ArraySearch "$dns_plugin" dns_plugin_available[@];then
-        error "Argument --dns-plugin not valid."; x
+if [ -z "$acme_client" ];then
+    error "Argument --acme-client is required."; x
+fi
+
+if [ -z "$web_server" ];then
+    error "Argument --web-server is required."; x
+fi
+
+if [ -z "$dbms" ];then
+    error "Argument --dbms is required."; x
+fi
+
+if [ -z "$os_setup" ];then
+    error "Argument --os-setup is required."; x
+fi
+
+if [ -z "$mail_server" ];then
+    error "Argument --mail-server is required."; x
+fi
+
+if [ -n "$mailbox_handler" ];then
+    if [ -z "$mail_filtering" ];then
+        error "Argument --mail-filtering is required."; x
     fi
 fi
-code 'dns_plugin="'$dns_plugin'"'
-code fqdn="$fqdn"
-Rcm_parse_url "$fqdn"
-for each in PHP_URL_SCHEME PHP_URL_PORT PHP_URL_USER PHP_URL_PASS PHP_URL_PATH PHP_URL_QUERY PHP_URL_FRAGMENT; do
-    value=${!each}
-    if [ -n "$value" ];then
-        error Argument --fqdn cannot have component "$each": '`'"$fqdn"'`'.; x
-    fi
-done
-hostname=$(echo "$PHP_URL_HOST" | sed -E 's|^([^\.]+)\..*|\1|g')
-code hostname="$hostname"
-code url_ispconfig="$url_ispconfig"
-if [ -n "$url_ispconfig" ];then
-    url="$url_ispconfig"
-    urlCompleteComponent
-    # code 'url_scheme="'$url_scheme'"'
-    # code 'url_host="'$url_host'"'
-    # code 'url_port="'$url_port'"'
-    # code 'url_path="'$url_path'"'
-    # code 'url_path_clean="'$url_path_clean'"'
-    # code 'url_path_clean_trailing="'$url_path_clean_trailing'"'
-    if [ -n "$url_path" ];then
-        error Argument --url-ispconfig is cannot have subpath: '`'"$url_path"'`'.; x
-    elif [ ! "$url_host" == "$fqdn" ];then
-        error Argument --url-ispconfig is not part of FQDN: '`'"$url_ispconfig"'`'.; x
-    fi
-    url_ispconfig="$url"
-    code 'url_ispconfig="'$url_ispconfig'"'
-fi
-code url_phpmyadmin="$url_phpmyadmin"
-if [ -n "$url_phpmyadmin" ];then
-    url="$url_phpmyadmin"
-    urlCompleteComponent
-    # code 'url_scheme="'$url_scheme'"'
-    # code 'url_host="'$url_host'"'
-    # code 'url_port="'$url_port'"'
-    # code 'url_path="'$url_path'"'
-    # code 'url_path_clean="'$url_path_clean'"'
-    # code 'url_path_clean_trailing="'$url_path_clean_trailing'"'
-    if [ ! "$url_host" == "$fqdn" ];then
-        error Argument --url-ispconfig is not part of FQDN: '`'"$url_ispconfig"'`'.; x
-    fi
-    url_phpmyadmin="$url"
-    code 'url_phpmyadmin="'$url_phpmyadmin'"'
-fi
-code url_roundcube="$url_roundcube"
-if [ -n "$url_roundcube" ];then
-    url="$url_roundcube"
-    urlCompleteComponent
-    # code 'url_scheme="'$url_scheme'"'
-    # code 'url_host="'$url_host'"'
-    # code 'url_port="'$url_port'"'
-    # code 'url_path="'$url_path'"'
-    # code 'url_path_clean="'$url_path_clean'"'
-    # code 'url_path_clean_trailing="'$url_path_clean_trailing'"'
-    if [ ! "$url_host" == "$fqdn" ];then
-        error Argument --url-ispconfig is not part of FQDN: '`'"$url_ispconfig"'`'.; x
-    fi
-    url_roundcube="$url"
-    code 'url_roundcube="'$url_roundcube'"'
-fi
-[ -z "$update_system" ] && update_system=1
-[ "$update_system" == 0 ] && update_system=
+
+[ -n "$RCM_DEBUG" ] && chapter Variable dump.
+[ -n "$RCM_DEBUG" ] && code 'web_server="'$web_server'"'
+[ -n "$RCM_DEBUG" ] && code 'dbms="'$dbms'"'
+[ -n "$RCM_DEBUG" ] && code 'os_setup="'$os_setup'"'
+[ -n "$RCM_DEBUG" ] && code 'timezone="'$timezone'"'
+[ -n "$RCM_DEBUG" ] && code 'mailbox_handler="'$mailbox_handler'"'
+[ -n "$RCM_DEBUG" ] && code 'mail_filtering="'$mail_filtering'"'
+[ -n "$RCM_DEBUG" ] && code 'public_domain="'$public_domain'"'
+[ -n "$RCM_DEBUG" ] && ____
+
+# Boolean default to TRUE.
+[ -z "$update_system" ] && update_system=1; [ "$update_system" == 0 ] && update_system=
+
+# Boolean default to FALSE.
 [ "$upgrade_system" == 0 ] && upgrade_system=
-[ -n "$update_system" ] && is_update_system=' --without-update-system-' || is_update_system=' --without-update-system'
-[ -n "$upgrade_system" ] && is_upgrade_system=' --without-upgrade-system-' || is_upgrade_system=' --without-upgrade-system'
+
+RCM_DO_UPDATE_SYSTEM="$update_system"
+RCM_DO_UPGRADE_SYSTEM="$upgrade_system"
+
 ____
 
-# chapter Take a break.
-# _ Begin to Validate DNS Zone for FQDN.; _.
-# sleepExtended 3 30
-# ____
+# @todo, how about ntp
 
-# Prepare for anything including setup required application.
-INDENT+='    ' \
-rcm-plugin $isfast execute --interface=dns --name="$dns_plugin" --method='server_setup_pre' \
-    ; [ ! $? -eq 0 ] && x
-____
+RCM_OS_TIMEZONE="$timezone"
 
-INDENT+='    ' \
-rcm-plugin $isfast execute --interface=dns --name="$dns_plugin" --method='is_a_record_exists_not_cname' \
-    ; [ ! $? -eq 0 ] && x
-____
-
-# chapter Take a break.
-# _ Setup LEMP Stack.; _.
-# sleepExtended 3 30
-# ____
-
-chapter Mengecek FQDN '(Fully-Qualified Domain Name)'
-code fqdn="$fqdn"
-current_fqdn=$(hostname -f 2>/dev/null)
-code hostname -f
-e "$current_fqdn"; _.
-adjust=
-if [[ "$current_fqdn" == "$fqdn" ]];then
-    __ Variable '$fqdn' sama dengan value system hostname saat ini '$(hostname -f)'.
-else
-    __ Variable '$fqdn' tidak sama dengan value system hostname saat ini '$(hostname -f)'.
-    adjust=1
-fi
-____
-
-if [[ -n "$adjust" ]];then
-    chapter Adjust FQDN.
-    code hostnamectl set-hostname "${hostname}"
-    hostnamectl set-hostname "${hostname}"
-    echo "127.0.1.1"$'\t'"${fqdn}"$'\t'"${hostname}" >> /etc/hosts
-    sleep .5
-    current_fqdn=$(hostname -f 2>/dev/null)
-    if [[ "$current_fqdn" == "$fqdn" ]];then
-        __; green Variable '$fqdn' sama dengan value system FQDN saat ini '$(hostname -f)'.; _.
-    else
-        __; red Variable '$fqdn' tidak sama dengan value system hostname saat ini '$(hostname -f)'.; x
-    fi
-    ____
-fi
+include `rcm plugin run-method ispconfig/os-setup $os_setup define`
 
 include `rcm plugin run-method ispconfig/os-setup $os_setup init`
+
+# Dibutuhkan oleh rcm ispconfig init.
+application=
+application+=' net-tools'
+application+=' pwgen'
+apt-install $application
 
 include `rcm plugin run-method ispconfig/acme-client $acme_client init`
 
@@ -362,18 +208,9 @@ if [ -n "$mailbox_handler" ];then
 
     include `rcm plugin run-method mailbox-handler $mailbox_handler init`
 
-    include `rcm plugin run-method mail-filtering $mail_filtering init`
+    include `rcm plugin run-method ispconfig/mail-filtering $mail_filtering init`
 
 fi
-
-INDENT+='    ' \
-rcm-plugin $isfast execute --interface=dns --name="$dns_plugin" --method='server_setup_post' \
-    ; [ ! $? -eq 0 ] && x
-
-# chapter Take a break.
-# _ Begin to Install ISPConfig and Friends.; _.
-# sleepExtended 3 30
-____
 
 chapter Take a break.
 _ Begin to Setup; _.
@@ -381,6 +218,12 @@ sleep-extended 3 30
 ____
 
 include `rcm plugin run-method ispconfig/mail-server $mail_server setup`
+
+if [ -n "$mailbox_handler" ];then
+
+    include `rcm plugin run-method ispconfig/mail-filtering $mail_filtering setup`
+
+fi
 
 include `rcm plugin run-method ispconfig/dbms $dbms setup`
 
@@ -404,86 +247,39 @@ RCM_PUBLIC_DOMAIN="$public_domain"
 
 include `rcm plugin run-method ispconfig/os-setup $os_setup setup`
 
-INDENT+='    ' \
-rcm-roundcube-setup-ispconfig-integration $isfast \
-    ; [ ! $? -eq 0 ] && x
-
-if [ -n "$url_ispconfig" ];then
-    INDENT+="    " \
-    rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php $isfast \
-        --project=ispconfig \
-        --php-version="$php_version" \
-        --url="$url_ispconfig" \
-        --tls-certificate="$tls_certificate" \
-        --tls-certificate-key="$tls_certificate_key" \
-        ; [ ! $? -eq 0 ] && x
-fi
-
-if [ -n "$url_phpmyadmin" ];then
-    INDENT+="    " \
-    rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root $isfast \
-        --project=phpmyadmin \
-        --php-version="$php_version" \
-        --url="$url_phpmyadmin" \
-        --tls-certificate="$tls_certificate" \
-        --tls-certificate-key="$tls_certificate_key" \
-        ; [ ! $? -eq 0 ] && x
-fi
-
-if [ -n "$url_roundcube" ];then
-    INDENT+="    " \
-    rcm-ispconfig-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root $isfast \
-        --project=roundcube \
-        --php-version="$php_version" \
-        --url="$url_roundcube" \
-        --tls-certificate="$tls_certificate" \
-        --tls-certificate-key="$tls_certificate_key" \
-        ; [ ! $? -eq 0 ] && x
-fi
+include `rcm plugin run-method ispconfig/os-setup $os_setup post-setup`
 
 chapter Take a break.
 _ Everything is OK, "let's" dump variables.; _.
-sleepExtended 3
+sleep-extended 3
 ____
 
-chapter Saving URL information.
-if [ -n "$url_ispconfig" ];then
-    path=/usr/local/share/ispconfig/website
-    parent=/usr/local/share/ispconfig
-    code mkdir -p "$parent"
-    mkdir -p "$parent"
-    cat << EOF >> "$path"
-URL_ISPCONFIG=$url_ispconfig
-EOF
+databaseCredentialIspconfig() {
+    local php_fpm_user prefix path
+    php_fpm_user=ispconfig
+    prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
+    path="${prefix}/interface/lib/config.inc.php"
+    db_user=$(php -r "include '$path';echo DB_USER;")
+    db_user_password=$(php -r "include '$path';echo DB_PASSWORD;")
+}
+websiteCredentialIspconfig() {
+    local ISPCONFIG_WEB_USER_PASSWORD
+    path=/usr/local/share/ispconfig/credential/website
     [ -f "$path" ] || fileMustExists "$path"
-fi
-if [ -n "$url_phpmyadmin" ];then
-    path=/usr/local/share/phpmyadmin/website
-    parent=/usr/local/share/phpmyadmin
-    code mkdir -p "$parent"
-    mkdir -p "$parent"
-    cat << EOF >> "$path"
-URL_PHPMYADMIN=$url_phpmyadmin
-EOF
-    [ -f "$path" ] || fileMustExists "$path"
-fi
-if [ -n "$url_roundcube" ];then
-    path=/usr/local/share/roundcube/website
-    parent=/usr/local/share/roundcube
-    code mkdir -p "$parent"
-    mkdir -p "$parent"
-    cat << EOF >> "$path"
-URL_ROUNDCUBE=$url_roundcube
-EOF
-    [ -f "$path" ] || fileMustExists "$path"
-fi
+    . "$path"
+    ispconfig_web_user_password=$ISPCONFIG_WEB_USER_PASSWORD
+}
+
+chapter MySQL Credentials.
+databaseCredentialIspconfig
+_ ' - 'username: $db_user; _.
+_ '   'password: $db_user_password; _.
 ____
 
-INDENT+="    " \
-rcm-ispconfig-setup-dump-variables-init $isfast \
-    ; [ ! $? -eq 0 ] && x
-
-chapter Finish
+chapter ISPConfig Credentials.
+websiteCredentialIspconfig
+_ ' - 'username: admin; _.
+_ '   'password: $ispconfig_web_user_password; _.
 ____
 
 exit 0
@@ -511,10 +307,6 @@ exit 0
 # --mailbox-handler
 # --mail-filtering
 # --dbms
-# --url-ispconfig
-# --url-phpmyadmin
-# --url-roundcube
-# --dns-plugin
 # --os-setup
 # --acme-client
 # )
