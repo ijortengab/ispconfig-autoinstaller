@@ -8,14 +8,12 @@ usage() {
 Usage: rcm ispconfig init [options]
 
 Options:
+   --fqdn=FQDN
+        Fully Qualified Domain Name of this server, for example: \`server1.example.org\`.
+        Value available from command: hostname(-f), or other.
    --dns-plugin *
         Select how to create the DNS record.
         Values available from command: rcm-plugin(list --interface=dns).
-   --domain *
-        Domain name of the server.
-        Together with --hostname will make a Fully Qualified Domain Name (FQDN).
-   --hostname *
-        Hostname of the server, for example: \`server1\`.
    --url-ispconfig
         Add ISPConfig public domain. The value can be domain or URL and must be part of FQDN.
         ISPConfig automatically has address at http://ispconfig.localhost/.
@@ -116,12 +114,10 @@ while [[ $# -gt 0 ]]; do
         --bypass-validation-is-installed) bypass_validation_is_installed=1; shift ;;
         --dbms=*) dbms="${1#*=}"; shift ;;
         --dbms) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then dbms="$2"; shift; fi; shift ;;
+        --fqdn=*) fqdn="${1#*=}"; shift ;;
+        --fqdn) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fqdn="$2"; shift; fi; shift ;;
         --dns-plugin=*) dns_plugin="${1#*=}"; shift ;;
         --dns-plugin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then dns_plugin="$2"; shift; fi; shift ;;
-        --domain=*) domain="${1#*=}"; shift ;;
-        --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
-        --hostname=*) hostname="${1#*=}"; shift ;;
-        --hostname) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then hostname="$2"; shift; fi; shift ;;
         --mailbox-handler=*) mailbox_handler="${1#*=}"; shift ;;
         --mailbox-handler) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mailbox_handler="$2"; shift; fi; shift ;;
         --mail-filtering=*) mail_filtering="${1#*=}"; shift ;;
@@ -235,15 +231,6 @@ else
     fi
 fi
 code 'dns_plugin="'$dns_plugin'"'
-if [ -z "$domain" ];then
-    error "Argument --domain required."; x
-fi
-code domain="$domain"
-if [ -z "$hostname" ];then
-    error "Argument --hostname required."; x
-fi
-code hostname="$hostname"
-fqdn="${hostname}.${domain}"
 code fqdn="$fqdn"
 Rcm_parse_url "$fqdn"
 for each in PHP_URL_SCHEME PHP_URL_PORT PHP_URL_USER PHP_URL_PASS PHP_URL_PATH PHP_URL_QUERY PHP_URL_FRAGMENT; do
@@ -322,8 +309,6 @@ rcm-plugin $isfast execute --interface=dns --name="$dns_plugin" --method='server
     ; [ ! $? -eq 0 ] && x
 ____
 
-export RCM_HOSTNAME="$hostname"
-export RCM_DOMAIN="$domain"
 INDENT+='    ' \
 rcm-plugin $isfast execute --interface=dns --name="$dns_plugin" --method='is_a_record_exists_not_cname' \
     ; [ ! $? -eq 0 ] && x
@@ -363,7 +348,7 @@ if [[ -n "$adjust" ]];then
     ____
 fi
 
-include `rcm plugin get-socket ispconfig/os-setup $os_setup init`
+include `rcm plugin run-method ispconfig/os-setup $os_setup init`
 
 include `rcm plugin run-method ispconfig/acme-client $acme_client init`
 
@@ -519,14 +504,13 @@ exit 0
 # --public-domain
 # )
 # VALUE=(
+# --fqdn
 # --timezone
 # --web-server
 # --mail-server
 # --mailbox-handler
 # --mail-filtering
 # --dbms
-# --hostname
-# --domain
 # --url-ispconfig
 # --url-phpmyadmin
 # --url-roundcube
