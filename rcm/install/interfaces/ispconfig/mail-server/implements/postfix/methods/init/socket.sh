@@ -1,3 +1,3 @@
 #!/bin/bash
 
-include `rcm plugin get-socket mail-server postfix init`
+include `rcm plugin run-parent-method mail-server postfix init`
