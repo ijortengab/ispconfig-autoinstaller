@@ -11,12 +11,6 @@ Options:
    --fqdn=FQDN
         Fully Qualified Domain Name of this server, for example: \`server1.example.org\`.
         Value available from command: hostname(-f), or other.
-   --public-domain
-        Make sure that --fqdn is public domain, this will trigger TLS request and DNS verification.
-   --acme-client=[TLS]
-        Select acme client to obtain TLS Certificate.
-        Values available from command: rcm(plugin list ispconfig/acme-client).
-        Conditional: Bypass if --public-domain is not added.
    --web-server=HTTP
         Select web server to build up virtual host.
         Values available from command: rcm(plugin list ispconfig/web-server).
@@ -49,7 +43,6 @@ Additional Options:
    rcm(-p plugin prompt ispconfig/mail-server [--mail-server] init)
    rcm(-p plugin prompt mailbox-handler [--mailbox-handler] init)
    rcm(-p plugin prompt ispconfig/mail-filtering [--mail-filtering] init)
-   rcm(-p plugin prompt ispconfig/acme-client [--acme-client] obtain)
 
 Global Options.
    --version
@@ -68,8 +61,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --acme-client=*) acme_client="${1#*=}"; shift ;;
-        --acme-client) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then acme_client="$2"; shift; fi; shift ;;
         --bypass-validation-is-installed) bypass_validation_is_installed=1; shift ;;
         --dbms=*) dbms="${1#*=}"; shift ;;
         --dbms) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then dbms="$2"; shift; fi; shift ;;
@@ -83,7 +74,6 @@ while [[ $# -gt 0 ]]; do
         --mail-server) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mail_server="$2"; shift; fi; shift ;;
         --os-setup=*) os_setup="${1#*=}"; shift ;;
         --os-setup) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then os_setup="$2"; shift; fi; shift ;;
-        --public-domain) public_domain=1; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
         --timezone) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then timezone="$2"; shift; fi; shift ;;
         --without-update-system) update_system=0; shift ;;
@@ -111,6 +101,8 @@ unset _new_arguments
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Require.
+require vendor/ijortengab/rcm/functions/base/array.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-yaml.sh
 require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
 require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
 require vendor/ijortengab/rcm/functions/utility/find-string.sh
@@ -133,10 +125,6 @@ ____
 
 if [ -z "$fqdn" ];then
     error "Argument --fqdn is required."; x
-fi
-
-if [ -z "$acme_client" ];then
-    error "Argument --acme-client is required."; x
 fi
 
 if [ -z "$web_server" ];then
@@ -168,7 +156,6 @@ fi
 [ -n "$RCM_DEBUG" ] && code 'timezone="'$timezone'"'
 [ -n "$RCM_DEBUG" ] && code 'mailbox_handler="'$mailbox_handler'"'
 [ -n "$RCM_DEBUG" ] && code 'mail_filtering="'$mail_filtering'"'
-[ -n "$RCM_DEBUG" ] && code 'public_domain="'$public_domain'"'
 [ -n "$RCM_DEBUG" ] && ____
 
 # Boolean default to TRUE.
@@ -179,7 +166,6 @@ fi
 
 RCM_DO_UPDATE_SYSTEM="$update_system"
 RCM_DO_UPGRADE_SYSTEM="$upgrade_system"
-
 ____
 
 # @todo, how about ntp
@@ -195,8 +181,6 @@ application=
 application+=' net-tools'
 application+=' pwgen'
 apt-install $application
-
-include `rcm plugin run-method ispconfig/acme-client $acme_client init`
 
 include `rcm plugin run-method ispconfig/web-server $web_server init`
 
@@ -229,21 +213,7 @@ include `rcm plugin run-method ispconfig/dbms $dbms setup`
 
 include `rcm plugin run-method ispconfig/web-server $web_server setup`
 
-if [ -n "$public_domain" ];then
-
-    RCM_FQDN=$(</etc/mailname)
-
-    include `rcm plugin run-method ispconfig/acme-client $acme_client obtain`
-
-    include `rcm plugin run-method ispconfig/acme-client $acme_client define`
-
-    [ -n "$RCM_TLS_CERTIFICATE" ] || { red "Unable to proceed, variable \$RCM_TLS_CERTIFICATE is empty."; x; }
-    [ -n "$RCM_TLS_CERTIFICATE_KEY" ] || { red "Unable to proceed, variable \$RCM_TLS_CERTIFICATE_KEY is empty."; x; }
-
-fi
-
 RCM_WEB_SERVER="$web_server"
-RCM_PUBLIC_DOMAIN="$public_domain"
 
 include `rcm plugin run-method ispconfig/os-setup $os_setup setup`
 
@@ -297,7 +267,6 @@ exit 0
 # --version
 # --help
 # --bypass-validation-is-installed
-# --public-domain
 # )
 # VALUE=(
 # --fqdn
@@ -308,7 +277,6 @@ exit 0
 # --mail-filtering
 # --dbms
 # --os-setup
-# --acme-client
 # )
 # MULTIVALUE=(
 # )

@@ -205,3 +205,37 @@ if [ -n "$is_different" ];then
     fi
     ____
 fi
+
+# Populate variable RCM_PUBLIC_DOMAIN, just looking from configuration.
+array="$RCM_PROMPT_YAML"
+array postfix init
+rcm-yaml init
+for each in "${_return_array[@]}";do
+    rcm-yaml append "${each}"
+done
+rcm-yaml find parameter --public-domain then get flag
+RCM_PUBLIC_DOMAIN="$_return_value"
+
+# Define variables and constants.
+public_domain="$RCM_PUBLIC_DOMAIN"
+
+if [ -n "$public_domain" ];then
+
+    rcm-yaml find parameter --acme-client then get value
+    RCM_ACME_CLIENT="$_return_value"
+
+    # Define variables and constants.
+    acme_client="$RCM_ACME_CLIENT"
+
+    RCM_FQDN=$(</etc/mailname)
+
+    include `rcm plugin run-method ispconfig/acme-client $acme_client obtain`
+
+    include `rcm plugin run-method ispconfig/acme-client $acme_client define`
+
+    [ -n "$RCM_TLS_CERTIFICATE" ] || { red "Unable to proceed, variable \$RCM_TLS_CERTIFICATE is empty."; x; }
+    [ -n "$RCM_TLS_CERTIFICATE_KEY" ] || { red "Unable to proceed, variable \$RCM_TLS_CERTIFICATE_KEY is empty."; x; }
+
+    include `rcm plugin use-trait ispconfig/mail-server postfix setup-smtpd-trait`
+
+fi
