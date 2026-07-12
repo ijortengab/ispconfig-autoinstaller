@@ -17,7 +17,7 @@ Options:
         Make sure that --mailname is public domain, this will trigger TLS request and DNS verification.
    --acme-client=TLS
         Select acme client to obtain TLS Certificate.
-        Values available from command: rcm(plugin list ispconfig/acme-client).
+        Values available from command: rcm(plugin list acme-client).
         Conditional: Bypass if --public-domain is not added.
 
 Additional Options:
