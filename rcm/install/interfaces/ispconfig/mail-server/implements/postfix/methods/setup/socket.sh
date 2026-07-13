@@ -221,17 +221,19 @@ public_domain="$RCM_PUBLIC_DOMAIN"
 
 if [ -n "$public_domain" ];then
 
+    rcm-yaml find parameter --mailname then get value
+    RCM_MAILNAME="$_return_value"
+
     rcm-yaml find parameter --acme-client then get value
     RCM_ACME_CLIENT="$_return_value"
 
     # Define variables and constants.
     acme_client="$RCM_ACME_CLIENT"
+    mailname="$RCM_MAILNAME"
 
-    RCM_FQDN=$(</etc/mailname)
+    RCM_FQDN="$mailname"
 
-    include `rcm plugin run-method ispconfig/acme-client $acme_client obtain`
-
-    include `rcm plugin run-method ispconfig/acme-client $acme_client define`
+    include `rcm plugin run-static-method ispconfig/acme-client $acme_client define`
 
     [ -n "$RCM_TLS_CERTIFICATE" ] || { red "Unable to proceed, variable \$RCM_TLS_CERTIFICATE is empty."; x; }
     [ -n "$RCM_TLS_CERTIFICATE_KEY" ] || { red "Unable to proceed, variable \$RCM_TLS_CERTIFICATE_KEY is empty."; x; }
