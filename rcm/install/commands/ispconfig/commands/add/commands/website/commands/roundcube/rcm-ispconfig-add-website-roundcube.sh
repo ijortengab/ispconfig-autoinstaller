@@ -1,6 +1,12 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.11.0-alpha.8
+RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
+SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
+PHP_FPM_USER=${PHP_FPM_USER:=ispconfig}
+ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
+ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 
 # Usage Functions.
 usage() {
@@ -103,14 +109,6 @@ if [ -n "$1" ];then
         error Command unknown: '`'"$1"'`'.; x
     fi
 fi
-
-# Define variables and constants.
-RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
-SUBDOMAIN_ROUNDCUBE=${SUBDOMAIN_ROUNDCUBE:=mail}
-
-PHP_FPM_USER=${PHP_FPM_USER:=ispconfig}
-ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
-ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }

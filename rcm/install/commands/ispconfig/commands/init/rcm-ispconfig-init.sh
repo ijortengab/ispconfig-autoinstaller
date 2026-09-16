@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.11.0-alpha.8
 
 # Usage Functions.
@@ -100,7 +101,13 @@ unset _new_arguments
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
-# Require.
+# ------------------------------------------------------------------------------
+
+# Title.
+title rcm ispconfig init
+____
+
+# Dependency.
 require vendor/ijortengab/rcm/functions/base/array.sh
 require vendor/ijortengab/rcm/functions/classes/rcm-yaml.sh
 require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
@@ -116,12 +123,6 @@ require vendor/ijortengab/bash/functions/array-intersect.sh
 require vendor/ijortengab/bash/functions/array-search.sh
 require vendor/ijortengab/bash/functions/array-remove.sh
 require vendor/ijortengab/ispconfig-autoinstaller/functions/parse-ini-file.sh
-
-# ------------------------------------------------------------------------------
-
-# Title.
-title rcm ispconfig init
-____
 
 if [ -z "$fqdn" ];then
     error "Argument --fqdn is required."; x

@@ -1,6 +1,11 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.11.0-alpha.8
+RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
+PHP_FPM_USER=${PHP_FPM_USER:=ispconfig}
+ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
+PHPMYADMIN_FQDN_LOCALHOST=${PHPMYADMIN_FQDN_LOCALHOST:=phpmyadmin.localhost}
 
 # Usage Functions.
 usage() {
@@ -80,13 +85,6 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
-
-# Define variables and constants.
-RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
-
-PHP_FPM_USER=${PHP_FPM_USER:=ispconfig}
-ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
-PHPMYADMIN_FQDN_LOCALHOST=${PHPMYADMIN_FQDN_LOCALHOST:=phpmyadmin.localhost}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }

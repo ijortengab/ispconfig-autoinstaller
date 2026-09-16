@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.11.0-alpha.8
 
 # Usage Functions.
@@ -54,9 +55,6 @@ unset _new_arguments
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
-# Require.
-require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
-
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -67,6 +65,7 @@ ____
 require command mysql
 require command pwgen
 require command php
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
 
 # Functions.
 getRemoteUserIdIspconfigByRemoteUsername() {

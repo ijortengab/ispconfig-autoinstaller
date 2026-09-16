@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.11.0-alpha.8
 
 # Usage Functions.
