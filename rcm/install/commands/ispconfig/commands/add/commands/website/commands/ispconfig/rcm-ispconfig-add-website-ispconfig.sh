@@ -156,7 +156,7 @@ ____
 if [ -z "$bypass_validation_is_installed" ];then
     chapter Mengecek existing ISPConfig.
     path=/usr/local/ispconfig/server/lib/config.inc.php
-    code 'path="'$path'"'
+    code path=$
     if [ ! -f "$path" ]; then
         __ File '`'$path'`' not found.
         error The ISPConfig is not installed. Aborting.; x
@@ -255,7 +255,7 @@ urlCompleteComponent() {
 # Require, validate, and populate value.
 chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
+code ISPCONFIG_FQDN_LOCALHOST=$
 if [ -z "$dns_plugin" ];then
     error "Argument --dns-plugin required."; x
 else
@@ -267,7 +267,7 @@ else
         error "Argument --dns-plugin not valid."; x
     fi
 fi
-code 'dns_plugin="'$dns_plugin'"'
+code dns_plugin=$
 if [ -n "$tls_plugin" ];then
     tls_plugin_available=()
     while read line; do
@@ -277,7 +277,7 @@ if [ -n "$tls_plugin" ];then
         error "Argument --tls-plugin not valid."; x
     fi
 fi
-code 'tls_plugin="'$tls_plugin'"'
+code tls_plugin=$
 code url="$url"
 urlCompleteComponent
 if [ -n "$url_path" ];then

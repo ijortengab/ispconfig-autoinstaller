@@ -159,11 +159,11 @@ chapter Variable dump.
 if [ -z "$username" ];then
     error "Argument --username required."; x
 fi
-code 'username="'$username'"'
+code username=$
 if [ -z "$password" ];then
     error "Argument --password required."; x
 fi
-code 'password="'$password'"'
+code password=$
 if [[ ${#function[@]} -eq 0 ]];then
     error "Argument --function required."; x
 fi
@@ -189,11 +189,11 @@ for each in "${function[@]}";do
         fi
     fi
 done
-code 'function_string="'"$function_string"'"'
+code function_string=$
 php_fpm_user=ispconfig
-code 'php_fpm_user="'$php_fpm_user'"'
+code php_fpm_user=$
 prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
-code 'prefix="'$prefix'"'
+code prefix=$
 ____
 
 if [ -z "$ispconfig_sure" ];then
@@ -211,13 +211,13 @@ chapter Populate variable.
 __ Mencari informasi database dari config.
 path="${prefix}/interface/lib/config.inc.php"
 rcm-file "$path" terminateIfNotExists
-code 'path="'$path'"'
+code path=$
 db_name=$(php -r "include '$path';echo DB_DATABASE;")
-code 'db_name="'$db_name'"'
+code db_name=$
 db_user=$(php -r "include '$path';echo DB_USER;")
-code 'db_user="'$db_user'"'
+code db_user=$
 db_user_password=$(php -r "include '$path';echo DB_PASSWORD;")
-code 'db_user_password="'$db_user_password'"'
+code db_user_password=$
 ____
 
 chapter Mengecek Remote User ISPConfig '"'$username'"'

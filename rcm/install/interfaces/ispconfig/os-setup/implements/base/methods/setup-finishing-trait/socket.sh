@@ -17,16 +17,16 @@ chapter Prepare arguments.
 if [ -z "$prefix" ];then
     prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
 fi
-code 'pool_name="'$pool_name'"'
+code pool_name=$
 socket_filename=$(rcm php get-info pool --php-version="$php_version" --pool-name="$pool_name" --key=listen)
 if [ -z "$socket_filename" ];then
     __; red Socket Filename of PHP-FPM not found.; x
 fi
-code 'socket_filename="'$socket_filename'"'
+code socket_filename=$
 root="$prefix/interface/web"
-code 'root="'$root'"'
+code root=$
 url="http://${ISPCONFIG_FQDN_LOCALHOST}"
-code 'url="'$url'"'
+code url=$
 ____
 
 RCM_WEB_SERVER_URL="$url"

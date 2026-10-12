@@ -115,7 +115,7 @@ EOF
 chapter Merakit INI file autoinstaller.
 source=/tmp/ispconfig3_install/docs/autoinstall_samples/autoinstall.ini.sample
 target=/tmp/ispconfig3_install/install/autoinstall.ini
-code 'target="'$target'"'
+code target=$
 rcm-file "$target" isExists
 if [ -n "$notfound" ];then
     rcm-file "$source" terminateIfNotExists
@@ -224,7 +224,7 @@ if [ -n "$public_domain" ];then
     path=/tmp/ispconfig3_install/install/install.php
     filename=install.php
     chapter Modifikasi file '`'$filename'`'.
-    code 'path="'$path'"'
+    code path=$
     if grep -q -F '$inst->configure_postfix();' "$path";then
         __; _, Memodifikasi file '`'$filename'`':' '
         sed 's|$inst->configure_postfix();|$inst->configure_postfix("dont-create-certs");|' \

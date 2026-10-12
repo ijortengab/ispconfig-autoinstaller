@@ -129,7 +129,7 @@ ____
 if [ -z "$bypass_validation_is_installed" ];then
     chapter Mengecek existing ISPConfig.
     path=/usr/local/ispconfig/server/lib/config.inc.php
-    code 'path="'$path'"'
+    code path=$
     if [ ! -f "$path" ]; then
         __ File '`'$path'`' not found.
         error The ISPConfig is not installed. Aborting.; x
@@ -166,7 +166,7 @@ else
         error "Argument --dns-plugin not valid."; x
     fi
 fi
-code 'dns_plugin="'$dns_plugin'"'
+code dns_plugin=$
 
 if [ -n "$tls_plugin" ];then
     tls_plugin_available=()
@@ -177,17 +177,17 @@ if [ -n "$tls_plugin" ];then
         error "Argument --tls-plugin not valid."; x
     fi
 fi
-code 'tls_plugin="'$tls_plugin'"'
+code tls_plugin=$
 
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
 code domain="$domain"
-code 'MAILBOX_ADMIN="'$MAILBOX_ADMIN'"'
-code 'MAILBOX_SUPPORT="'$MAILBOX_SUPPORT'"'
-code 'MAILBOX_WEB="'$MAILBOX_WEB'"'
-code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
-code 'MAILBOX_POST="'$MAILBOX_POST'"'
+code MAILBOX_ADMIN=$
+code MAILBOX_SUPPORT=$
+code MAILBOX_WEB=$
+code MAILBOX_HOST=$
+code MAILBOX_POST=$
 ____
 
 export RCM_DOMAIN="$domain"

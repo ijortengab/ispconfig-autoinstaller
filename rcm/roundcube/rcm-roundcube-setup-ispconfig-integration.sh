@@ -246,33 +246,33 @@ isDirExists() {
 
 # Requirement, validate, and populate value.
 chapter Variable dump.
-code 'ROUNDCUBE_FQDN_LOCALHOST="'$ROUNDCUBE_FQDN_LOCALHOST'"'
-code 'ISPCONFIG_REMOTE_USER_ROUNDCUBE="'$ISPCONFIG_REMOTE_USER_ROUNDCUBE'"'
-code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
+code ROUNDCUBE_FQDN_LOCALHOST=$
+code ISPCONFIG_REMOTE_USER_ROUNDCUBE=$
+code ISPCONFIG_FQDN_LOCALHOST=$
 nginx_user=
 conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
 if [ -f "$conf_nginx" ];then
     nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
 fi
-code 'nginx_user="'$nginx_user'"'
+code nginx_user=$
 if [ -z "$nginx_user" ];then
     error "Variable \$nginx_user failed to populate."; x
 fi
 php_fpm_user="$nginx_user"
-code 'php_fpm_user="'$php_fpm_user'"'
+code php_fpm_user=$
 prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
-code 'prefix="'$prefix'"'
+code prefix=$
 project_container="$ROUNDCUBE_FQDN_LOCALHOST"
-code 'project_container="'$project_container'"'
+code project_container=$
 root="$prefix/${project_container}/web"
-code 'root="'$root'"'
+code root=$
 root_realpath=$(realpath "$root")
-code 'root_realpath="'$root_realpath'"'
+code root_realpath=$
 if [[ ! $(basename "$root_realpath") == public_html ]];then
     error Direktori tidak bernama '`'public_html'`'.; x
 fi
 root_source=$(dirname "$root_realpath")
-code 'root_source="'$root_source'"'
+code root_source=$
 ____
 
 chapter Mengecek ISPConfig User.
@@ -319,7 +319,7 @@ ____
 if [ -n "$notfound" ];then
     chapter Menginstall Plugin Integrasi Roundcube dan ISPConfig
     php_fpm_user="$nginx_user"
-    code 'php_fpm_user="'$php_fpm_user'"'
+    code php_fpm_user=$
     code sudo -u $php_fpm_user mkdir -p '"'$root_source'"'
     sudo -u $php_fpm_user mkdir -p "$root_source"
     cd $root_source
@@ -453,7 +453,7 @@ EOF
 
 chapter Mengecek informasi file konfigurasi RoundCube plugin '`'ispconfig3_account'`'.
 path="${root_source}/plugins/ispconfig3_account/config/config.inc.php"
-code 'path="'$path'"'
+code path=$
 reference="$(php -r "echo serialize([
     'identity_limit' => false,
     'remote_soap_user' => '$ispconfig_remote_user_name',
@@ -485,7 +485,7 @@ fi
 
 chapter Mengecek informasi file konfigurasi RoundCube.
 path="${root_source}/config/config.inc.php"
-code 'path="'$path'"'
+code path=$
 reference="$(php -r "echo serialize([
     'ispconfig3_account',
     'ispconfig3_autoreply',
@@ -519,7 +519,7 @@ fi
 
 chapter Mengecek informasi file konfigurasi RoundCube.
 path="${root_source}/config/config.inc.php"
-code 'path="'$path'"'
+code path=$
 reference="$(php -r "echo serialize([
     'identity_select_headers' => ['To'],
 ]);")"

@@ -303,8 +303,8 @@ create() {
     [ -n "$tempfile" ] || { error Variable tempfile is required; x; }
 
     ____; client_id=$(INDENT+="    " rcm-ispconfig-control-manage-client $isfast --username "$domain" --email "${MAILBOX_ADMIN}@${domain}" --ispconfig-soap-exists-sure --get-client-id -- --limit-mailaliasdomain=0 --limit-mailaliasdomain=0 --limit-maildomain=1 --startmodule=mail)
-    code 'client_id="'$client_id'"'
-    [ -n "$client_id" ] || { client_id=0; code 'client_id="'$client_id'"'; }
+    code client_id=$
+    [ -n "$client_id" ] || { client_id=0; code client_id=$; }
 
     ____; json=$(INDENT+="    " rcm-ispconfig helper generate-key "$domain")
     dkim_private=$(php -r "echo (json_decode(fgets(STDIN)))->dkim_private;" <<< "$json")
@@ -332,14 +332,14 @@ create() {
 # Requirement, validate, and populate value.
 chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-code 'MAILBOX_ADMIN="'$MAILBOX_ADMIN'"'
-code 'DKIM_SELECTOR="'$DKIM_SELECTOR'"'
-code 'MAILBOX_WEB="'$MAILBOX_WEB'"'
+code MAILBOX_ADMIN=$
+code DKIM_SELECTOR=$
+code MAILBOX_WEB=$
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-code 'domain="'$domain'"'
-code 'ispconfig_soap_exists_sure="'$ispconfig_soap_exists_sure'"'
+code domain=$
+code ispconfig_soap_exists_sure=$
 tempfile=
 vercomp `stat --version | head -1 | grep -o -E '\S+$'` 8.31
 if [[ $? -lt 2 ]];then
@@ -380,13 +380,13 @@ ____
 
 chapter Membuat welcome mail.
 php_fpm_user=ispconfig
-code 'php_fpm_user="'$php_fpm_user'"'
+code php_fpm_user=$
 prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
-code 'prefix="'$prefix'"'
+code prefix=$
 code mkdir -p '/usr/local/share/ispconfig/mail'
 mkdir -p '/usr/local/share/ispconfig/mail'
 source="/usr/local/share/ispconfig/mail/welcome_email_${domain}.html"
-code 'source="'$source'"'
+code source=$
 cat <<- EOF > "$source"
 From: Webmaster <$MAILBOX_WEB@$domain>
 Subject: Welcome to your new email account.
@@ -395,7 +395,7 @@ Subject: Welcome to your new email account.
 
 EOF
 target="${prefix}/server/conf-custom/mail/welcome_email_${domain}.html"
-code 'target="'$target'"'
+code target=$
 ____
 
 link_symbolic "$source" "$target" - absolute

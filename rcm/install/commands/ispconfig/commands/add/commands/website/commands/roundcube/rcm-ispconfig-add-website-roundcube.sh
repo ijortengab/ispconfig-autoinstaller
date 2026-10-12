@@ -276,7 +276,7 @@ ____
 if [ -z "$bypass_validation_is_installed" ];then
     chapter Mengecek existing ISPConfig.
     path=/usr/local/ispconfig/server/lib/config.inc.php
-    code 'path="'$path'"'
+    code path=$
     if [ ! -f "$path" ]; then
         __ File '`'$path'`' not found.
         error The ISPConfig is not installed. Aborting.; x
@@ -422,8 +422,8 @@ urlCompleteComponent() {
 # Require, validate, and populate value.
 chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
-code 'ROUNDCUBE_FQDN_LOCALHOST="'$ROUNDCUBE_FQDN_LOCALHOST'"'
+code ISPCONFIG_FQDN_LOCALHOST=$
+code ROUNDCUBE_FQDN_LOCALHOST=$
 
 if [ -z "$dns_plugin" ];then
     error "Argument --dns-plugin required."; x
@@ -436,7 +436,7 @@ else
         error "Argument --dns-plugin not valid."; x
     fi
 fi
-code 'dns_plugin="'$dns_plugin'"'
+code dns_plugin=$
 if [ -n "$tls_plugin" ];then
     tls_plugin_available=()
     while read line; do
@@ -446,13 +446,13 @@ if [ -n "$tls_plugin" ];then
         error "Argument --tls-plugin not valid."; x
     fi
 fi
-code 'tls_plugin="'$tls_plugin'"'
+code tls_plugin=$
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
 code domain="$domain"
 domain_length="${#domain}"
-code 'domain_length="'$domain_length'"'
+code domain_length=$
 
 code url="$url"
 urlCompleteComponent
@@ -598,8 +598,8 @@ EOF
 chapter Roundcube Virtual Host.
 url_roundcube="$url"
 roundcube_url_host="$url_host"
-code 'url_roundcube="'$url_roundcube'"'
-code 'roundcube_url_host="'$roundcube_url_host'"'
+code url_roundcube=$
+code roundcube_url_host=$
 ____
 
 chapter Prepare arguments.
@@ -608,17 +608,17 @@ conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && ngin
 if [ -f "$conf_nginx" ];then
     nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
 fi
-code 'nginx_user="'$nginx_user'"'
+code nginx_user=$
 if [ -z "$nginx_user" ];then
     error "Variable \$nginx_user failed to populate."; x
 fi
 nginx_user_home=$(getent passwd "$nginx_user" | cut -d: -f6 )
 php_fpm_user="$nginx_user"
-code 'php_fpm_user="'$php_fpm_user'"'
+code php_fpm_user=$
 prefix="$nginx_user_home"
 
 project_container="$ROUNDCUBE_FQDN_LOCALHOST"
-code 'project_container="'$project_container'"'
+code project_container=$
 root="$prefix/${project_container}/web"
 root_source=$(realpath "$root")
 if [ $(basename "$root_source") == "public_html" ];then
@@ -627,7 +627,7 @@ else
     error "Direktori public_html tidak ditemukan"; x
 fi
 php_project_name=www
-code 'php_project_name="'$php_project_name'"'
+code php_project_name=$
 code root="$root"
 code root_source="$root_source"
 ____

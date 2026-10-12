@@ -5,7 +5,7 @@ include `rcm plugin run-parent-method ispconfig/os-setup debian11 setup`
 # Source: ISPConfigDebianOS::runPerfectSetup()
 chapter Mengecek existing ISPConfig.
 path=/usr/local/ispconfig/server/lib/config.inc.php
-code 'path="'$path'"'
+code path=$
 do_install=
 if [ -f "$path" ]; then
     __ File '`'$path'`' found.

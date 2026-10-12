@@ -56,13 +56,13 @@ helper-generate-key() {
     if [ -z "$domain" ];then
         error "Operand <domain> required."; x
     fi
-    code 'domain="'$domain'"'
+    code domain=$
     php_fpm_user=ispconfig
-    code 'php_fpm_user="'$php_fpm_user'"'
+    code php_fpm_user=$
     prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
-    code 'prefix="'$prefix'"'
+    code prefix=$
     tempfile=$(mktemp -p "$prefix/interface/web/mail" -t rcm-ispconfig-ajax-get-json.XXXXXX)
-    code 'tempfile="'$tempfile'"'
+    code tempfile=$
     cp "${prefix}/interface/web/mail/ajax_get_json.php" "$tempfile"
     chmod go-r "$tempfile"
     chmod go-w "$tempfile"

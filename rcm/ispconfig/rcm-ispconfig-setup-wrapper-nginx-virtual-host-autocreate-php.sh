@@ -239,8 +239,8 @@ urlCompleteComponent() {
 # Require, validate, and populate value.
 chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-code 'ROUNDCUBE_FQDN_LOCALHOST="'$ROUNDCUBE_FQDN_LOCALHOST'"'
-code 'PHPMYADMIN_FQDN_LOCALHOST="'$PHPMYADMIN_FQDN_LOCALHOST'"'
+code ROUNDCUBE_FQDN_LOCALHOST=$
+code PHPMYADMIN_FQDN_LOCALHOST=$
 if [ -z "$project" ];then
     error "Argument --project required."; x
 else
@@ -251,30 +251,30 @@ else
            x
     esac
 fi
-code 'project="'$project'"'
+code project=$
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
-code 'php_version="'$php_version'"'
+code php_version=$
 if [ -z "$url" ];then
     error "Argument --url required."; x
 fi
-code 'url="'$url'"'
+code url=$
 urlCompleteComponent
-code 'url="'$url'"'
-code 'url_scheme="'$url_scheme'"'
-code 'url_host="'$url_host'"'
-code 'url_port="'$url_port'"'
-code 'url_path="'$url_path'"'
-code 'url_path_clean="'$url_path_clean'"'
-code 'url_path_clean_trailing="'$url_path_clean_trailing'"'
-code 'tls_certificate="'$tls_certificate'"'
-code 'tls_certificate_key="'$tls_certificate_key'"'
+code url=$
+code url_scheme=$
+code url_host=$
+code url_port=$
+code url_path=$
+code url_path_clean=$
+code url_path_clean_trailing=$
+code tls_certificate=$
+code tls_certificate_key=$
 # If not set in argument, try load from environment.
 [ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"
 [ -z "$tls_certificate_key" ] && tls_certificate_key="$TLS_CERTIFICATE_KEY"
-code 'tls_certificate="'$tls_certificate'"'
-code 'tls_certificate_key="'$tls_certificate_key'"'
+code tls_certificate=$
+code tls_certificate_key=$
 ____
 
 chapter Prepare arguments.
@@ -282,7 +282,7 @@ chapter Prepare arguments.
 case "$project" in
     ispconfig)
         php_fpm_user=ispconfig
-        code 'php_fpm_user="'$php_fpm_user'"'
+        code php_fpm_user=$
         prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
         ;;
     roundcube|phpmyadmin)
@@ -291,34 +291,34 @@ case "$project" in
         if [ -f "$conf_nginx" ];then
             nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
         fi
-        code 'nginx_user="'$nginx_user'"'
+        code nginx_user=$
         if [ -z "$nginx_user" ];then
             error "Variable \$nginx_user failed to populate."; x
         fi
         php_fpm_user="$nginx_user"
-        code 'php_fpm_user="'$php_fpm_user'"'
+        code php_fpm_user=$
         prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
 esac
-code 'prefix="'$prefix'"'
+code prefix=$
 case "$project" in
     ispconfig)
         root="$prefix/interface/web"
         php_fpm_section="ispconfig"
-        code 'php_fpm_section="'$php_fpm_section'"'
+        code php_fpm_section=$
         ;;
     phpmyadmin)
         project_container="$PHPMYADMIN_FQDN_LOCALHOST"
-        code 'project_container="'$project_container'"'
+        code project_container=$
         root="$prefix/${project_container}/web"
         php_fpm_section=www
-        code 'php_fpm_section="'$php_fpm_section'"'
+        code php_fpm_section=$
         ;;
     roundcube)
         project_container="$ROUNDCUBE_FQDN_LOCALHOST"
-        code 'project_container="'$project_container'"'
+        code project_container=$
         root="$prefix/${project_container}/web"
         php_fpm_section=www
-        code 'php_fpm_section="'$php_fpm_section'"'
+        code php_fpm_section=$
         ;;
 esac
 if [ -z "$php_fpm_section" ];then
@@ -328,7 +328,7 @@ socket_filename=$(rcm-php-fpm-setup-project-config get --php-version="$php_versi
 if [ -z "$socket_filename" ];then
     __; red Socket Filename of PHP-FPM not found.; x
 fi
-code 'socket_filename="'$socket_filename'"'
+code socket_filename=$
 code root="$root"
 ____
 

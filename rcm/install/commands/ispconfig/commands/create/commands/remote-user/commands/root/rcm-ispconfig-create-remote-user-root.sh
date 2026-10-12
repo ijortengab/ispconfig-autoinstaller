@@ -375,7 +375,7 @@ ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
 # Requirement, validate, and populate value.
 chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-code 'ISPCONFIG_REMOTE_USER_ROOT="'$ISPCONFIG_REMOTE_USER_ROOT'"'
+code ISPCONFIG_REMOTE_USER_ROOT=$
 ____
 
 chapter Mengecek ISPConfig User.

@@ -94,13 +94,13 @@ isDirExists() {
 # Require, validate, and populate value.
 chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
-code 'DOVECOT_CONFIG_DIR="'$DOVECOT_CONFIG_DIR'"'
-code 'DOVECOT_CONFIG_FILE_ISPCONFIG="'$DOVECOT_CONFIG_FILE_ISPCONFIG'"'
+code MAILBOX_HOST=$
+code DOVECOT_CONFIG_DIR=$
+code DOVECOT_CONFIG_FILE_ISPCONFIG=$
 if [ -z "$fqdn" ];then
     error "Argument --fqdn required."; x
 fi
-code 'fqdn="'$fqdn'"'
+code fqdn=$
 # If not set in argument, try load from environment.
 [ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"
 [ -z "$tls_certificate_key" ] && tls_certificate_key="$TLS_CERTIFICATE_KEY"

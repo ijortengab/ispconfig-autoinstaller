@@ -153,12 +153,12 @@ if [ -n "$mailbox_handler" ];then
 fi
 
 [ -n "$RCM_DEBUG" ] && chapter Variable dump.
-[ -n "$RCM_DEBUG" ] && code 'web_server="'$web_server'"'
-[ -n "$RCM_DEBUG" ] && code 'dbms="'$dbms'"'
-[ -n "$RCM_DEBUG" ] && code 'os_setup="'$os_setup'"'
-[ -n "$RCM_DEBUG" ] && code 'timezone="'$timezone'"'
-[ -n "$RCM_DEBUG" ] && code 'mailbox_handler="'$mailbox_handler'"'
-[ -n "$RCM_DEBUG" ] && code 'mail_filtering="'$mail_filtering'"'
+[ -n "$RCM_DEBUG" ] && code web_server=$
+[ -n "$RCM_DEBUG" ] && code dbms=$
+[ -n "$RCM_DEBUG" ] && code os_setup=$
+[ -n "$RCM_DEBUG" ] && code timezone=$
+[ -n "$RCM_DEBUG" ] && code mailbox_handler=$
+[ -n "$RCM_DEBUG" ] && code mail_filtering=$
 [ -n "$RCM_DEBUG" ] && ____
 
 # Boolean default to TRUE.

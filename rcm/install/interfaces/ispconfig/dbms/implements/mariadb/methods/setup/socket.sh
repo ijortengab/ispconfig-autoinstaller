@@ -10,16 +10,16 @@ MYSQL_ROOT_PASSWD_INI=${MYSQL_ROOT_PASSWD_INI:=[HOME]/.mysql-root-passwd.ini}
 
 # Requirement, validate, and populate value.
 chapter Variable dump.
-code 'MYSQL_ROOT_PASSWD="'$MYSQL_ROOT_PASSWD'"'
+code MYSQL_ROOT_PASSWD=$
 find='[HOME]'
 replace="$HOME"
 MYSQL_ROOT_PASSWD="${MYSQL_ROOT_PASSWD/"$find"/"$replace"}"
-code 'MYSQL_ROOT_PASSWD="'$MYSQL_ROOT_PASSWD'"'
-code 'MYSQL_ROOT_PASSWD_INI="'$MYSQL_ROOT_PASSWD_INI'"'
+code MYSQL_ROOT_PASSWD=$
+code MYSQL_ROOT_PASSWD_INI=$
 find='[HOME]'
 replace="$HOME"
 MYSQL_ROOT_PASSWD_INI="${MYSQL_ROOT_PASSWD_INI/"$find"/"$replace"}"
-code 'MYSQL_ROOT_PASSWD_INI="'$MYSQL_ROOT_PASSWD_INI'"'
+code MYSQL_ROOT_PASSWD_INI=$
 ____
 
 chapter Mengecek konfigurasi MariaDB '`'/etc/mysql/mariadb.conf.d/50-server.cnf'`'.

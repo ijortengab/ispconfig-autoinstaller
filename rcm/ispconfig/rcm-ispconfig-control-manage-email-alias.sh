@@ -316,8 +316,8 @@ create() {
     [ -n "$tempfile" ] || { error Variable tempfile is required; x; }
 
     ____; client_id=$(INDENT+="    " rcm-ispconfig-control-manage-client $isfast get-client-id --username "$domain")
-    code 'client_id="'$client_id'"'
-    [ -n "$client_id" ] || { client_id=0; code 'client_id="'$client_id'"'; }
+    code client_id=$
+    [ -n "$client_id" ] || { client_id=0; code client_id=$; }
     code rcm-php-ispconfig soap mail_alias_add '"'$client_id'"' --server-id='"'1'"' --source='"'$source'"' --destination='"'$destination'"' "$@"
     rcm-php-ispconfig soap mail_alias_add "$client_id" --server-id="1" --source="$source" --destination="$destination" "$@" 2>&1 &> "$tempfile"
     local exit_code=$?
@@ -333,28 +333,28 @@ create() {
 # Require, validate, and populate value.
 chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
-code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
+code MARIADB_PREFIX_MASTER=$
+code MARIADB_USERS_CONTAINER_MASTER=$
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-code 'domain="'$domain'"'
+code domain=$
 if [ -z "$name" ];then
     error "Argument --name required."; x
 fi
-code 'name="'$name'"'
+code name=$
 if [ -z "$destination_name" ];then
     error "Argument --destination-name required."; x
 fi
-code 'destination_name="'$destination_name'"'
+code destination_name=$
 if [ -z "$destination_domain" ];then
     error "Argument --destination-domain required."; x
 fi
-code 'destination_domain="'$destination_domain'"'
-code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'
-code 'ispconfig_soap_exists_sure="'$ispconfig_soap_exists_sure'"'
+code destination_domain=$
+code ispconfig_domain_exists_sure=$
+code ispconfig_soap_exists_sure=$
 mariadb_project_name=roundcube
-code 'mariadb_project_name="'$mariadb_project_name'"'
+code mariadb_project_name=$
 tempfile=
 ____
 
@@ -384,10 +384,10 @@ fi
 chapter Populate variable.
 db_name="$mariadb_project_name"
 db_user="$mariadb_project_name"
-code 'db_name="'$db_name'"'
-code 'db_user="'$db_user'"'
+code db_name=$
+code db_user=$
 populateDatabaseUserPassword "$db_user"
-code 'db_user_password="'$db_user_password'"'
+code db_user_password=$
 ____
 
 if [ -z "$tempfile" ];then

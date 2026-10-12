@@ -249,13 +249,13 @@ isFileExists() {
 chapter Variable dump.
 __FILE__=$(resolve_relative_path "$0")
 __DIR__=$(dirname "$__FILE__")
-code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
+code BINARY_DIRECTORY=$
 find='[__DIR__]'
 replace="$__DIR__"
 BINARY_DIRECTORY="${BINARY_DIRECTORY/"$find"/"$replace"}"
-code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
+code BINARY_DIRECTORY=$
 NEW_VERSION=$RCM_EXTENSION_VERSION
-code 'NEW_VERSION="'$NEW_VERSION'"'
+code NEW_VERSION=$
 mktemp=
 ____
 

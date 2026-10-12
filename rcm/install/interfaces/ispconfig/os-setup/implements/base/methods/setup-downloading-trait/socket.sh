@@ -20,7 +20,7 @@ else
 fi
 rcm-file "$filename" terminateIfNotExists
 path=/tmp/ispconfig3_install/install/install.php
-code 'path="'$path'"'
+code path=$
 rcm-file "$path" isExists
 if [ -n "$notfound" ];then
     __ Extracting downloaded ISPConfig

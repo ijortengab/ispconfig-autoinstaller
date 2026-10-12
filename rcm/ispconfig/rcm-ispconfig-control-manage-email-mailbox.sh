@@ -131,9 +131,9 @@ create() {
     local email="${user}@${host}"
 
     ____; client_id=$(INDENT+="    " rcm-ispconfig-control-manage-client $isfast get-client-id --username "$domain")
-    code 'client_id="'$client_id'"'
+    code client_id=$
     [ -n "$client_id" ] || client_id=0
-    code 'client_id="'$client_id'"'
+    code client_id=$
     mailboxCredential $host $user
     __; magenta 'password="'$password'"'; _.
     code rcm-php-ispconfig soap mail_user_add '"'$client_id'"' --server-id='"'1'"' --email='"'$email'"' --password='"'$password'"' "$@"
@@ -154,13 +154,13 @@ chapter Variable dump.
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-code 'domain="'$domain'"'
+code domain=$
 if [ -z "$name" ];then
     error "Argument --name required."; x
 fi
-code 'name="'$name'"'
-code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'
-code 'ispconfig_soap_exists_sure="'$ispconfig_soap_exists_sure'"'
+code name=$
+code ispconfig_domain_exists_sure=$
+code ispconfig_soap_exists_sure=$
 tempfile=
 ____
 

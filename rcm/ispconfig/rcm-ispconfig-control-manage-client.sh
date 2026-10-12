@@ -224,13 +224,13 @@ chapter Variable dump.
 if [ -z "$username" ];then
     error "Argument --username required."; x
 fi
-code 'username="'$username'"'
-code 'password="'$password'"'
+code username=$
+code password=$
 if [ -z "$email" ];then
     error "Argument --email required."; x
 fi
-code 'email="'$email'"'
-code 'ispconfig_soap_exists_sure="'$ispconfig_soap_exists_sure'"'
+code email=$
+code ispconfig_soap_exists_sure=$
 tempfile=
 ____
 

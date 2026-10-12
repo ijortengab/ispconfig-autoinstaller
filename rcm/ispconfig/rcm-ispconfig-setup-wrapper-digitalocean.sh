@@ -98,8 +98,8 @@ ____
 # Requirement, validate, and populate value.
 chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-code 'DKIM_SELECTOR="'$DKIM_SELECTOR'"'
-code 'action="'$action'"'
+code DKIM_SELECTOR=$
+code action=$
 case "$type" in
     spf|dkim|dmarc) ;;
     *) type=
@@ -112,7 +112,7 @@ until [[ -n "$type" ]];do
         *) type=
     esac
 done
-code 'type="'$type'"'
+code type=$
 case "$type" in
     spf)
         until [[ -n "$mail_provider" ]];do
@@ -131,14 +131,14 @@ case "$type" in
         ;;
 esac
 hostname=${hostname:=@}
-code 'hostname="'$hostname'"'
-code 'mail_provider="'$mail_provider'"'
+code hostname=$
+code mail_provider=$
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-code 'domain="'$domain'"'
-code 'digitalocean_domain_exists_sure="'$digitalocean_domain_exists_sure'"'
-code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'
+code domain=$
+code digitalocean_domain_exists_sure=$
+code ispconfig_domain_exists_sure=$
 ____
 
 if [ -z "$ispconfig_domain_exists_sure" ];then

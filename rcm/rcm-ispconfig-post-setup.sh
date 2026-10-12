@@ -280,14 +280,14 @@ sleepExtended() {
 
 # Requirement, validate, and populate value.
 chapter Variable dump.
-code 'DKIM_SELECTOR="'$DKIM_SELECTOR'"'
-code 'MAILBOX_POST="'$MAILBOX_POST'"'
+code DKIM_SELECTOR=$
+code MAILBOX_POST=$
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-code 'domain="'$domain'"'
+code domain=$
 current_fqdn=$(hostname -f 2>/dev/null)
-code 'current_fqdn="'$current_fqdn'"'
+code current_fqdn=$
 vercomp `stat --version | head -1 | grep -o -E '\S+$'` 8.31
 if [[ $? -lt 2 ]];then
     stat_cached=' --cached=never'

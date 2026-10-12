@@ -125,8 +125,8 @@ websiteCredentialIspconfig() {
 
 # Require, validate, and populate value.
 chapter Variable dump.
-code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
-code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
+code MARIADB_PREFIX_MASTER=$
+code MARIADB_USERS_CONTAINER_MASTER=$
 ____
 
 if [ -f /usr/local/share/ispconfig/website ];then

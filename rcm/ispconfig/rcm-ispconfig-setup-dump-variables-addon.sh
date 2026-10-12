@@ -150,20 +150,20 @@ websiteCredentialIspconfig() {
 # Require, validate, and populate value.
 chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-code 'SUBDOMAIN_ISPCONFIG="'$SUBDOMAIN_ISPCONFIG'"'
-code 'SUBDOMAIN_PHPMYADMIN="'$SUBDOMAIN_PHPMYADMIN'"'
-code 'SUBDOMAIN_ROUNDCUBE="'$SUBDOMAIN_ROUNDCUBE'"'
-code 'MAILBOX_ADMIN="'$MAILBOX_ADMIN'"'
-code 'MAILBOX_SUPPORT="'$MAILBOX_SUPPORT'"'
-code 'MAILBOX_POST="'$MAILBOX_POST'"'
-code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
-code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
-code 'DKIM_SELECTOR="'$DKIM_SELECTOR'"'
+code SUBDOMAIN_ISPCONFIG=$
+code SUBDOMAIN_PHPMYADMIN=$
+code SUBDOMAIN_ROUNDCUBE=$
+code MAILBOX_ADMIN=$
+code MAILBOX_SUPPORT=$
+code MAILBOX_POST=$
+code MARIADB_PREFIX_MASTER=$
+code MARIADB_USERS_CONTAINER_MASTER=$
+code DKIM_SELECTOR=$
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-code 'domain="'$domain'"'
-code 'ip_address="'$ip_address'"'
+code domain=$
+code ip_address=$
 current_fqdn=$(hostname -f 2>/dev/null)
 code current_fqdn="$current_fqdn"
 code additional_info="$additional_info"
