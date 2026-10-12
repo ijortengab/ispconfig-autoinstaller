@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Execute Parent
-include `rcm plugin run-parent-method mail-filtering amavis init`
+include rcm plugin run-parent-method mail-filtering amavis init
 
 INDENT+="$RCM_INDENT" \
 rcm spamassassin init \

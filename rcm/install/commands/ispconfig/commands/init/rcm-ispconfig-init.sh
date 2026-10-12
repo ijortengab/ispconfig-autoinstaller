@@ -175,9 +175,9 @@ ____
 
 RCM_OS_TIMEZONE="$timezone"
 
-include `rcm plugin run-method ispconfig/os-setup $os_setup define`
+include rcm plugin run-method ispconfig/os-setup $os_setup define
 
-include `rcm plugin run-method ispconfig/os-setup $os_setup init`
+include rcm plugin run-method ispconfig/os-setup $os_setup init
 
 # Dibutuhkan oleh rcm ispconfig init.
 application=
@@ -185,17 +185,17 @@ application+=' net-tools'
 application+=' pwgen'
 apt-install $application
 
-include `rcm plugin run-method ispconfig/web-server $web_server init`
+include rcm plugin run-method ispconfig/web-server $web_server init
 
-include `rcm plugin run-method ispconfig/dbms $dbms init`
+include rcm plugin run-method ispconfig/dbms $dbms init
 
-include `rcm plugin run-method ispconfig/mail-server $mail_server init`
+include rcm plugin run-method ispconfig/mail-server $mail_server init
 
 if [ -n "$mailbox_handler" ];then
 
-    include `rcm plugin run-method mailbox-handler $mailbox_handler init`
+    include rcm plugin run-method mailbox-handler $mailbox_handler init
 
-    include `rcm plugin run-method ispconfig/mail-filtering $mail_filtering init`
+    include rcm plugin run-method ispconfig/mail-filtering $mail_filtering init
 
 fi
 
@@ -204,23 +204,23 @@ _ Begin to Setup; _.
 sleep-extended 3 30
 ____
 
-include `rcm plugin run-method ispconfig/mail-server $mail_server setup`
+include rcm plugin run-method ispconfig/mail-server $mail_server setup
 
 if [ -n "$mailbox_handler" ];then
 
-    include `rcm plugin run-method ispconfig/mail-filtering $mail_filtering setup`
+    include rcm plugin run-method ispconfig/mail-filtering $mail_filtering setup
 
 fi
 
-include `rcm plugin run-method ispconfig/dbms $dbms setup`
+include rcm plugin run-method ispconfig/dbms $dbms setup
 
-include `rcm plugin run-method ispconfig/web-server $web_server setup`
+include rcm plugin run-method ispconfig/web-server $web_server setup
 
 RCM_WEB_SERVER="$web_server"
 
-include `rcm plugin run-method ispconfig/os-setup $os_setup setup`
+include rcm plugin run-method ispconfig/os-setup $os_setup setup
 
-include `rcm plugin run-method ispconfig/os-setup $os_setup post-setup`
+include rcm plugin run-method ispconfig/os-setup $os_setup post-setup
 
 chapter Take a break.
 _ Everything is OK, "let's" dump variables.; _.

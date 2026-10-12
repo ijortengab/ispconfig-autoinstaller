@@ -1,3 +1,3 @@
 #!/bin/bash
 
-include `rcm plugin run-parent-method ispconfig/os-setup base setup`
+include rcm plugin run-parent-method ispconfig/os-setup base setup

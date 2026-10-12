@@ -32,7 +32,7 @@ ____
 RCM_WEB_SERVER_URL="$url"
 RCM_WEB_SERVER_ROOT="$root"
 RCM_WEB_SERVER_PHP_FPM_SOCKET="$socket_filename"
-include `rcm plugin run-method ispconfig/web-server $web_server add-vhost`
+include rcm plugin run-method ispconfig/web-server $web_server add-vhost
 
 chapter Mengecek address host local '`'$ISPCONFIG_FQDN_LOCALHOST'`'.
 notfound=

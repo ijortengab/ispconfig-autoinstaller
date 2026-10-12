@@ -1,6 +1,6 @@
 #!/bin/bash
 
-include `rcm plugin run-parent-method ispconfig/os-setup debian12 setup`
+include rcm plugin run-parent-method ispconfig/os-setup debian12 setup
 
 # Source: ISPConfigDebianOS::runPerfectSetup()
 chapter Mengecek existing ISPConfig.
@@ -21,14 +21,14 @@ if [ -n "$do_install" ];then
 
     # use-trait utamanya digunakan untuk me-load function-function yang
     # digunakan bersama-sama.
-    include `rcm plugin use-trait ispconfig/os-setup base setup-downloading-trait`
+    include rcm plugin use-trait ispconfig/os-setup base setup-downloading-trait
 
-    include `rcm plugin use-trait ispconfig/os-setup debian12 setup-modify-trait`
+    include rcm plugin use-trait ispconfig/os-setup debian12 setup-modify-trait
 
     modify-file-debian12
 
-    include `rcm plugin use-trait ispconfig/os-setup base setup-trait`
+    include rcm plugin use-trait ispconfig/os-setup base setup-trait
 
 fi
 
-include `rcm plugin use-trait ispconfig/os-setup base setup-finishing-trait`
+include rcm plugin use-trait ispconfig/os-setup base setup-finishing-trait

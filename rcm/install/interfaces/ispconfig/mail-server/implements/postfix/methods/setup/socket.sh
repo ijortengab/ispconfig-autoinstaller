@@ -233,11 +233,11 @@ if [ -n "$public_domain" ];then
 
     RCM_FQDN="$mailname"
 
-    include `rcm plugin run-static-method ispconfig/acme-client $acme_client define`
+    include rcm plugin run-static-method ispconfig/acme-client $acme_client define
 
     [ -n "$RCM_TLS_CERTIFICATE" ] || { red "Unable to proceed, variable \$RCM_TLS_CERTIFICATE is empty."; x; }
     [ -n "$RCM_TLS_CERTIFICATE_KEY" ] || { red "Unable to proceed, variable \$RCM_TLS_CERTIFICATE_KEY is empty."; x; }
 
-    include `rcm plugin use-trait ispconfig/mail-server postfix setup-smtpd-trait`
+    include rcm plugin use-trait ispconfig/mail-server postfix setup-smtpd-trait
 
 fi

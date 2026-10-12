@@ -3,7 +3,7 @@
 # Dependency.
 [ -n "$RCM_PHP_VERSION" ] || { red "Unable to proceed, variable \$RCM_PHP_VERSION is empty."; x; }
 
-include `rcm plugin run-parent-method ispconfig/os-setup debian11 init`
+include rcm plugin run-parent-method ispconfig/os-setup debian11 init
 
 # Dependency.
 require command apt-install
